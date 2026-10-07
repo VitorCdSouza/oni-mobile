@@ -6,7 +6,7 @@ root="$(cd "$(dirname "$0")/.." && pwd)"
 export JAVA_HOME="$(ls -d "$root"/tools/jdk-21*)"
 export PATH="$JAVA_HOME/bin:$PATH"
 python3 -I "$root/sim/layout/gen_layout.py" "$root/sim/layout/layout.txt" \
-    "$root/sim/layout/ghidra_types.h" "$root/sim/port/src/layout_checks.h"
+    "$root/sim/layout/ghidra_types.h" "$root/sim/port/src/layout_checks.h" "$root/sim/port/src/sim_types.h"
 rm -rf "$root/sim/decomp/functions"
 "$root"/tools/ghidra_*/support/analyzeHeadless "$root/sim/ghidra-proj" simdll \
     -process libSimDLL.x86_64.so -noanalysis -scriptPath "$root/tools/scripts" \

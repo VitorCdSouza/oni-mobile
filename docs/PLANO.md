@@ -49,6 +49,32 @@ mesmas estruturas). As funções ainda não portadas continuam sendo chamadas pe
 Assim cada função é validada isoladamente contra a gravação, e a lib original é aposentada só
 quando todas as funções tiverem sido substituídas. Aí o mesmo código é compilado para arm64-v8a.
 
+Ferramentas do ciclo:
+
+- `sim/layout/layout.txt`: structs do original por offset. `tools/redecomp.sh` aplica no Ghidra,
+  reexporta o decompilado com nomes de campo e gera `port/src/sim_types.h` (structs C++ com
+  `static_assert` de offset).
+- `make -C sim/port hybrid`: compila o port. `SIMPORT=sim/build/libsimport.so sim/build/replay ...`
+  roda o replay com as funções portadas; `compare.py` contra `sim/recordings/orig.txt`.
+- Os bytes de padding das structs de evento são ignorados no hash: o original deixa lixo da pilha
+  neles e o jogo não lê.
+- `make -C sim/port coverage` + replay + `make -C sim/port coverage-report`: lista as linhas do
+  port que nenhuma gravação executou.
+
+### Funções portadas
+
+| Função | Validação |
+| --- | --- |
+| `ConduitTemperatureManager::CalculateEnergyFlow` | replay idêntico, 100% das linhas |
+| `DoStateTransition` | replay idêntico, 70% das linhas |
+
+### Gravações que faltam
+
+A gravação de 4 minutos não passa por todos os ramos. Vai ser preciso um save de laboratório no
+modo sandbox, montado para exercitar mecânicas específicas: transições que soltam minério (água
+poluída fervendo, magma esfriando), tiles que avisam quando derretem, congelamento de grandes
+massas em tile, e assim por diante conforme a cobertura apontar.
+
 ## Fase 2 — Build Android
 
 IL2CPP arm64, stub de Steam, FMOD Android, AssetBundles refeitos, shaders convertidos.

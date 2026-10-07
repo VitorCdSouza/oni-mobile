@@ -222,7 +222,7 @@ extern "C" __attribute__((visibility("default"))) int simport_install(const char
     TrampolinePage tp;
     int patched = 0;
     for (const auto &mine : ours) {
-        if (mine.name == "simport_install" || is_runtime_symbol(mine.name) || (!only.empty() && !matches_any(mine.name, only)) ||
+        if (mine.name.rfind("simport_", 0) == 0 || is_runtime_symbol(mine.name) || (!only.empty() && !matches_any(mine.name, only)) ||
             matches_any(mine.name, skip)) {
             continue;
         }
@@ -246,4 +246,15 @@ extern "C" __attribute__((visibility("default"))) int simport_install(const char
     }
     fprintf(stderr, "[simport] %d functions patched\n", patched);
     return patched;
+}
+
+// Coverage builds (make coverage): writes the gcov counters. The replay exits with _exit() to skip
+// the original library's static destructors, which would also skip gcov's own exit handler.
+#ifdef SIMPORT_COVERAGE
+extern "C" void __gcov_dump(void);
+#endif
+extern "C" __attribute__((visibility("default"))) void simport_flush_coverage() {
+#ifdef SIMPORT_COVERAGE
+    __gcov_dump();
+#endif
 }

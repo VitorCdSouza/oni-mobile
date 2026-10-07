@@ -19,18 +19,27 @@ PRIM = {'u8': ('uint8_t', 1), 'bool': ('uint8_t', 1), 'u16': ('uint16_t', 2), 'i
 
 def parse(path):
     structs, order, cur = {}, [], None
+    globals_ = []
     for raw in open(path):
         line = raw.split('#', 1)[0].rstrip()
         if not line.strip():
             continue
+        if line.startswith('global '):
+            _, name, typ = line.split()
+            globals_.append((name, typ))
+            continue
         if line.startswith('struct '):
             _, name, size = line.split()
-            cur = {'name': name, 'size': int(size, 16), 'fields': []}
+            cur = {'name': name, 'size': int(size, 16), 'fields': [], 'methods': []}
             structs[name] = cur
             order.append(name)
             continue
+        if line.strip().startswith('method '):
+            cur['methods'].append(line.strip()[len('method '):])
+            continue
         off, typ, fname = line.split()
         cur['fields'].append((int(off, 16), typ, fname))
+    parse.globals = globals_
     return structs, order
 
 
@@ -58,13 +67,35 @@ def vec_struct_name(elem):
     return 'Vec_' + re.sub(r'\W', '_', elem.rstrip('*')) + ('_ptr' if elem.endswith('*') else '')
 
 
+def embedded_first(structs, order):
+    """Orders structs so that a struct embedded by value is defined before its container."""
+    done, result = set(), []
+
+    def visit(name):
+        if name in done:
+            return
+        done.add(name)
+        for _, typ, _ in structs[name]['fields']:
+            base = re.sub(r'\[\d+\]$', '', typ)
+            if base in structs:
+                visit(base)
+        result.append(name)
+
+    for name in order:
+        visit(name)
+    return result
+
+
 def ghidra_header(structs, order):
+    order = embedded_first(structs, order)
     out = ['// Generated from sim/layout/layout.txt. Do not edit.', 'typedef unsigned char uint8_t;',
            'typedef unsigned short uint16_t;', 'typedef short int16_t;', 'typedef unsigned int uint32_t;',
            'typedef int int32_t;', 'typedef unsigned long long uint64_t;', 'typedef long long int64_t;', '']
     vecs = {}
-    for name in order:
-        for _, typ, _ in structs[name]['fields']:
+    all_types = [typ for name in order for _, typ, _ in structs[name]['fields']]
+    all_types += [typ for _, typ in parse.globals]
+    for name in [None]:
+        for typ in all_types:
             base = re.sub(r'\[\d+\]$', '', typ)
             if base.startswith('vec<'):
                 vecs[vec_struct_name(base[4:-1])] = base[4:-1]
@@ -93,6 +124,56 @@ def ghidra_header(structs, order):
             out.append(f'    uint8_t pad_{pos:#x}[{s["size"] - pos}];')
         out.append('};')
         out.append('')
+    # Global variable types, read by ApplyTypes.java: "//@global <symbol> <C type name> <is pointer>".
+    for gname, typ in parse.globals:
+        if typ.startswith('vec<'):
+            out.append(f'//@global {gname} {vec_struct_name(typ[4:-1])} 0')
+        elif typ.endswith('*'):
+            out.append(f'//@global {gname} {typ[:-1]} 1')
+        else:
+            out.append(f'//@global {gname} {typ} 0')
+    return '\n'.join(out)
+
+
+CPP_PRIM = {'u8': 'uint8_t', 'bool': 'bool', 'u16': 'uint16_t', 'i16': 'int16_t', 'u32': 'uint32_t',
+            'i32': 'int32_t', 'f32': 'float', 'u64': 'uint64_t', 'i64': 'int64_t', 'f64': 'double', 'ptr': 'void *'}
+
+
+def cpp_type(typ):
+    if typ.startswith('vec<'):
+        return f'std::vector<{cpp_type(typ[4:-1])}>'
+    if typ.endswith('*'):
+        return cpp_type(typ[:-1]) + ' *'
+    return CPP_PRIM.get(typ, typ)
+
+
+def cpp_header(structs, order):
+    order = embedded_first(structs, order)
+    out = ['// Generated from sim/layout/layout.txt. Do not edit.',
+           '// The original SimDLL structures, laid out exactly like the original.',
+           '#pragma once', '#include <cstdint>', '#include <vector>', '']
+    out += [f'struct {n};' for n in order] + ['']
+    for name in order:
+        s = structs[name]
+        out.append(f'struct {name} {{')
+        pos = 0
+        for off, typ, fname in sorted(s['fields']):
+            if off > pos:
+                out.append(f'    uint8_t pad_{pos:#x}[{off - pos}];')
+            m = re.fullmatch(r'(.+)\[(\d+)\]', typ)
+            base, count = (m.group(1), m.group(2)) if m else (typ, None)
+            out.append(f'    {cpp_type(base)} {fname}' + (f'[{count}]' if count else '') + ';')
+            pos = off + size_of(typ, structs)
+        if pos < s['size']:
+            out.append(f'    uint8_t pad_{pos:#x}[{s["size"] - pos}];')
+        for m in s['methods']:
+            out.append(f'    {m}')
+        out.append('};')
+        out.append('')
+    for gname, typ in parse.globals:
+        out.append(f'extern {cpp_type(typ)} {gname};')
+    out.append('')
+    out.append('#include "layout_checks.h"')
     return '\n'.join(out)
 
 
@@ -110,11 +191,13 @@ def checks_header(structs, order):
     return '\n'.join(out)
 
 
-def main(src, ghidra_out, checks_out):
+def main(src, ghidra_out, checks_out, cpp_out=None):
     structs, order = parse(src)
+    if cpp_out:
+        open(cpp_out, 'w').write(cpp_header(structs, order) + '\n')
     open(ghidra_out, 'w').write(ghidra_header(structs, order) + '\n')
     open(checks_out, 'w').write(checks_header(structs, order) + '\n')
 
 
 if __name__ == '__main__':
-    main(*sys.argv[1:4])
+    main(*sys.argv[1:5])

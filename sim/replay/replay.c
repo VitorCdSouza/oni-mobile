@@ -85,6 +85,7 @@ static time_t replayed_time(time_t *out) {
 }
 
 static unsigned g_threads;
+static void (*g_flush_coverage)(void);
 
 // std::thread::hardware_concurrency() inside the library, overridden with SIM_THREADS to check
 // that results do not depend on the core count (the phone has 8, the PC 28).
@@ -132,6 +133,28 @@ static void observe(const char *label, const char *name, const void *data, size_
     }
 }
 
+// Copy of an event array with the padding bytes zeroed, so that garbage there does not count.
+static uint8_t *g_scratch;
+static size_t g_scratch_size;
+
+static const void *without_padding(const void *data, size_t count, const GduArray *a) {
+    if (!data || a->padding[0] < 0) {
+        return data;
+    }
+    size_t size = count * (size_t)a->elem_size;
+    if (size > g_scratch_size) {
+        g_scratch = realloc(g_scratch, size);
+        g_scratch_size = size;
+    }
+    memcpy(g_scratch, data, size);
+    for (size_t i = 0; i < count; i++) {
+        for (int p = 0; a->padding[p] >= 0; p++) {
+            g_scratch[i * (size_t)a->elem_size + (size_t)a->padding[p]] = 0;
+        }
+    }
+    return g_scratch;
+}
+
 static void observe_gdu(const uint8_t *gdu) {
     int32_t frames;
     memcpy(&frames, gdu + GDU_NUM_FRAMES_OFFSET, 4);
@@ -148,7 +171,8 @@ static void observe_gdu(const uint8_t *gdu) {
         memcpy(&count, gdu + kGduArrays[i].count_offset, 4);
         memcpy(&p, gdu + kGduArrays[i].ptr_offset, sizeof p);
         printf(" n_%s=%d", kGduArrays[i].name, count);
-        observe("gdu", kGduArrays[i].name, p, (size_t)count * (size_t)kGduArrays[i].elem_size);
+        observe("gdu", kGduArrays[i].name, without_padding(p, (size_t)count, &kGduArrays[i]),
+                (size_t)count * (size_t)kGduArrays[i].elem_size);
     }
     printf("\n");
     g_observation++;
@@ -241,6 +265,7 @@ int main(int argc, char **argv) {
             return 2;
         }
         int (*install)(const char *) = (int (*)(const char *))need(port_handle, "simport_install");
+        g_flush_coverage = (void (*)(void))dlsym(port_handle, "simport_flush_coverage");
         if (install(base) < 0) {
             return 2;
         }
@@ -332,6 +357,9 @@ int main(int argc, char **argv) {
         }
     }
     fflush(stdout);
+    if (g_flush_coverage) {
+        g_flush_coverage();
+    }
     // Skip library destructors: the original's static teardown is not part of what is compared.
     _exit(0);
 }

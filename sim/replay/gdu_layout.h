@@ -2,41 +2,43 @@
 #pragma once
 #include <stddef.h>
 
-typedef struct { const char *name; int count_offset; int ptr_offset; int elem_size; } GduArray;
+// padding: up to 8 byte offsets inside each element that are padding, -1 terminated.
+// The replay zeroes them before hashing: the original leaves stack garbage there.
+typedef struct { const char *name; int count_offset; int ptr_offset; int elem_size; int padding[9]; } GduArray;
 typedef struct { const char *name; int ptr_offset; int elem_size; } GduCellArray;
 
 #define GDU_SIZE 496
 #define GDU_NUM_FRAMES_OFFSET 0
 static const GduArray kGduArrays[] = {
-    {"solidInfo", 100, 104, 8},
-    {"liquidChangeInfo", 112, 116, 4},
-    {"solidSubstanceChangeInfo", 124, 128, 4},
-    {"substanceChangeInfo", 136, 140, 8},
-    {"callbackInfo", 148, 152, 4},
-    {"spawnFallingLiquidInfo", 160, 164, 20},
-    {"digInfo", 172, 176, 20},
-    {"spawnOreInfo", 184, 188, 20},
-    {"spawnFXInfo", 196, 200, 12},
-    {"unstableCellInfo", 208, 212, 20},
-    {"worldDamageInfo", 220, 224, 8},
-    {"buildingTemperatures", 232, 236, 8},
-    {"massConsumedCallbacks", 244, 248, 20},
-    {"massEmittedCallbacks", 256, 260, 20},
-    {"diseaseConsumptionCallbacks", 268, 272, 12},
-    {"componentStateChangedMessages", 280, 284, 8},
-    {"removedMassEntries", 292, 296, 20},
-    {"emittedMassEntries", 304, 308, 16},
-    {"elementChunkInfos", 316, 320, 8},
-    {"elementChunkMeltedInfos", 328, 332, 4},
-    {"buildingOverheatInfos", 340, 344, 4},
-    {"buildingNoLongerOverheatedInfos", 352, 356, 4},
-    {"buildingMeltedInfos", 364, 368, 4},
-    {"cellMeltedInfos", 376, 380, 4},
-    {"backwallElementChangedInfos", 388, 392, 4},
-    {"backwallShouldTransitionInfos", 400, 404, 4},
-    {"diseaseEmittedInfos", 412, 416, 8},
-    {"diseaseConsumedInfos", 424, 428, 8},
-    {"radiationConsumedCallbacks", 436, 440, 12},
+    {"solidInfo", 100, 104, 8, {-1}},
+    {"liquidChangeInfo", 112, 116, 4, {-1}},
+    {"solidSubstanceChangeInfo", 124, 128, 4, {-1}},
+    {"substanceChangeInfo", 136, 140, 8, {-1}},
+    {"callbackInfo", 148, 152, 4, {-1}},
+    {"spawnFallingLiquidInfo", 160, 164, 20, {7, -1}},
+    {"digInfo", 172, 176, 20, {7, -1}},
+    {"spawnOreInfo", 184, 188, 20, {7, -1}},
+    {"spawnFXInfo", 196, 200, 12, {-1}},
+    {"unstableCellInfo", 208, 212, 20, {-1}},
+    {"worldDamageInfo", 220, 224, 8, {-1}},
+    {"buildingTemperatures", 232, 236, 8, {-1}},
+    {"massConsumedCallbacks", 244, 248, 20, {7, -1}},
+    {"massEmittedCallbacks", 256, 260, 20, {-1}},
+    {"diseaseConsumptionCallbacks", 268, 272, 12, {5, 6, 7, -1}},
+    {"componentStateChangedMessages", 280, 284, 8, {-1}},
+    {"removedMassEntries", 292, 296, 20, {7, -1}},
+    {"emittedMassEntries", 304, 308, 16, {3, -1}},
+    {"elementChunkInfos", 316, 320, 8, {-1}},
+    {"elementChunkMeltedInfos", 328, 332, 4, {-1}},
+    {"buildingOverheatInfos", 340, 344, 4, {-1}},
+    {"buildingNoLongerOverheatedInfos", 352, 356, 4, {-1}},
+    {"buildingMeltedInfos", 364, 368, 4, {-1}},
+    {"cellMeltedInfos", 376, 380, 4, {-1}},
+    {"backwallElementChangedInfos", 388, 392, 4, {-1}},
+    {"backwallShouldTransitionInfos", 400, 404, 4, {-1}},
+    {"diseaseEmittedInfos", 412, 416, 8, {1, 2, 3, -1}},
+    {"diseaseConsumedInfos", 424, 428, 8, {1, 2, 3, -1}},
+    {"radiationConsumedCallbacks", 436, 440, 12, {-1}},
 };
 static const GduCellArray kGduCellArrays[] = {
     {"elementIdx", 4, 2},
