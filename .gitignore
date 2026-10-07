@@ -5,3 +5,4 @@ decomp-cs/
 tools/jdk-*/
 sim/decomp/
 sim/ghidra.log
+sim/build/
