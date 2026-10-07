@@ -80,3 +80,70 @@ void Disease::AddDiseaseToCell(CellSOA *soa, int cell, unsigned char disease_idx
     }
     ClearDisease(*soa, cell);
 }
+
+// How readily the germs in `cell` spread: zero below the disease's minimum count or minimum
+// infestation ticks for that element.
+float Disease::GetDiffusionScale(const SimData &sim, int cell) {
+    const CellSOA &cells = *sim.cells;
+    uint8_t idx = cells.diseaseIdx[cell];
+    int count = cells.diseaseCount[cell];
+    uint16_t element = cells.elementIdx[cell];
+    if (Table<int32_t>(idx, 0xd8)[element] > count) {
+        return 0.0f;
+    }
+    if (Table<uint8_t>(idx, 0xf0)[element] > cells.diseaseInfestationTickCount[cell]) {
+        return 0.0f;
+    }
+    return Table<float>(idx, 0x90)[element];
+}
+
+// Germs spreading between two neighbouring cells of the same state: 1/8 of the dominant side
+// (scaled by its diffusion scale) moves across; the same germ evens out its counts instead.
+void Disease::UpdateCells(float dt, SimData &sim, SimEvents &events, int a, int b) {
+    (void)dt;
+    (void)events;
+    const CellSOA &cells = *sim.cells;
+    const ElementPostProcessData *pp = gElementPostProcessData.data();
+    if ((pp[cells.elementIdx[a]].state ^ pp[cells.elementIdx[b]].state) & 3) {
+        return;
+    }
+    uint8_t ia = cells.diseaseIdx[a];
+    uint8_t ib = cells.diseaseIdx[b];
+    int to_a, to_b;
+    uint8_t idx_a, idx_b;
+    if (ia == ib) {
+        if (ia == kNoDisease) {
+            return;
+        }
+        int diff = cells.diseaseCount[b] - cells.diseaseCount[a];
+        float scale = GetDiffusionScale(sim, diff > 0 ? b : a);
+        idx_a = cells.diseaseIdx[a];
+        idx_b = cells.diseaseIdx[b];
+        to_a = static_cast<int>(static_cast<float>(diff) * 0.125f * scale);
+        to_b = -to_a;
+    } else {
+        bool b_dominates = ia == kNoDisease;
+        if (!b_dominates && ib != kNoDisease) {
+            float wa = static_cast<float>(cells.diseaseCount[a]) * Weight(ia);
+            float wb = static_cast<float>(cells.diseaseCount[b]) * Weight(ib);
+            b_dominates = !(wa > wb);
+        }
+        if (b_dominates) {
+            float scale = GetDiffusionScale(sim, b);
+            idx_a = idx_b = sim.cells->diseaseIdx[b];
+            to_a = static_cast<int>(static_cast<float>(sim.cells->diseaseCount[b]) * 0.125f * scale);
+            to_b = -to_a;
+        } else {
+            float scale = GetDiffusionScale(sim, a);
+            idx_a = idx_b = sim.cells->diseaseIdx[a];
+            to_b = static_cast<int>(static_cast<float>(sim.cells->diseaseCount[a]) * 0.125f * scale);
+            to_a = -to_b;
+        }
+    }
+    if (to_a != 0) {
+        AddDiseaseToCell(sim.updatedCells, a, idx_a, to_a);
+    }
+    if (to_b != 0) {
+        AddDiseaseToCell(sim.updatedCells, b, idx_b, to_b);
+    }
+}

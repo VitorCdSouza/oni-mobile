@@ -22,7 +22,16 @@ struct Disease {
         __builtin_memcpy(&w, records + static_cast<size_t>(disease_idx) * 0x110 + 4, sizeof w);
         return w;
     }
+    // Per-element tables inside a disease record (std::vector begin pointers).
+    template <typename T>
+    const T *Table(uint8_t disease_idx, size_t offset) const {
+        const T *table;
+        __builtin_memcpy(&table, records + static_cast<size_t>(disease_idx) * 0x110 + offset, sizeof table);
+        return table;
+    }
     void AddDiseaseToCell(CellSOA *soa, int cell, unsigned char disease_idx, int count);
+    float GetDiffusionScale(const SimData &sim, int cell);
+    void UpdateCells(float dt, SimData &sim, SimEvents &events, int a, int b);
 };
 extern Disease *gDisease;
 
@@ -32,6 +41,23 @@ extern Disease *gDisease;
             AssertFunc("BREAKPT:", (line), (file));        \
         }                                                  \
     } while (0)
+
+// The original's small vector templates (their names appear in mangled signatures).
+template <typename T>
+struct Vector2 {
+    T x, y;
+};
+template <typename T>
+struct Vector4 {
+    T x, y, z, w;
+};
+
+// SimBase drives the frame: only the member functions the port defines are declared; its data
+// is reached through offsets until its layout is mapped.
+struct SimBase {
+    void UpdatedCellsToCells(SimData &sim, Vector2<int> min, Vector2<int> max);
+    void CopyUpdatedCellsToCells(SimData &sim);
+};
 
 constexpr uint16_t kInvalidElement = 0xffff;
 constexpr uint8_t kNoDisease = 0xff;

@@ -89,11 +89,6 @@ void UpdateBackwallTask::InternalDoTask() {
 
 // The same row copy for one per-cell Vector4 array (unk_0x60).
 template <typename T>
-struct Vector4 {
-    T x, y, z, w;
-};
-
-template <typename T>
 struct UpdateCellTask {
     void *vtable;
     T *src;
