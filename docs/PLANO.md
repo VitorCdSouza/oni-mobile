@@ -76,6 +76,7 @@ Ferramentas do ciclo:
 | `DoPartialMelt` (as duas sobrecargas), `DoUnstableCheckBasic` | replay idêntico, 48% das linhas |
 | `SimData::ClearCell`, `SimData::GetStableTicksRemaining`, `Disease::AddDiseaseToCell` | replay idêntico, 90% das linhas |
 | `DoUnstableCheckWithDiagonals`, `HeadlessUnstableFallSimpleSwap` | replay idêntico, **0% das linhas** (opção desligada no save gravado) |
+| `UpdateLiquid` (com a função interna de mover líquido), `IsLiquidPermeable` | replay idêntico, 96% das linhas |
 
 Ferramenta extra: `python3 sim/gen/rodata.py sim/libSimDLL.x86_64.so --symbol <nome mangled>` lista
 as constantes que uma função lê da memória com o valor exato. O Ghidra arredonda os literais

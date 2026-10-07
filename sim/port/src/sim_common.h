@@ -113,3 +113,4 @@ uint64_t DoPartialHeatTransition(SimData &sim, SimEvents &events, int cell);
 void HeadlessUnstableFallSimpleSwap(SimData &sim, SimEvents &events, CellAccessor &cell);
 
 constexpr int32_t kSimHashVoid = -1456075980;  // SimHashes.Void
+uint8_t IsLiquidPermeable(const CellSOA *soa, unsigned long cell);
