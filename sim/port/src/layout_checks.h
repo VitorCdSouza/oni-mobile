@@ -19,6 +19,8 @@ static_assert(sizeof(SimData) == 0x748, "SimData size");
 static_assert(offsetof(SimData, width) == 0x0, "SimData::width");
 static_assert(offsetof(SimData, height) == 0x4, "SimData::height");
 static_assert(offsetof(SimData, numGameCells) == 0x8, "SimData::numGameCells");
+static_assert(offsetof(SimData, rngState) == 0xc, "SimData::rngState");
+static_assert(offsetof(SimData, gasDirection) == 0x14, "SimData::gasDirection");
 static_assert(offsetof(SimData, vacuumElementIdx) == 0x1c, "SimData::vacuumElementIdx");
 static_assert(offsetof(SimData, cells) == 0x20, "SimData::cells");
 static_assert(offsetof(SimData, updatedCells) == 0x28, "SimData::updatedCells");
@@ -26,6 +28,12 @@ static_assert(offsetof(SimData, events) == 0x98, "SimData::events");
 static_assert(offsetof(SimData, components) == 0xb0, "SimData::components");
 static_assert(offsetof(SimData, headless) == 0x719, "SimData::headless");
 static_assert(offsetof(SimData, radiationEnabled) == 0x71a, "SimData::radiationEnabled");
+
+static_assert(sizeof(Vector4f) == 0x10, "Vector4f size");
+static_assert(offsetof(Vector4f, x) == 0x0, "Vector4f::x");
+static_assert(offsetof(Vector4f, y) == 0x4, "Vector4f::y");
+static_assert(offsetof(Vector4f, z) == 0x8, "Vector4f::z");
+static_assert(offsetof(Vector4f, w) == 0xc, "Vector4f::w");
 
 static_assert(sizeof(CellAccessor) == 0x10, "CellAccessor size");
 static_assert(offsetof(CellAccessor, soa) == 0x0, "CellAccessor::soa");

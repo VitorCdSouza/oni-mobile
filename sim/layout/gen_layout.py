@@ -151,7 +151,9 @@ def cpp_header(structs, order):
     order = embedded_first(structs, order)
     out = ['// Generated from sim/layout/layout.txt. Do not edit.',
            '// The original SimDLL structures, laid out exactly like the original.',
-           '#pragma once', '#include <cstdint>', '#include <vector>', '']
+           '#pragma once', '#include <cstdint>', '#include <vector>', '',
+           '// Enums used in member function signatures (they shape the mangled names).',
+           'namespace SpawnFXHashes { enum Type : int32_t {}; }', '']
     out += [f'struct {n};' for n in order] + ['']
     for name in order:
         s = structs[name]

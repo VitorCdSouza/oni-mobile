@@ -29,10 +29,14 @@ struct SimData 0x748
   0x00 i32 width                 # includes the 1-cell border on each side
   0x04 i32 height
   0x08 i32 numGameCells          # (width - 2) * (height - 2)
+  0x0c u32 rngState              # MSVC-style rand(): x = x * 214013 + 2531011, (x >> 16) & 0x7fff
+  0x14 i32 gasDirection          # +1 / -1, flipped by every gas cell PostProcessCell visits
   0x18 u8 unk_0x18
   0x1c u16 vacuumElementIdx      # element written by ClearCell
   0x20 CellSOA* cells
   0x28 CellSOA* updatedCells     # guess: written by the update, swapped with cells
+  0x58 f32* unk_0x58             # per cell; DoSublimation adds the sublimated mass
+  0x60 Vector4f* unk_0x60        # per cell; zeroed when the cell evaporates
   0x68 u8* unk_0x68              # per-cell flags, DoStateTransition sets the low 5 bits
   0x88 u8* unk_0x88              # per game cell; gates spawning falling liquid (visibility?)
   0x90 u16 unk_0x90
@@ -50,6 +54,12 @@ struct SimData 0x748
   0x728 f32 unk_0x728            # 0.7
   0x72c f32 unk_0x72c            # 0.8
   method void ClearCell(CellAccessor &cell);
+
+struct Vector4f 0x10
+  0x0 f32 x
+  0x4 f32 y
+  0x8 f32 z
+  0xc f32 w
 
 # A cell of one CellSOA, passed by reference to cell-level helpers.
 struct CellAccessor 0x10
@@ -79,6 +89,8 @@ struct SimEvents 0x1e0
   0x198 vec<i32> unk_0x198
   0x1b0 vec<BackwallElementChangedInfo> backwallElementChanged
   0x1c8 vec<BackwallShouldTransitionInfo> backwallShouldTransition
+  method void ChangeSubstance(const SimData &sim, unsigned long cell);
+  method void SpawnFX(const SimData &sim, unsigned long cell, SpawnFXHashes::Type fx, float rotation);
 
 # Event records, same layout as the C# structs of the same name in Sim.cs.
 struct SubstanceChangeInfo 0x8

@@ -30,14 +30,6 @@ void EmitTransitionOre(SimData &sim, SimEvents &events, CellSOA &soa, int cell, 
     }
 }
 
-void PushSubstanceChange(SimEvents &events, int game_cell) {
-    SubstanceChangeInfo info;
-    info.cellIdx = game_cell;
-    info.oldElemIdx = kInvalidElement;
-    info.newElemIdx = kInvalidElement;
-    events.substanceChanges.push_back(info);
-}
-
 }  // namespace
 
 // Returns 1 when the cell changed element.
@@ -149,9 +141,7 @@ int DoStateTransition(SimData &sim, SimEvents &events, int cell, const ElementTe
             }
         }
         if (cleared) {
-            CellAccessor accessor{};
-            accessor.soa = sim.updatedCells;
-            accessor.cell = cell;
+            CellAccessor accessor = Accessor(sim.updatedCells, cell);
             sim.ClearCell(accessor);
             game_cell = ToGameCell(sim, cell);
         } else {

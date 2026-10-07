@@ -9,6 +9,7 @@ typedef long long int64_t;
 
 struct CellSOA;
 struct SimData;
+struct Vector4f;
 struct CellAccessor;
 struct SimEvents;
 struct SubstanceChangeInfo;
@@ -86,14 +87,18 @@ struct SimData {
     int32_t width;
     int32_t height;
     int32_t numGameCells;
-    uint8_t pad_0xc[12];
+    uint32_t rngState;
+    uint8_t pad_0x10[4];
+    int32_t gasDirection;
     uint8_t unk_0x18;
     uint8_t pad_0x19[3];
     uint16_t vacuumElementIdx;
     uint8_t pad_0x1e[2];
     struct CellSOA * cells;
     struct CellSOA * updatedCells;
-    uint8_t pad_0x30[56];
+    uint8_t pad_0x30[40];
+    float * unk_0x58;
+    struct Vector4f * unk_0x60;
     uint8_t * unk_0x68;
     uint8_t pad_0x70[24];
     uint8_t * unk_0x88;
@@ -116,6 +121,13 @@ struct SimData {
     float unk_0x728;
     float unk_0x72c;
     uint8_t pad_0x730[24];
+};
+
+struct Vector4f {
+    float x;
+    float y;
+    float z;
+    float w;
 };
 
 struct CellAccessor {

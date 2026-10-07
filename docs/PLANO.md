@@ -66,14 +66,27 @@ Ferramentas do ciclo:
 | Função | Validação |
 | --- | --- |
 | `ConduitTemperatureManager::CalculateEnergyFlow` | replay idêntico, 100% das linhas |
-| `DoStateTransition` | replay idêntico, 70% das linhas |
+| `DoStateTransition` | replay idêntico, 68% das linhas |
+| `DoSublimation` | replay idêntico, 84% das linhas |
+| `DoPartialHeatTransition` (as duas sobrecargas) | replay idêntico, 64% das linhas |
+| `PostProcessCell` (com a lambda `FUN_0016f980`) | replay idêntico, 91% das linhas |
+| `SimEvents::ChangeSubstance`, `SimEvents::SpawnFX` | replay idêntico, 100% das linhas |
+
+Ferramenta extra: `python3 sim/gen/rodata.py sim/libSimDLL.x86_64.so --symbol <nome mangled>` lista
+as constantes que uma função lê da memória com o valor exato. O Ghidra arredonda os literais
+(1/32767 aparece como `3.051851e-05`, mas o original usa `0x1.0002p-15f`).
 
 ### Gravações que faltam
 
 A gravação de 4 minutos não passa por todos os ramos. Vai ser preciso um save de laboratório no
-modo sandbox, montado para exercitar mecânicas específicas: transições que soltam minério (água
-poluída fervendo, magma esfriando), tiles que avisam quando derretem, congelamento de grandes
-massas em tile, e assim por diante conforme a cobertura apontar.
+modo sandbox, montado para exercitar mecânicas específicas. Lista até agora:
+
+- transições que soltam minério (água poluída fervendo, magma esfriando);
+- tiles construídos que derretem (aviso `NotifyOnMelt`);
+- congelamento de massa grande que vira tile em vez de detrito;
+- tile inteiro sublimando (pouca massa sobrando, ex.: alvejante quase no fim);
+- fervura parcial de líquido virando vapor ao lado de algo muito quente (ex.: água sobre magma);
+- sólido que some todo por sublimação (`Evaporate`).
 
 ## Fase 2 — Build Android
 
