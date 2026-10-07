@@ -1,5 +1,6 @@
 # Builds the SimDLL port.
-#   make hybrid   build/libsimport.so: port functions + detour installer, for replay against the original
+#   make hybrid      build/libsimport.so: port functions + detour installer, for replay against the original
+#   make standalone  build/standalone/libSimDLL.so: the whole library, without the original
 CXX ?= g++
 # -ffp-contract=off: no fused multiply-add, so arm64 builds round exactly like the x86 original.
 CXXFLAGS ?= -O2 -g -std=c++17 -fPIC -ffp-contract=off -Wall -Wextra
@@ -12,6 +13,16 @@ $(BUILD)/libsimport.so: $(SRCS) detour/detour.cpp $(wildcard src/*.h)
 	$(CXX) $(CXXFLAGS) -shared -o $@ $(SRCS) detour/detour.cpp -ldl
 
 .PHONY: hybrid
+
+STANDALONE_SRCS := $(SRCS) $(wildcard standalone/*.cpp)
+
+standalone: $(BUILD)/standalone/libSimDLL.so
+
+$(BUILD)/standalone/libSimDLL.so: $(STANDALONE_SRCS) $(wildcard src/*.h)
+	mkdir -p $(BUILD)/standalone
+	$(CXX) $(CXXFLAGS) -shared -Wl,--no-undefined -o $@ $(STANDALONE_SRCS) -lpthread
+
+.PHONY: standalone
 
 # coverage: same as hybrid, instrumented with gcov. After a replay with SIMPORT pointing at
 # build/coverage/libsimport.so, `make coverage-report` lists line coverage per port file, which
