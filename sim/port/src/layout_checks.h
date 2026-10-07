@@ -398,6 +398,9 @@ static_assert(offsetof(ConduitTemperatureManager, melted) == 0x80, "ConduitTempe
 static_assert(offsetof(ConduitTemperatureManager, frozen) == 0x98, "ConduitTemperatureManager::frozen");
 static_assert(offsetof(ConduitTemperatureManager, temperatures) == 0xb0, "ConduitTemperatureManager::temperatures");
 static_assert(offsetof(ConduitTemperatureManager, result) == 0xc8, "ConduitTemperatureManager::result");
+static_assert(offsetof(ConduitTemperatureManager, pendingIndex) == 0xec, "ConduitTemperatureManager::pendingIndex");
+static_assert(offsetof(ConduitTemperatureManager, pendingRemovals0) == 0xf0, "ConduitTemperatureManager::pendingRemovals0");
+static_assert(offsetof(ConduitTemperatureManager, pendingRemovals1) == 0x108, "ConduitTemperatureManager::pendingRemovals1");
 static_assert(offsetof(ConduitTemperatureManager, mutex) == 0x120, "ConduitTemperatureManager::mutex");
 
 static_assert(sizeof(FloodFillInfo) == 0x6, "FloodFillInfo size");
@@ -945,4 +948,15 @@ static_assert(offsetof(SimFrameManager, processingFrames) == 0x60, "SimFrameMana
 static_assert(offsetof(SimFrameManager, processedFrames) == 0x78, "SimFrameManager::processedFrames");
 static_assert(offsetof(SimFrameManager, activeRegions) == 0xb0, "SimFrameManager::activeRegions");
 static_assert(offsetof(SimFrameManager, nextFrame) == 0xc8, "SimFrameManager::nextFrame");
+
+static_assert(sizeof(SimBase) == 0x160, "SimBase size");
+static_assert(offsetof(SimBase, vtable) == 0x0, "SimBase::vtable");
+static_assert(offsetof(SimBase, frames) == 0x8, "SimBase::frames");
+static_assert(offsetof(SimBase, taskQueue) == 0xd8, "SimBase::taskQueue");
+static_assert(offsetof(SimBase, updateTasks) == 0xe0, "SimBase::updateTasks");
+static_assert(offsetof(SimBase, taskEvents) == 0xf8, "SimBase::taskEvents");
+static_assert(offsetof(SimBase, flowTasks) == 0x110, "SimBase::flowTasks");
+static_assert(offsetof(SimBase, cellTasks) == 0x128, "SimBase::cellTasks");
+static_assert(offsetof(SimBase, backwallTasks) == 0x140, "SimBase::backwallTasks");
+static_assert(offsetof(SimBase, remainder) == 0x158, "SimBase::remainder");
 

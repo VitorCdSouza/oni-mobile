@@ -157,3 +157,153 @@ ConduitTemperatureUpdateData *ConduitTemperatureManager::Update(float dt, const 
     pthread_mutex_unlock(reinterpret_cast<pthread_mutex_t *>(mutex));
     return &result;
 }
+
+namespace {
+
+struct MutexLock {
+    explicit MutexLock(uint8_t *m) : mutex(reinterpret_cast<pthread_mutex_t *>(m)) { pthread_mutex_lock(mutex); }
+    ~MutexLock() { pthread_mutex_unlock(mutex); }
+    pthread_mutex_t *mutex;
+};
+
+// The element's low/high transition temperatures, or 0 / FLT_MAX when it has none.
+void SetContents(ConduitTemperatureData &d, const Element &e, float temperature, float mass) {
+    d.temperature = temperature;
+    d.contentsConductivity = e.thermalConductivity;
+    d.contentsHeatCapacity = mass * e.specificHeatCapacity;
+    d.lowTemp = e.lowTempTransitionIdx != kInvalidElement ? e.lowTemp : 0.0f;
+    d.highTemp = e.highTempTransitionIdx != kInvalidElement ? e.highTemp : 0x1.fffffep+127f;
+}
+
+void CheckContents(const Element &e, float temperature, float mass, int line_temperature, int line_conductivity) {
+    if (mass == 0.0f) {
+        return;
+    }
+    if (temperature < 0.0f) {
+        AssertFunc("BREAKPT:", line_temperature, "ConduitTemperatureManager.cpp");
+        KCrashReporterReportMessage("ConduitTemperatureManager.cpp", line_temperature,
+                                    "Assert failed: contents_mass == 0.0f || 0.0f <= contents_temperature");
+    }
+    if (e.thermalConductivity < 0.0f) {
+        AssertFunc("BREAKPT:", line_conductivity, "ConduitTemperatureManager.cpp");
+        KCrashReporterReportMessage("ConduitTemperatureManager.cpp", line_conductivity,
+                                    "Assert failed: contents_mass == 0.0f || 0.0f <= "
+                                    "contents_elem.thermalConductivity");
+    }
+}
+
+}  // namespace
+
+// A pipe segment's contents. Returns its handle.
+uint32_t ConduitTemperatureManager::Add(float temperature, float mass, int element_hash, int structure_handle,
+                                        float conduit_heat_capacity, float conduit_conductivity, bool insulated) {
+    MutexLock lock(mutex);
+    const Element &e = gElements[GetElementIndex(static_cast<uint32_t>(element_hash))];
+    CheckContents(e, temperature, mass, 0x30, 0x31);
+    if (temperature > 10000.0f) {
+        KCrashReporterReportMessage("ConduitTemperatureManager.cpp", 0x35,
+                                    "Contents have invalid temperature %f. Resetting to default.",
+                                    static_cast<double>(temperature));
+        temperature = e.defaultValues.temperature;
+    }
+    ConduitTemperatureData d{};
+    SetContents(d, e, temperature, mass);
+    d.structureHandle = static_cast<uint32_t>(structure_handle);
+    d.insulated = insulated;
+    d.conduitHeatCapacity = conduit_heat_capacity;
+    d.conduitConductivity = conduit_conductivity;
+    int32_t dense = static_cast<int32_t>(data.size());
+    uint32_t handle;
+    if (freeHandles.empty()) {
+        versions.push_back(0);
+        handle = static_cast<uint32_t>(handleToDense.size()) & 0xffffff;
+        handleToDense.push_back(dense);
+    } else {
+        handle = freeHandles.back();
+        freeHandles.pop_back();
+        handleToDense[handle & 0xffffff] = dense;
+    }
+    denseToHandle.push_back(handle);
+    data.push_back(d);
+    return handle;
+}
+
+// New contents for a pipe segment (bad handles are reported and ignored).
+void ConduitTemperatureManager::Set(int handle, float temperature, float mass, int element_hash) {
+    MutexLock lock(mutex);
+    uint32_t h = static_cast<uint32_t>(handle);
+    uint32_t index = h & 0xffffff;
+    if ((h & 0xf00000) != 0 || index >= versions.size() || versions[index] != static_cast<uint8_t>(h >> 24)) {
+        KCrashReporterReportMessage("ConduitTemperatureManager.cpp", 99,
+                                    "ConduitTemperatureManager::Set called with bad handle: V=%d, Idx=%d, ArraySize=%d",
+                                    static_cast<int>(index), static_cast<int>(h >> 24), static_cast<int>(data.size()));
+        return;
+    }
+    ConduitTemperatureData &d = data[static_cast<size_t>(handleToDense[index])];
+    const Element &e = gElements[GetElementIndex(static_cast<uint32_t>(element_hash))];
+    CheckContents(e, temperature, mass, 0x6b, 0x6c);
+    if (temperature > 10000.0f) {
+        AssertFunc("BREAKPT:", 0x6d, "ConduitTemperatureManager.cpp");
+        KCrashReporterReportMessage("ConduitTemperatureManager.cpp", 0x6d,
+                                    "Assert failed: contents_temperature <= SIM_MAX_TEMPERATURE");
+        KCrashReporterReportMessage("ConduitTemperatureManager.cpp", 0x71,
+                                    "Contents have invalid temperature %f. Resetting to default.",
+                                    static_cast<double>(temperature));
+        temperature = e.defaultValues.temperature;
+    }
+    SetContents(d, e, temperature, mass);
+}
+
+// Marks the segment dead now and queues its handle; ReleaseQueuedHandles frees it a step later.
+void ConduitTemperatureManager::Remove(int handle) {
+    MutexLock lock(mutex);
+    uint32_t h = static_cast<uint32_t>(handle);
+    uint32_t index = h & 0xffffff;
+    if (((h & 0xf00000) != 0 || index >= versions.size() || versions[index] != static_cast<uint8_t>(h >> 24)) &&
+        !gAssertsDisabled) {
+        AssertFunc("BREAKPT:", 0xcf, "./util/HandleVector.h");
+    }
+    ConduitTemperatureData &d = data[static_cast<size_t>(handleToDense[index])];
+    d.structureHandle = 0xffffffffu;
+    d.conduitHeatCapacity = -1.0f;
+    d.conduitConductivity = -1.0f;
+    (pendingIndex == 0 ? pendingRemovals0 : pendingRemovals1).push_back(h);
+}
+
+void ConduitTemperatureManager::Clear() {
+    MutexLock lock(mutex);
+    denseToHandle.clear();
+    data.clear();
+    handleToDense.clear();
+    freeHandles.clear();
+    versions.clear();
+}
+
+// Called by the sim thread before each step: flips the pending list and frees the handles
+// queued in the list it lands on (removed during the step before last).
+void ConduitTemperatureManager::ReleaseQueuedHandles() {
+    MutexLock lock(mutex);
+    pendingIndex = (pendingIndex + 1) % 2;
+    std::vector<uint32_t> &pending = pendingIndex == 0 ? pendingRemovals0 : pendingRemovals1;
+    for (uint32_t h : pending) {
+        if ((h & 0xf00000) != 0) {
+            continue;
+        }
+        uint32_t index = h & 0xffffff;
+        int version = (static_cast<int32_t>(h) >> 24) + 1;
+        versions[index] = static_cast<uint8_t>(version);
+        freeHandles.push_back(static_cast<uint32_t>(version) << 24 | index);
+        int32_t dense = handleToDense[index];
+        handleToDense[index] = 0;
+        int last = static_cast<int>(data.size()) - 1;
+        if (dense < last) {
+            data[static_cast<size_t>(dense)] = data[static_cast<size_t>(last)];
+            uint32_t moved = denseToHandle[static_cast<size_t>(last)];
+            handleToDense[moved & 0xffffff] = dense;
+            denseToHandle[static_cast<size_t>(dense)] = moved;
+        }
+        denseToHandle.pop_back();
+        data.pop_back();
+    }
+    pending.clear();
+}

@@ -120,6 +120,7 @@ struct DebugProperties;
 struct NewGameFrame;
 struct SimFrameInfo;
 struct SimFrameManager;
+struct SimBase;
 
 struct Vec_ActiveRegion { struct ActiveRegion *begin; struct ActiveRegion *end; struct ActiveRegion *cap; };
 struct Vec_AddBuildingHeatExchangeMessage { struct AddBuildingHeatExchangeMessage *begin; struct AddBuildingHeatExchangeMessage *end; struct AddBuildingHeatExchangeMessage *cap; };
@@ -773,7 +774,9 @@ struct ConduitTemperatureManager {
     struct Vec_i32 frozen;
     struct Vec_f32 temperatures;
     struct ConduitTemperatureUpdateData result;
-    uint8_t pad_0xec[52];
+    int32_t pendingIndex;
+    struct Vec_u32 pendingRemovals0;
+    struct Vec_u32 pendingRemovals1;
     uint8_t mutex[40];
 };
 
@@ -1338,6 +1341,19 @@ struct SimFrameManager {
     struct Vec_ActiveRegion activeRegions;
     int32_t nextFrame;
     uint8_t pad_0xcc[4];
+};
+
+struct SimBase {
+    void * vtable;
+    struct SimFrameManager frames;
+    void * taskQueue;
+    struct Vec_ptr updateTasks;
+    struct Vec_ptr taskEvents;
+    struct Vec_ptr flowTasks;
+    struct Vec_ptr cellTasks;
+    struct Vec_ptr backwallTasks;
+    float remainder;
+    uint8_t pad_0x15c[4];
 };
 
 //@global gElements Vec_Element 0

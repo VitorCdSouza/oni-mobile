@@ -75,6 +75,9 @@ struct SimData 0x748
   method void UpdateComponents(float dt, const Region &region);
   method void UpdateComponentsDataListOnly();
   method void ClearBackwall(int cell);
+  method SimData(int width, int height, unsigned int seed, bool radiation_enabled, bool headless);
+  method ~SimData();
+  method void InitializeBoundary();
 
 struct Vector4f 0x10
   0x0 f32 x
@@ -475,11 +478,19 @@ struct ConduitTemperatureManager 0x148
   0x098 vec<i32> frozen
   0x0b0 vec<f32> temperatures
   0x0c8 ConduitTemperatureUpdateData result
+  0x0ec i32 pendingIndex           # which pendingRemovals list Remove fills
+  0x0f0 vec<u32> pendingRemovals0  # handles freed by ReleaseQueuedHandles one step later
+  0x108 vec<u32> pendingRemovals1
   0x120 u8[40] mutex                 # std::mutex (pthread_mutex_t)
   method float CalculateEnergyFlow(bool insulated, float contents_temperature, float contents_conductivity, float conduit_temperature, float conduit_conductivity, float scale);
   method float ClampEnergyTransfer(float dt, float src_temperature, float src_capacity, float dst_temperature, float dst_capacity, float energy);
   method float ModifyTemperature(float temperature, float capacity, float other_temperature, float other_capacity, float energy);
   method ConduitTemperatureUpdateData *Update(float dt, const BuildingTemperatureInfo *buildings);
+  method uint32_t Add(float temperature, float mass, int element_hash, int structure_handle, float conduit_heat_capacity, float conduit_conductivity, bool insulated);
+  method void Set(int handle, float temperature, float mass, int element_hash);
+  method void Remove(int handle);
+  method void Clear();
+  method void ReleaseQueuedHandles();
 
 global gConduitTemperatureManager ConduitTemperatureManager*
 
@@ -723,6 +734,8 @@ struct GameData 0x318
   0x300 ptr propertyTextureLiquidData
   0x308 ptr propertyTextureMaterialData
   0x310 u8* propertyTextureExposedToSunlight
+  method GameData(int width, int height);
+  method ~GameData();
 
 # Messages the game sends through SIM_HandleMessage, queued per frame by SimFrameManager.
 # Field layouts from the C# structs (named in comments where the native name differs).
@@ -1087,3 +1100,21 @@ struct SimFrameManager 0xd0
   method void EndFrameProcessing();
   method void NewFrame();
   method static void ProcessFrame(SimFrameInfo &frame, SimData &sim);
+
+# The sim driver: the frame queue, the worker tasks of UpdateData and the leftover time of Step.
+struct SimBase 0x160
+  0x000 ptr vtable
+  0x008 SimFrameManager frames
+  0x0d8 ptr taskQueue              # ParallelTaskQueue; its worker threads vector is at +0xe0
+  0x0e0 vec<ptr> updateTasks       # SimUpdateTemperatureTask*, one per worker
+  0x0f8 vec<ptr> taskEvents        # SimEvents*, one per worker
+  0x110 vec<ptr> flowTasks         # UpdateCellTask<Vector4<float>>*
+  0x128 vec<ptr> cellTasks         # UpdateCellSOATask*
+  0x140 vec<ptr> backwallTasks     # UpdateBackwallTask*
+  0x158 f32 remainder              # dt not yet simulated (ticks are 0.2 s)
+  method void UpdatedCellsToCells(SimData &sim, Vector2<int> min, Vector2<int> max);
+  method void CopyUpdatedCellsToCells(SimData &sim);
+  method void ConsolidateEvents(SimData &sim);
+  method void UpdateData(SimData &sim);
+  method void Step(SimData &sim, GameData &game, const GameData &previous);
+  method void CopySimDataToGame(SimData &sim, GameData &game, const GameData &previous, int frames);

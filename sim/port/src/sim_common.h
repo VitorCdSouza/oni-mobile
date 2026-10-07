@@ -72,27 +72,9 @@ extern Disease *gDisease;
         }                                                  \
     } while (0)
 
-// The original's small vector templates (their names appear in mangled signatures).
-template <typename T>
-struct Vector2 {
-    T x, y;
-};
-template <typename T>
-struct Vector4 {
-    T x, y, z, w;
-};
 
 // SimBase drives the frame: only the member functions the port defines are declared; its data
 // is reached through offsets until its layout is mapped.
-struct GameData;
-struct SimBase {
-    void UpdatedCellsToCells(SimData &sim, Vector2<int> min, Vector2<int> max);
-    void CopyUpdatedCellsToCells(SimData &sim);
-    void ConsolidateEvents(SimData &sim);
-    void UpdateData(SimData &sim);
-    void Step(SimData &sim, GameData &game, const GameData &previous);
-    void CopySimDataToGame(SimData &sim, GameData &game, const GameData &previous, int frames);
-};
 
 // Row copy of one per-cell array from the bordered sim grid into the game's grid (the
 // UpdateCellSOATask layout, for a single array).

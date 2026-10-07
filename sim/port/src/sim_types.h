@@ -8,6 +8,16 @@
 // Enums used in member function signatures (they shape the mangled names).
 namespace SpawnFXHashes { enum Type : int32_t {}; }
 
+// The original's small vector templates (their names appear in mangled signatures).
+template <typename T>
+struct Vector2 {
+    T x, y;
+};
+template <typename T>
+struct Vector4 {
+    T x, y, z, w;
+};
+
 // Component handle: low 24 bits index, top 8 bits version; 0xf00000 set means invalid.
 // Its copy constructor is user-provided, as in the original: that makes it non-trivial for
 // the ABI, so it is returned through a hidden pointer and passed by invisible reference.
@@ -132,6 +142,7 @@ struct DebugProperties;
 struct NewGameFrame;
 struct SimFrameInfo;
 struct SimFrameManager;
+struct SimBase;
 
 struct CellSOA {
     std::vector<uint16_t> elementIdx;
@@ -333,6 +344,9 @@ struct SimData {
     void UpdateComponents(float dt, const Region &region);
     void UpdateComponentsDataListOnly();
     void ClearBackwall(int cell);
+    SimData(int width, int height, unsigned int seed, bool radiation_enabled, bool headless);
+    ~SimData();
+    void InitializeBoundary();
 };
 
 struct Vector4f {
@@ -739,12 +753,19 @@ struct ConduitTemperatureManager {
     std::vector<int32_t> frozen;
     std::vector<float> temperatures;
     ConduitTemperatureUpdateData result;
-    uint8_t pad_0xec[52];
+    int32_t pendingIndex;
+    std::vector<uint32_t> pendingRemovals0;
+    std::vector<uint32_t> pendingRemovals1;
     uint8_t mutex[40];
     float CalculateEnergyFlow(bool insulated, float contents_temperature, float contents_conductivity, float conduit_temperature, float conduit_conductivity, float scale);
     float ClampEnergyTransfer(float dt, float src_temperature, float src_capacity, float dst_temperature, float dst_capacity, float energy);
     float ModifyTemperature(float temperature, float capacity, float other_temperature, float other_capacity, float energy);
     ConduitTemperatureUpdateData *Update(float dt, const BuildingTemperatureInfo *buildings);
+    uint32_t Add(float temperature, float mass, int element_hash, int structure_handle, float conduit_heat_capacity, float conduit_conductivity, bool insulated);
+    void Set(int handle, float temperature, float mass, int element_hash);
+    void Remove(int handle);
+    void Clear();
+    void ReleaseQueuedHandles();
 };
 
 struct FloodFillInfo {
@@ -901,6 +922,8 @@ struct GameData {
     void * propertyTextureLiquidData;
     void * propertyTextureMaterialData;
     uint8_t * propertyTextureExposedToSunlight;
+    GameData(int width, int height);
+    ~GameData();
 };
 
 struct DigPoint {
@@ -1314,6 +1337,25 @@ struct SimFrameManager {
     void EndFrameProcessing();
     void NewFrame();
     static void ProcessFrame(SimFrameInfo &frame, SimData &sim);
+};
+
+struct SimBase {
+    void * vtable;
+    SimFrameManager frames;
+    void * taskQueue;
+    std::vector<void *> updateTasks;
+    std::vector<void *> taskEvents;
+    std::vector<void *> flowTasks;
+    std::vector<void *> cellTasks;
+    std::vector<void *> backwallTasks;
+    float remainder;
+    uint8_t pad_0x15c[4];
+    void UpdatedCellsToCells(SimData &sim, Vector2<int> min, Vector2<int> max);
+    void CopyUpdatedCellsToCells(SimData &sim);
+    void ConsolidateEvents(SimData &sim);
+    void UpdateData(SimData &sim);
+    void Step(SimData &sim, GameData &game, const GameData &previous);
+    void CopySimDataToGame(SimData &sim, GameData &game, const GameData &previous, int frames);
 };
 
 extern std::vector<Element> gElements;
