@@ -15,7 +15,8 @@ inline bool IsNonZero(float x) { return x < 0.0f || x > 0.0f; }
 // The disease table. Only what the port uses is declared: the first member points at one
 // 0x110-byte record per disease, whose float at +4 weighs germs when two kinds meet.
 struct Disease {
-    const uint8_t *records;
+    const uint8_t *records;     // std::vector of 0x110-byte records: begin, end
+    const uint8_t *recordsEnd;
 
     float Weight(uint8_t disease_idx) const {
         float w;
@@ -29,6 +30,24 @@ struct Disease {
         __builtin_memcpy(&table, records + static_cast<size_t>(disease_idx) * 0x110 + offset, sizeof table);
         return table;
     }
+    float Field(uint8_t disease_idx, size_t offset) const {
+        float v;
+        __builtin_memcpy(&v, records + static_cast<size_t>(disease_idx) * 0x110 + offset, sizeof v);
+        return v;
+    }
+    const float *Range(uint8_t disease_idx, size_t offset) const {
+        return reinterpret_cast<const float *>(records + static_cast<size_t>(disease_idx) * 0x110 + offset);
+    }
+    // Record offsets: RangeInfo (minViable, minGrowth, maxGrowth, maxViable) of temperatures and
+    // of their half lives, then the C# ElemGrowthInfo fields as per-element vectors.
+    static constexpr size_t kTemperatureRange = 0x08;
+    static constexpr size_t kTemperatureHalfLives = 0x18;
+    static constexpr size_t kUnderPopulationDeathRate = 0x48;
+    static constexpr size_t kPopulationHalfLife = 0x60;
+    static constexpr size_t kOverPopulationHalfLife = 0x78;
+    static constexpr size_t kMinCountPerKG = 0xa8;
+    static constexpr size_t kMaxCountPerKG = 0xc0;
+    static constexpr size_t kRadiationKillRate = 0x108;
     void AddDiseaseToCell(CellSOA *soa, int cell, unsigned char disease_idx, int count);
     float GetDiffusionScale(const SimData &sim, int cell);
     uint8_t GetDiseaseIndex(uint32_t hash) const;
@@ -191,6 +210,7 @@ float DoGasPressureDisplacement(uint16_t element, int cell, int neighbour, int b
 float DoLiquidPressureDisplacement(uint16_t element, int cell, int neighbour, int beyond, SimData &sim);
 void UpdateLiquid(SimData &sim, SimEvents &events, int cell);
 void PostProcessCell(SimData &sim, SimEvents &events, int cell);
+uint16_t GetElementIndex(uint32_t hash);
 
 // Two germ populations in one cell: what survives (Disease::CalculateFinalDiseaseCount).
 struct DiseaseCount {

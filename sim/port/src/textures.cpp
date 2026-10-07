@@ -6,7 +6,6 @@
 
 #include "sim_common.h"
 
-uint16_t GetElementIndex(uint32_t hash);
 
 // Per game cell: the flow of the cell (x: first minus second component, y: fourth minus third),
 // divided by the mass above 1 kg, and zero when the cell changed element this tick.
