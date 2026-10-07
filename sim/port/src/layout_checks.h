@@ -24,6 +24,7 @@ static_assert(offsetof(SimData, gasDirection) == 0x14, "SimData::gasDirection");
 static_assert(offsetof(SimData, vacuumElementIdx) == 0x1c, "SimData::vacuumElementIdx");
 static_assert(offsetof(SimData, cells) == 0x20, "SimData::cells");
 static_assert(offsetof(SimData, updatedCells) == 0x28, "SimData::updatedCells");
+static_assert(offsetof(SimData, displacementDirection) == 0x90, "SimData::displacementDirection");
 static_assert(offsetof(SimData, events) == 0x98, "SimData::events");
 static_assert(offsetof(SimData, components) == 0xb0, "SimData::components");
 static_assert(offsetof(SimData, headless) == 0x719, "SimData::headless");

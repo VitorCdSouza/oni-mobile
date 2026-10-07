@@ -102,7 +102,7 @@ struct SimData {
     uint8_t * unk_0x68;
     uint8_t pad_0x70[24];
     uint8_t * unk_0x88;
-    uint16_t unk_0x90;
+    uint16_t displacementDirection;
     uint8_t pad_0x92[6];
     struct SimEvents * events;
     float unk_0xa0;

@@ -39,7 +39,7 @@ struct SimData 0x748
   0x60 Vector4f* unk_0x60        # per cell; zeroed when the cell evaporates
   0x68 u8* unk_0x68              # per-cell flags, DoStateTransition sets the low 5 bits
   0x88 u8* unk_0x88              # per game cell; gates spawning falling liquid (visibility?)
-  0x90 u16 unk_0x90
+  0x90 u16 displacementDirection # rotates the neighbour order DisplaceGas/DisplaceLiquid try (low 2 bits)
   0x98 SimEvents* events
   0xa0 f32 unk_0xa0              # 0.001
   0xa4 f32 unk_0xa4              # 0.001

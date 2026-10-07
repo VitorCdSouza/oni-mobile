@@ -4,9 +4,19 @@
 
 #include "sim_types.h"
 
-// From the original: assertion hook and its kill switch.
+// From the original: assertion hook, its kill switch and the crash reporter message.
 void AssertFunc(const char *tag, int line, const char *file);
 extern bool gAssertsDisabled;
+void KCrashReporterReportMessage(const char *file, int line, const char *format, ...);
+
+// True for a non-zero, non-NaN float (how the original's "!= 0.0f" asserts compile).
+inline bool IsNonZero(float x) { return x < 0.0f || x > 0.0f; }
+
+// The disease table; only the entry points the port calls are declared.
+struct Disease {
+    void AddDiseaseToCell(CellSOA *soa, int cell, unsigned char disease_idx, int count);
+};
+extern Disease *gDisease;
 
 #define SIM_ASSERT(cond, line, file)                       \
     do {                                                   \
@@ -72,11 +82,13 @@ inline void PushSpawnFX(SimEvents &events, int game_cell, int fx_hash, float rot
     events.spawnFX.push_back(info);
 }
 
-// Not ported yet: resolved to the original in hybrid builds.
 bool DisplaceGas(SimData &sim, SimEvents &events, CellSOA *soa, int cell, uint16_t element);
-void AddMassAndUpdateTemperature(CellSOA *dst, CellSOA *src, int cell, float mass, float temperature,
+void AddMassAndUpdateTemperature(CellSOA *src, CellSOA *dst, int cell, float mass, float temperature,
                                  uint8_t disease_idx, int disease_count);
 void Evaporate(int cell, SimData &sim, SimEvents &events);
+void DoDisplacement(SimData &sim, SimEvents &events, CellSOA *soa, int from, int to);
+bool DisplaceLiquidSimple(SimData &sim, SimEvents &events, int cell, uint16_t element, int num_candidates,
+                          const int *candidates);
 bool DisplaceLiquid(SimData &sim, SimEvents &events, CellSOA *soa, int cell, uint16_t element);
 
 // minss semantics: the second operand wins unless the first is strictly smaller (matters for NaN).
