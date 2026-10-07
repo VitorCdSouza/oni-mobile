@@ -1,0 +1,46 @@
+# Memory layout of the original SimDLL's internal structures, recovered from the decompile.
+#
+# One block per struct:
+#   struct <Name> <size in hex>
+#     <offset> <type> <field name>   [# note]
+# Types: u8 u16 u32 i32 i64 f32 f64 bool ptr (void*), <Name>* (pointer to a struct here),
+# vec<T> (a std::vector<T>: three pointers), <Name> (embedded struct), T[N] (array).
+# Gaps between fields are filled with padding bytes; unknown fields are named after their
+# offset (unk_0x18) until their role is known.
+# sim/layout/gen_layout.py turns this into the Ghidra header and the port's offset checks.
+
+struct CellSOA 0x108
+  0x00 vec<u16> elementIdx
+  0x18 vec<f32> temperature
+  0x30 vec<f32> mass
+  0x48 vec<u8> properties
+  0x60 vec<u8> insulation
+  0x78 vec<u8> strengthInfo
+  0x90 vec<u8> diseaseIdx        # guess: byte array next to the int diseaseCount
+  0xa8 vec<i32> diseaseCount
+  0xc0 vec<u8> unk_0xc0
+  0xd8 vec<f32> unk_0xd8
+  0xf0 vec<f32> unk_0xf0         # zeroed at the end of the constructor
+
+struct SimData 0x748
+  0x00 i32 width                 # includes the 1-cell border on each side
+  0x04 i32 height
+  0x08 i32 numGameCells          # (width - 2) * (height - 2)
+  0x18 u8 unk_0x18
+  0x20 CellSOA* cells
+  0x28 CellSOA* updatedCells     # guess: written by the update, swapped with cells
+  0x90 u16 unk_0x90
+  0x98 SimEvents* events
+  0xa0 f32 unk_0xa0              # 0.001
+  0xa4 f32 unk_0xa4              # 0.001
+  0xb0 vec<ptr> components       # std::vector<SimComponent*>
+  0x718 bool unk_0x718
+  0x719 bool headless
+  0x71a bool radiationEnabled
+  0x71c f32 unk_0x71c            # 1.1
+  0x720 f32 unk_0x720            # 2000.0
+  0x724 f32 unk_0x724            # 0.3
+  0x728 f32 unk_0x728            # 0.7
+  0x72c f32 unk_0x72c            # 0.8
+
+struct SimEvents 0x1e0

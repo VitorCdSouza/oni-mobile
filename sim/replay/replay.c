@@ -3,6 +3,9 @@
 //
 //   replay <libSimDLL.so> <recording.bin> [--dump-at N <dir>]
 //
+// With SIMPORT=<libsimport.so> in the environment, the port library is loaded on top of the
+// original and its functions are patched in (hybrid mode, see port/detour/detour.cpp).
+//
 // Running it against the original library and against a reimplementation and diffing the two
 // outputs (see compare.py) points at the first frame and the first array that diverge.
 // --dump-at N writes the raw arrays of observation N to <dir> for a cell-level diff.
@@ -209,7 +212,10 @@ int main(int argc, char **argv) {
         g_dump_at = atol(argv[4]);
         g_dump_dir = argv[5];
     }
-    void *handle = dlopen(argv[1], RTLD_NOW | RTLD_LOCAL);
+    const char *port = getenv("SIMPORT");
+    // RTLD_GLOBAL in hybrid mode: the port's calls to functions it does not define yet must
+    // resolve to the original.
+    void *handle = dlopen(argv[1], RTLD_NOW | (port ? RTLD_GLOBAL : RTLD_LOCAL));
     if (!handle) {
         fprintf(stderr, "replay: %s\n", dlerror());
         return 2;
@@ -228,6 +234,17 @@ int main(int argc, char **argv) {
     lib.CTM_Clear = need(handle, "ConduitTemperatureManager_Clear");
 
     const char *base = strrchr(argv[1], '/') ? strrchr(argv[1], '/') + 1 : argv[1];
+    if (port) {
+        void *port_handle = dlopen(port, RTLD_NOW | RTLD_LOCAL);
+        if (!port_handle) {
+            fprintf(stderr, "replay: %s\n", dlerror());
+            return 2;
+        }
+        int (*install)(const char *) = (int (*)(const char *))need(port_handle, "simport_install");
+        if (install(base) < 0) {
+            return 2;
+        }
+    }
     if (gotpatch(base, "time", (void *)replayed_time) == 0) {
         fprintf(stderr, "replay: note: %s does not import time()\n", base);
     }
