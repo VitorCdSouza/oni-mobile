@@ -601,3 +601,345 @@ static_assert(offsetof(GameData, propertyTextureLiquidData) == 0x300, "GameData:
 static_assert(offsetof(GameData, propertyTextureMaterialData) == 0x308, "GameData::propertyTextureMaterialData");
 static_assert(offsetof(GameData, propertyTextureExposedToSunlight) == 0x310, "GameData::propertyTextureExposedToSunlight");
 
+static_assert(sizeof(DigPoint) == 0xc, "DigPoint size");
+static_assert(offsetof(DigPoint, cellIdx) == 0x0, "DigPoint::cellIdx");
+static_assert(offsetof(DigPoint, callbackIdx) == 0x4, "DigPoint::callbackIdx");
+static_assert(offsetof(DigPoint, skipEvent) == 0x8, "DigPoint::skipEvent");
+static_assert(offsetof(DigPoint, backwall) == 0x9, "DigPoint::backwall");
+
+static_assert(sizeof(CellModification) == 0x1c, "CellModification size");
+static_assert(offsetof(CellModification, cellIdx) == 0x0, "CellModification::cellIdx");
+static_assert(offsetof(CellModification, callbackIdx) == 0x4, "CellModification::callbackIdx");
+static_assert(offsetof(CellModification, temperature) == 0x8, "CellModification::temperature");
+static_assert(offsetof(CellModification, mass) == 0xc, "CellModification::mass");
+static_assert(offsetof(CellModification, diseaseCount) == 0x10, "CellModification::diseaseCount");
+static_assert(offsetof(CellModification, elementIdx) == 0x14, "CellModification::elementIdx");
+static_assert(offsetof(CellModification, replaceType) == 0x16, "CellModification::replaceType");
+static_assert(offsetof(CellModification, diseaseIdx) == 0x17, "CellModification::diseaseIdx");
+static_assert(offsetof(CellModification, addSubType) == 0x18, "CellModification::addSubType");
+
+static_assert(sizeof(CellEnergyModification) == 0x10, "CellEnergyModification size");
+static_assert(offsetof(CellEnergyModification, cellIdx) == 0x0, "CellEnergyModification::cellIdx");
+static_assert(offsetof(CellEnergyModification, kilojoules) == 0x4, "CellEnergyModification::kilojoules");
+static_assert(offsetof(CellEnergyModification, maxTemperature) == 0x8, "CellEnergyModification::maxTemperature");
+static_assert(offsetof(CellEnergyModification, id) == 0xc, "CellEnergyModification::id");
+
+static_assert(sizeof(SetCellFloatValue) == 0x8, "SetCellFloatValue size");
+static_assert(offsetof(SetCellFloatValue, cellIdx) == 0x0, "SetCellFloatValue::cellIdx");
+static_assert(offsetof(SetCellFloatValue, value) == 0x4, "SetCellFloatValue::value");
+
+static_assert(sizeof(CellPropertiesChange) == 0xc, "CellPropertiesChange size");
+static_assert(offsetof(CellPropertiesChange, cellIdx) == 0x0, "CellPropertiesChange::cellIdx");
+static_assert(offsetof(CellPropertiesChange, callbackIdx) == 0x4, "CellPropertiesChange::callbackIdx");
+static_assert(offsetof(CellPropertiesChange, properties) == 0x8, "CellPropertiesChange::properties");
+static_assert(offsetof(CellPropertiesChange, set) == 0x9, "CellPropertiesChange::set");
+static_assert(offsetof(CellPropertiesChange, pad0) == 0xa, "CellPropertiesChange::pad0");
+static_assert(offsetof(CellPropertiesChange, pad1) == 0xb, "CellPropertiesChange::pad1");
+
+static_assert(sizeof(ConsumeDisease) == 0x10, "ConsumeDisease size");
+static_assert(offsetof(ConsumeDisease, gameCell) == 0x0, "ConsumeDisease::gameCell");
+static_assert(offsetof(ConsumeDisease, callbackIdx) == 0x4, "ConsumeDisease::callbackIdx");
+static_assert(offsetof(ConsumeDisease, percentToConsume) == 0x8, "ConsumeDisease::percentToConsume");
+static_assert(offsetof(ConsumeDisease, maxToConsume) == 0xc, "ConsumeDisease::maxToConsume");
+
+static_assert(sizeof(CellDiseaseModification) == 0xc, "CellDiseaseModification size");
+static_assert(offsetof(CellDiseaseModification, cellIdx) == 0x0, "CellDiseaseModification::cellIdx");
+static_assert(offsetof(CellDiseaseModification, diseaseIdx) == 0x4, "CellDiseaseModification::diseaseIdx");
+static_assert(offsetof(CellDiseaseModification, pad0) == 0x5, "CellDiseaseModification::pad0");
+static_assert(offsetof(CellDiseaseModification, pad1) == 0x6, "CellDiseaseModification::pad1");
+static_assert(offsetof(CellDiseaseModification, pad2) == 0x7, "CellDiseaseModification::pad2");
+static_assert(offsetof(CellDiseaseModification, diseaseCount) == 0x8, "CellDiseaseModification::diseaseCount");
+
+static_assert(sizeof(CellRadiationModification) == 0xc, "CellRadiationModification size");
+static_assert(offsetof(CellRadiationModification, cellIdx) == 0x0, "CellRadiationModification::cellIdx");
+static_assert(offsetof(CellRadiationModification, radiationDelta) == 0x4, "CellRadiationModification::radiationDelta");
+static_assert(offsetof(CellRadiationModification, callbackIdx) == 0x8, "CellRadiationModification::callbackIdx");
+
+static_assert(sizeof(RadiationParamsModification) == 0x8, "RadiationParamsModification size");
+static_assert(offsetof(RadiationParamsModification, RadiationParamsType) == 0x0, "RadiationParamsModification::RadiationParamsType");
+static_assert(offsetof(RadiationParamsModification, value) == 0x4, "RadiationParamsModification::value");
+
+static_assert(sizeof(CellWorldZoneModification) == 0x8, "CellWorldZoneModification size");
+static_assert(offsetof(CellWorldZoneModification, cell) == 0x0, "CellWorldZoneModification::cell");
+static_assert(offsetof(CellWorldZoneModification, zoneID) == 0x4, "CellWorldZoneModification::zoneID");
+
+static_assert(sizeof(MassConsumption) == 0x10, "MassConsumption size");
+static_assert(offsetof(MassConsumption, cellIdx) == 0x0, "MassConsumption::cellIdx");
+static_assert(offsetof(MassConsumption, callbackIdx) == 0x4, "MassConsumption::callbackIdx");
+static_assert(offsetof(MassConsumption, mass) == 0x8, "MassConsumption::mass");
+static_assert(offsetof(MassConsumption, elementIdx) == 0xc, "MassConsumption::elementIdx");
+static_assert(offsetof(MassConsumption, radius) == 0xe, "MassConsumption::radius");
+static_assert(offsetof(MassConsumption, height) == 0xf, "MassConsumption::height");
+
+static_assert(sizeof(MassEmission) == 0x18, "MassEmission size");
+static_assert(offsetof(MassEmission, cellIdx) == 0x0, "MassEmission::cellIdx");
+static_assert(offsetof(MassEmission, callbackIdx) == 0x4, "MassEmission::callbackIdx");
+static_assert(offsetof(MassEmission, mass) == 0x8, "MassEmission::mass");
+static_assert(offsetof(MassEmission, temperature) == 0xc, "MassEmission::temperature");
+static_assert(offsetof(MassEmission, diseaseCount) == 0x10, "MassEmission::diseaseCount");
+static_assert(offsetof(MassEmission, elementIdx) == 0x14, "MassEmission::elementIdx");
+static_assert(offsetof(MassEmission, diseaseIdx) == 0x16, "MassEmission::diseaseIdx");
+
+static_assert(sizeof(AddBuildingHeatExchangeMessage) == 0x2c, "AddBuildingHeatExchangeMessage size");
+static_assert(offsetof(AddBuildingHeatExchangeMessage, callbackIdx) == 0x0, "AddBuildingHeatExchangeMessage::callbackIdx");
+static_assert(offsetof(AddBuildingHeatExchangeMessage, elemIdx) == 0x4, "AddBuildingHeatExchangeMessage::elemIdx");
+static_assert(offsetof(AddBuildingHeatExchangeMessage, pad0) == 0x6, "AddBuildingHeatExchangeMessage::pad0");
+static_assert(offsetof(AddBuildingHeatExchangeMessage, pad1) == 0x7, "AddBuildingHeatExchangeMessage::pad1");
+static_assert(offsetof(AddBuildingHeatExchangeMessage, mass) == 0x8, "AddBuildingHeatExchangeMessage::mass");
+static_assert(offsetof(AddBuildingHeatExchangeMessage, temperature) == 0xc, "AddBuildingHeatExchangeMessage::temperature");
+static_assert(offsetof(AddBuildingHeatExchangeMessage, thermalConductivity) == 0x10, "AddBuildingHeatExchangeMessage::thermalConductivity");
+static_assert(offsetof(AddBuildingHeatExchangeMessage, overheatTemperature) == 0x14, "AddBuildingHeatExchangeMessage::overheatTemperature");
+static_assert(offsetof(AddBuildingHeatExchangeMessage, operatingKilowatts) == 0x18, "AddBuildingHeatExchangeMessage::operatingKilowatts");
+static_assert(offsetof(AddBuildingHeatExchangeMessage, minX) == 0x1c, "AddBuildingHeatExchangeMessage::minX");
+static_assert(offsetof(AddBuildingHeatExchangeMessage, minY) == 0x20, "AddBuildingHeatExchangeMessage::minY");
+static_assert(offsetof(AddBuildingHeatExchangeMessage, maxX) == 0x24, "AddBuildingHeatExchangeMessage::maxX");
+static_assert(offsetof(AddBuildingHeatExchangeMessage, maxY) == 0x28, "AddBuildingHeatExchangeMessage::maxY");
+
+static_assert(sizeof(ModifyBuildingHeatExchangeMessage) == 0x2c, "ModifyBuildingHeatExchangeMessage size");
+static_assert(offsetof(ModifyBuildingHeatExchangeMessage, callbackIdx) == 0x0, "ModifyBuildingHeatExchangeMessage::callbackIdx");
+static_assert(offsetof(ModifyBuildingHeatExchangeMessage, elemIdx) == 0x4, "ModifyBuildingHeatExchangeMessage::elemIdx");
+static_assert(offsetof(ModifyBuildingHeatExchangeMessage, pad0) == 0x6, "ModifyBuildingHeatExchangeMessage::pad0");
+static_assert(offsetof(ModifyBuildingHeatExchangeMessage, pad1) == 0x7, "ModifyBuildingHeatExchangeMessage::pad1");
+static_assert(offsetof(ModifyBuildingHeatExchangeMessage, mass) == 0x8, "ModifyBuildingHeatExchangeMessage::mass");
+static_assert(offsetof(ModifyBuildingHeatExchangeMessage, temperature) == 0xc, "ModifyBuildingHeatExchangeMessage::temperature");
+static_assert(offsetof(ModifyBuildingHeatExchangeMessage, thermalConductivity) == 0x10, "ModifyBuildingHeatExchangeMessage::thermalConductivity");
+static_assert(offsetof(ModifyBuildingHeatExchangeMessage, overheatTemperature) == 0x14, "ModifyBuildingHeatExchangeMessage::overheatTemperature");
+static_assert(offsetof(ModifyBuildingHeatExchangeMessage, operatingKilowatts) == 0x18, "ModifyBuildingHeatExchangeMessage::operatingKilowatts");
+static_assert(offsetof(ModifyBuildingHeatExchangeMessage, minX) == 0x1c, "ModifyBuildingHeatExchangeMessage::minX");
+static_assert(offsetof(ModifyBuildingHeatExchangeMessage, minY) == 0x20, "ModifyBuildingHeatExchangeMessage::minY");
+static_assert(offsetof(ModifyBuildingHeatExchangeMessage, maxX) == 0x24, "ModifyBuildingHeatExchangeMessage::maxX");
+static_assert(offsetof(ModifyBuildingHeatExchangeMessage, maxY) == 0x28, "ModifyBuildingHeatExchangeMessage::maxY");
+
+static_assert(sizeof(RemoveBuildingHeatExchangeMessage) == 0x8, "RemoveBuildingHeatExchangeMessage size");
+static_assert(offsetof(RemoveBuildingHeatExchangeMessage, handle) == 0x0, "RemoveBuildingHeatExchangeMessage::handle");
+static_assert(offsetof(RemoveBuildingHeatExchangeMessage, callbackIdx) == 0x4, "RemoveBuildingHeatExchangeMessage::callbackIdx");
+
+static_assert(sizeof(ModifyBuildingEnergyMessage) == 0x10, "ModifyBuildingEnergyMessage size");
+static_assert(offsetof(ModifyBuildingEnergyMessage, handle) == 0x0, "ModifyBuildingEnergyMessage::handle");
+static_assert(offsetof(ModifyBuildingEnergyMessage, deltaKJ) == 0x4, "ModifyBuildingEnergyMessage::deltaKJ");
+static_assert(offsetof(ModifyBuildingEnergyMessage, minTemperature) == 0x8, "ModifyBuildingEnergyMessage::minTemperature");
+static_assert(offsetof(ModifyBuildingEnergyMessage, maxTemperature) == 0xc, "ModifyBuildingEnergyMessage::maxTemperature");
+
+static_assert(sizeof(RegisterBuildingToBuildingHeatExchangeMessage) == 0x8, "RegisterBuildingToBuildingHeatExchangeMessage size");
+static_assert(offsetof(RegisterBuildingToBuildingHeatExchangeMessage, callbackIdx) == 0x0, "RegisterBuildingToBuildingHeatExchangeMessage::callbackIdx");
+static_assert(offsetof(RegisterBuildingToBuildingHeatExchangeMessage, structureTemperatureHandler) == 0x4, "RegisterBuildingToBuildingHeatExchangeMessage::structureTemperatureHandler");
+
+static_assert(sizeof(RemoveBuildingInContactFromBuildingToBuildingHeatExchangeMessage) == 0x8, "RemoveBuildingInContactFromBuildingToBuildingHeatExchangeMessage size");
+static_assert(offsetof(RemoveBuildingInContactFromBuildingToBuildingHeatExchangeMessage, selfHandler) == 0x0, "RemoveBuildingInContactFromBuildingToBuildingHeatExchangeMessage::selfHandler");
+static_assert(offsetof(RemoveBuildingInContactFromBuildingToBuildingHeatExchangeMessage, buildingNoLongerInContactHandler) == 0x4, "RemoveBuildingInContactFromBuildingToBuildingHeatExchangeMessage::buildingNoLongerInContactHandler");
+
+static_assert(sizeof(RemoveBuildingToBuildingHeatExchangeMessage) == 0x8, "RemoveBuildingToBuildingHeatExchangeMessage size");
+static_assert(offsetof(RemoveBuildingToBuildingHeatExchangeMessage, callbackIdx) == 0x0, "RemoveBuildingToBuildingHeatExchangeMessage::callbackIdx");
+static_assert(offsetof(RemoveBuildingToBuildingHeatExchangeMessage, selfHandler) == 0x4, "RemoveBuildingToBuildingHeatExchangeMessage::selfHandler");
+
+static_assert(sizeof(AddInContactBuildingToBuildingToBuildingHeatExchangeMessage) == 0xc, "AddInContactBuildingToBuildingToBuildingHeatExchangeMessage size");
+static_assert(offsetof(AddInContactBuildingToBuildingToBuildingHeatExchangeMessage, selfHandler) == 0x0, "AddInContactBuildingToBuildingToBuildingHeatExchangeMessage::selfHandler");
+static_assert(offsetof(AddInContactBuildingToBuildingToBuildingHeatExchangeMessage, buildingInContactHandle) == 0x4, "AddInContactBuildingToBuildingToBuildingHeatExchangeMessage::buildingInContactHandle");
+static_assert(offsetof(AddInContactBuildingToBuildingToBuildingHeatExchangeMessage, cellsInContact) == 0x8, "AddInContactBuildingToBuildingToBuildingHeatExchangeMessage::cellsInContact");
+
+static_assert(sizeof(AddElementChunkMessage) == 0x20, "AddElementChunkMessage size");
+static_assert(offsetof(AddElementChunkMessage, gameCell) == 0x0, "AddElementChunkMessage::gameCell");
+static_assert(offsetof(AddElementChunkMessage, callbackIdx) == 0x4, "AddElementChunkMessage::callbackIdx");
+static_assert(offsetof(AddElementChunkMessage, mass) == 0x8, "AddElementChunkMessage::mass");
+static_assert(offsetof(AddElementChunkMessage, temperature) == 0xc, "AddElementChunkMessage::temperature");
+static_assert(offsetof(AddElementChunkMessage, surfaceArea) == 0x10, "AddElementChunkMessage::surfaceArea");
+static_assert(offsetof(AddElementChunkMessage, thickness) == 0x14, "AddElementChunkMessage::thickness");
+static_assert(offsetof(AddElementChunkMessage, groundTransferScale) == 0x18, "AddElementChunkMessage::groundTransferScale");
+static_assert(offsetof(AddElementChunkMessage, elementIdx) == 0x1c, "AddElementChunkMessage::elementIdx");
+static_assert(offsetof(AddElementChunkMessage, pad0) == 0x1e, "AddElementChunkMessage::pad0");
+static_assert(offsetof(AddElementChunkMessage, pad1) == 0x1f, "AddElementChunkMessage::pad1");
+
+static_assert(sizeof(ModifyElementChunkMessage) == 0xc, "ModifyElementChunkMessage size");
+static_assert(offsetof(ModifyElementChunkMessage, handle) == 0x0, "ModifyElementChunkMessage::handle");
+static_assert(offsetof(ModifyElementChunkMessage, temperature) == 0x4, "ModifyElementChunkMessage::temperature");
+static_assert(offsetof(ModifyElementChunkMessage, heatCapacity) == 0x8, "ModifyElementChunkMessage::heatCapacity");
+
+static_assert(sizeof(RemoveElementChunkMessage) == 0x8, "RemoveElementChunkMessage size");
+static_assert(offsetof(RemoveElementChunkMessage, handle) == 0x0, "RemoveElementChunkMessage::handle");
+static_assert(offsetof(RemoveElementChunkMessage, callbackIdx) == 0x4, "RemoveElementChunkMessage::callbackIdx");
+
+static_assert(sizeof(MoveElementChunkMessage) == 0x8, "MoveElementChunkMessage size");
+static_assert(offsetof(MoveElementChunkMessage, handle) == 0x0, "MoveElementChunkMessage::handle");
+static_assert(offsetof(MoveElementChunkMessage, gameCell) == 0x4, "MoveElementChunkMessage::gameCell");
+
+static_assert(sizeof(ModifyElementChunkEnergyMessage) == 0x8, "ModifyElementChunkEnergyMessage size");
+static_assert(offsetof(ModifyElementChunkEnergyMessage, handle) == 0x0, "ModifyElementChunkEnergyMessage::handle");
+static_assert(offsetof(ModifyElementChunkEnergyMessage, deltaKJ) == 0x4, "ModifyElementChunkEnergyMessage::deltaKJ");
+
+static_assert(sizeof(ModifyElementChunkAdjusterMessage) == 0x10, "ModifyElementChunkAdjusterMessage size");
+static_assert(offsetof(ModifyElementChunkAdjusterMessage, handle) == 0x0, "ModifyElementChunkAdjusterMessage::handle");
+static_assert(offsetof(ModifyElementChunkAdjusterMessage, temperature) == 0x4, "ModifyElementChunkAdjusterMessage::temperature");
+static_assert(offsetof(ModifyElementChunkAdjusterMessage, heatCapacity) == 0x8, "ModifyElementChunkAdjusterMessage::heatCapacity");
+static_assert(offsetof(ModifyElementChunkAdjusterMessage, thermalConductivity) == 0xc, "ModifyElementChunkAdjusterMessage::thermalConductivity");
+
+static_assert(sizeof(ModifyBackwallDataMessage) == 0x10, "ModifyBackwallDataMessage size");
+static_assert(offsetof(ModifyBackwallDataMessage, gameCell) == 0x0, "ModifyBackwallDataMessage::gameCell");
+static_assert(offsetof(ModifyBackwallDataMessage, elementIdx) == 0x4, "ModifyBackwallDataMessage::elementIdx");
+static_assert(offsetof(ModifyBackwallDataMessage, pad) == 0x6, "ModifyBackwallDataMessage::pad");
+static_assert(offsetof(ModifyBackwallDataMessage, mass) == 0x8, "ModifyBackwallDataMessage::mass");
+static_assert(offsetof(ModifyBackwallDataMessage, temperature) == 0xc, "ModifyBackwallDataMessage::temperature");
+
+static_assert(sizeof(AddElementConsumerMessage) == 0xc, "AddElementConsumerMessage size");
+static_assert(offsetof(AddElementConsumerMessage, cellIdx) == 0x0, "AddElementConsumerMessage::cellIdx");
+static_assert(offsetof(AddElementConsumerMessage, callbackIdx) == 0x4, "AddElementConsumerMessage::callbackIdx");
+static_assert(offsetof(AddElementConsumerMessage, radius) == 0x8, "AddElementConsumerMessage::radius");
+static_assert(offsetof(AddElementConsumerMessage, configuration) == 0x9, "AddElementConsumerMessage::configuration");
+static_assert(offsetof(AddElementConsumerMessage, elementIdx) == 0xa, "AddElementConsumerMessage::elementIdx");
+
+static_assert(sizeof(ModifyElementConsumerMessage) == 0xc, "ModifyElementConsumerMessage size");
+static_assert(offsetof(ModifyElementConsumerMessage, handle) == 0x0, "ModifyElementConsumerMessage::handle");
+static_assert(offsetof(ModifyElementConsumerMessage, cell) == 0x4, "ModifyElementConsumerMessage::cell");
+static_assert(offsetof(ModifyElementConsumerMessage, consumptionRate) == 0x8, "ModifyElementConsumerMessage::consumptionRate");
+
+static_assert(sizeof(RemoveElementConsumerMessage) == 0x8, "RemoveElementConsumerMessage size");
+static_assert(offsetof(RemoveElementConsumerMessage, handle) == 0x0, "RemoveElementConsumerMessage::handle");
+static_assert(offsetof(RemoveElementConsumerMessage, callbackIdx) == 0x4, "RemoveElementConsumerMessage::callbackIdx");
+
+static_assert(sizeof(AddElementEmitterMessage) == 0x10, "AddElementEmitterMessage size");
+static_assert(offsetof(AddElementEmitterMessage, maxPressure) == 0x0, "AddElementEmitterMessage::maxPressure");
+static_assert(offsetof(AddElementEmitterMessage, callbackIdx) == 0x4, "AddElementEmitterMessage::callbackIdx");
+static_assert(offsetof(AddElementEmitterMessage, onBlockedCB) == 0x8, "AddElementEmitterMessage::onBlockedCB");
+static_assert(offsetof(AddElementEmitterMessage, onUnblockedCB) == 0xc, "AddElementEmitterMessage::onUnblockedCB");
+
+static_assert(sizeof(ModifyElementEmitterMessage) == 0x20, "ModifyElementEmitterMessage size");
+static_assert(offsetof(ModifyElementEmitterMessage, handle) == 0x0, "ModifyElementEmitterMessage::handle");
+static_assert(offsetof(ModifyElementEmitterMessage, cellIdx) == 0x4, "ModifyElementEmitterMessage::cellIdx");
+static_assert(offsetof(ModifyElementEmitterMessage, emitInterval) == 0x8, "ModifyElementEmitterMessage::emitInterval");
+static_assert(offsetof(ModifyElementEmitterMessage, emitMass) == 0xc, "ModifyElementEmitterMessage::emitMass");
+static_assert(offsetof(ModifyElementEmitterMessage, emitTemperature) == 0x10, "ModifyElementEmitterMessage::emitTemperature");
+static_assert(offsetof(ModifyElementEmitterMessage, maxPressure) == 0x14, "ModifyElementEmitterMessage::maxPressure");
+static_assert(offsetof(ModifyElementEmitterMessage, diseaseCount) == 0x18, "ModifyElementEmitterMessage::diseaseCount");
+static_assert(offsetof(ModifyElementEmitterMessage, elementIdx) == 0x1c, "ModifyElementEmitterMessage::elementIdx");
+static_assert(offsetof(ModifyElementEmitterMessage, maxDepth) == 0x1e, "ModifyElementEmitterMessage::maxDepth");
+static_assert(offsetof(ModifyElementEmitterMessage, diseaseIdx) == 0x1f, "ModifyElementEmitterMessage::diseaseIdx");
+
+static_assert(sizeof(RemoveElementEmitterMessage) == 0x8, "RemoveElementEmitterMessage size");
+static_assert(offsetof(RemoveElementEmitterMessage, handle) == 0x0, "RemoveElementEmitterMessage::handle");
+static_assert(offsetof(RemoveElementEmitterMessage, callbackIdx) == 0x4, "RemoveElementEmitterMessage::callbackIdx");
+
+static_assert(sizeof(AddDiseaseEmitterMessage) == 0x4, "AddDiseaseEmitterMessage size");
+static_assert(offsetof(AddDiseaseEmitterMessage, callbackIdx) == 0x0, "AddDiseaseEmitterMessage::callbackIdx");
+
+static_assert(sizeof(ModifyDiseaseEmitterMessage) == 0x14, "ModifyDiseaseEmitterMessage size");
+static_assert(offsetof(ModifyDiseaseEmitterMessage, handle) == 0x0, "ModifyDiseaseEmitterMessage::handle");
+static_assert(offsetof(ModifyDiseaseEmitterMessage, gameCell) == 0x4, "ModifyDiseaseEmitterMessage::gameCell");
+static_assert(offsetof(ModifyDiseaseEmitterMessage, diseaseIdx) == 0x8, "ModifyDiseaseEmitterMessage::diseaseIdx");
+static_assert(offsetof(ModifyDiseaseEmitterMessage, maxDepth) == 0x9, "ModifyDiseaseEmitterMessage::maxDepth");
+static_assert(offsetof(ModifyDiseaseEmitterMessage, emitInterval) == 0xc, "ModifyDiseaseEmitterMessage::emitInterval");
+static_assert(offsetof(ModifyDiseaseEmitterMessage, emitCount) == 0x10, "ModifyDiseaseEmitterMessage::emitCount");
+
+static_assert(sizeof(RemoveDiseaseEmitterMessage) == 0x8, "RemoveDiseaseEmitterMessage size");
+static_assert(offsetof(RemoveDiseaseEmitterMessage, handle) == 0x0, "RemoveDiseaseEmitterMessage::handle");
+static_assert(offsetof(RemoveDiseaseEmitterMessage, callbackIdx) == 0x4, "RemoveDiseaseEmitterMessage::callbackIdx");
+
+static_assert(sizeof(AddDiseaseConsumerMessage) == 0xc, "AddDiseaseConsumerMessage size");
+
+static_assert(sizeof(ModifyDiseaseConsumerMessage) == 0x14, "ModifyDiseaseConsumerMessage size");
+
+static_assert(sizeof(RemoveDiseaseConsumerMessage) == 0x8, "RemoveDiseaseConsumerMessage size");
+static_assert(offsetof(RemoveDiseaseConsumerMessage, handle) == 0x0, "RemoveDiseaseConsumerMessage::handle");
+static_assert(offsetof(RemoveDiseaseConsumerMessage, callbackIdx) == 0x4, "RemoveDiseaseConsumerMessage::callbackIdx");
+
+static_assert(sizeof(AddRadiationEmitterMessage) == 0x24, "AddRadiationEmitterMessage size");
+static_assert(offsetof(AddRadiationEmitterMessage, callbackIdx) == 0x0, "AddRadiationEmitterMessage::callbackIdx");
+static_assert(offsetof(AddRadiationEmitterMessage, cell) == 0x4, "AddRadiationEmitterMessage::cell");
+static_assert(offsetof(AddRadiationEmitterMessage, emitRadiusX) == 0x8, "AddRadiationEmitterMessage::emitRadiusX");
+static_assert(offsetof(AddRadiationEmitterMessage, emitRadiusY) == 0xa, "AddRadiationEmitterMessage::emitRadiusY");
+static_assert(offsetof(AddRadiationEmitterMessage, emitRads) == 0xc, "AddRadiationEmitterMessage::emitRads");
+static_assert(offsetof(AddRadiationEmitterMessage, emitRate) == 0x10, "AddRadiationEmitterMessage::emitRate");
+static_assert(offsetof(AddRadiationEmitterMessage, emitSpeed) == 0x14, "AddRadiationEmitterMessage::emitSpeed");
+static_assert(offsetof(AddRadiationEmitterMessage, emitDirection) == 0x18, "AddRadiationEmitterMessage::emitDirection");
+static_assert(offsetof(AddRadiationEmitterMessage, emitAngle) == 0x1c, "AddRadiationEmitterMessage::emitAngle");
+static_assert(offsetof(AddRadiationEmitterMessage, emitType) == 0x20, "AddRadiationEmitterMessage::emitType");
+
+static_assert(sizeof(ModifyRadiationEmitterMessage) == 0x28, "ModifyRadiationEmitterMessage size");
+static_assert(offsetof(ModifyRadiationEmitterMessage, handle) == 0x0, "ModifyRadiationEmitterMessage::handle");
+static_assert(offsetof(ModifyRadiationEmitterMessage, cell) == 0x4, "ModifyRadiationEmitterMessage::cell");
+static_assert(offsetof(ModifyRadiationEmitterMessage, callbackIdx) == 0x8, "ModifyRadiationEmitterMessage::callbackIdx");
+static_assert(offsetof(ModifyRadiationEmitterMessage, emitRadiusX) == 0xc, "ModifyRadiationEmitterMessage::emitRadiusX");
+static_assert(offsetof(ModifyRadiationEmitterMessage, emitRadiusY) == 0xe, "ModifyRadiationEmitterMessage::emitRadiusY");
+static_assert(offsetof(ModifyRadiationEmitterMessage, emitRads) == 0x10, "ModifyRadiationEmitterMessage::emitRads");
+static_assert(offsetof(ModifyRadiationEmitterMessage, emitRate) == 0x14, "ModifyRadiationEmitterMessage::emitRate");
+static_assert(offsetof(ModifyRadiationEmitterMessage, emitSpeed) == 0x18, "ModifyRadiationEmitterMessage::emitSpeed");
+static_assert(offsetof(ModifyRadiationEmitterMessage, emitDirection) == 0x1c, "ModifyRadiationEmitterMessage::emitDirection");
+static_assert(offsetof(ModifyRadiationEmitterMessage, emitAngle) == 0x20, "ModifyRadiationEmitterMessage::emitAngle");
+static_assert(offsetof(ModifyRadiationEmitterMessage, emitType) == 0x24, "ModifyRadiationEmitterMessage::emitType");
+
+static_assert(sizeof(RemoveRadiationEmitterMessage) == 0x8, "RemoveRadiationEmitterMessage size");
+static_assert(offsetof(RemoveRadiationEmitterMessage, handle) == 0x0, "RemoveRadiationEmitterMessage::handle");
+static_assert(offsetof(RemoveRadiationEmitterMessage, callbackIdx) == 0x4, "RemoveRadiationEmitterMessage::callbackIdx");
+
+static_assert(sizeof(DebugProperties) == 0xc, "DebugProperties size");
+static_assert(offsetof(DebugProperties, buildingTemperatureScale) == 0x0, "DebugProperties::buildingTemperatureScale");
+static_assert(offsetof(DebugProperties, buildingToBuildingTemperatureScale) == 0x4, "DebugProperties::buildingToBuildingTemperatureScale");
+static_assert(offsetof(DebugProperties, isDebugEditing) == 0x8, "DebugProperties::isDebugEditing");
+static_assert(offsetof(DebugProperties, pad0) == 0x9, "DebugProperties::pad0");
+static_assert(offsetof(DebugProperties, pad1) == 0xa, "DebugProperties::pad1");
+static_assert(offsetof(DebugProperties, pad2) == 0xb, "DebugProperties::pad2");
+
+static_assert(sizeof(NewGameFrame) == 0x1c, "NewGameFrame size");
+static_assert(offsetof(NewGameFrame, elapsedSeconds) == 0x0, "NewGameFrame::elapsedSeconds");
+static_assert(offsetof(NewGameFrame, minX) == 0x4, "NewGameFrame::minX");
+static_assert(offsetof(NewGameFrame, minY) == 0x8, "NewGameFrame::minY");
+static_assert(offsetof(NewGameFrame, maxX) == 0xc, "NewGameFrame::maxX");
+static_assert(offsetof(NewGameFrame, maxY) == 0x10, "NewGameFrame::maxY");
+static_assert(offsetof(NewGameFrame, currentSunlightIntensity) == 0x14, "NewGameFrame::currentSunlightIntensity");
+static_assert(offsetof(NewGameFrame, currentCosmicRadiationIntensity) == 0x18, "NewGameFrame::currentCosmicRadiationIntensity");
+
+static_assert(sizeof(SimFrameInfo) == 0x450, "SimFrameInfo size");
+static_assert(offsetof(SimFrameInfo, dt) == 0x0, "SimFrameInfo::dt");
+static_assert(offsetof(SimFrameInfo, digs) == 0x8, "SimFrameInfo::digs");
+static_assert(offsetof(SimFrameInfo, cellModifications) == 0x20, "SimFrameInfo::cellModifications");
+static_assert(offsetof(SimFrameInfo, cellEnergyModifications) == 0x38, "SimFrameInfo::cellEnergyModifications");
+static_assert(offsetof(SimFrameInfo, insulationChanges) == 0x68, "SimFrameInfo::insulationChanges");
+static_assert(offsetof(SimFrameInfo, strengthChanges) == 0x80, "SimFrameInfo::strengthChanges");
+static_assert(offsetof(SimFrameInfo, propertyChanges) == 0x98, "SimFrameInfo::propertyChanges");
+static_assert(offsetof(SimFrameInfo, diseaseConsumptions) == 0xc8, "SimFrameInfo::diseaseConsumptions");
+static_assert(offsetof(SimFrameInfo, diseaseModifications) == 0xe0, "SimFrameInfo::diseaseModifications");
+static_assert(offsetof(SimFrameInfo, radiationModifications) == 0xf8, "SimFrameInfo::radiationModifications");
+static_assert(offsetof(SimFrameInfo, radiationParams) == 0x110, "SimFrameInfo::radiationParams");
+static_assert(offsetof(SimFrameInfo, worldZoneModifications) == 0x128, "SimFrameInfo::worldZoneModifications");
+static_assert(offsetof(SimFrameInfo, massConsumptions) == 0x140, "SimFrameInfo::massConsumptions");
+static_assert(offsetof(SimFrameInfo, massEmissions) == 0x158, "SimFrameInfo::massEmissions");
+static_assert(offsetof(SimFrameInfo, addBuildingHeatExchange) == 0x170, "SimFrameInfo::addBuildingHeatExchange");
+static_assert(offsetof(SimFrameInfo, modifyBuildingHeatExchange) == 0x188, "SimFrameInfo::modifyBuildingHeatExchange");
+static_assert(offsetof(SimFrameInfo, removeBuildingHeatExchange) == 0x1a0, "SimFrameInfo::removeBuildingHeatExchange");
+static_assert(offsetof(SimFrameInfo, modifyBuildingEnergy) == 0x1b8, "SimFrameInfo::modifyBuildingEnergy");
+static_assert(offsetof(SimFrameInfo, registerBuildingToBuilding) == 0x1d0, "SimFrameInfo::registerBuildingToBuilding");
+static_assert(offsetof(SimFrameInfo, removeBuildingInContact) == 0x1e8, "SimFrameInfo::removeBuildingInContact");
+static_assert(offsetof(SimFrameInfo, removeBuildingToBuilding) == 0x200, "SimFrameInfo::removeBuildingToBuilding");
+static_assert(offsetof(SimFrameInfo, addBuildingInContact) == 0x218, "SimFrameInfo::addBuildingInContact");
+static_assert(offsetof(SimFrameInfo, addElementChunk) == 0x230, "SimFrameInfo::addElementChunk");
+static_assert(offsetof(SimFrameInfo, modifyElementChunk) == 0x248, "SimFrameInfo::modifyElementChunk");
+static_assert(offsetof(SimFrameInfo, removeElementChunk) == 0x260, "SimFrameInfo::removeElementChunk");
+static_assert(offsetof(SimFrameInfo, moveElementChunk) == 0x278, "SimFrameInfo::moveElementChunk");
+static_assert(offsetof(SimFrameInfo, modifyElementChunkEnergy) == 0x290, "SimFrameInfo::modifyElementChunkEnergy");
+static_assert(offsetof(SimFrameInfo, modifyElementChunkAdjuster) == 0x2a8, "SimFrameInfo::modifyElementChunkAdjuster");
+static_assert(offsetof(SimFrameInfo, modifyBackwall) == 0x2c0, "SimFrameInfo::modifyBackwall");
+static_assert(offsetof(SimFrameInfo, addElementConsumer) == 0x2d8, "SimFrameInfo::addElementConsumer");
+static_assert(offsetof(SimFrameInfo, modifyElementConsumer) == 0x2f0, "SimFrameInfo::modifyElementConsumer");
+static_assert(offsetof(SimFrameInfo, removeElementConsumer) == 0x308, "SimFrameInfo::removeElementConsumer");
+static_assert(offsetof(SimFrameInfo, addElementEmitter) == 0x320, "SimFrameInfo::addElementEmitter");
+static_assert(offsetof(SimFrameInfo, modifyElementEmitter) == 0x338, "SimFrameInfo::modifyElementEmitter");
+static_assert(offsetof(SimFrameInfo, removeElementEmitter) == 0x350, "SimFrameInfo::removeElementEmitter");
+static_assert(offsetof(SimFrameInfo, addDiseaseEmitter) == 0x368, "SimFrameInfo::addDiseaseEmitter");
+static_assert(offsetof(SimFrameInfo, modifyDiseaseEmitter) == 0x380, "SimFrameInfo::modifyDiseaseEmitter");
+static_assert(offsetof(SimFrameInfo, removeDiseaseEmitter) == 0x398, "SimFrameInfo::removeDiseaseEmitter");
+static_assert(offsetof(SimFrameInfo, addDiseaseConsumer) == 0x3b0, "SimFrameInfo::addDiseaseConsumer");
+static_assert(offsetof(SimFrameInfo, modifyDiseaseConsumer) == 0x3c8, "SimFrameInfo::modifyDiseaseConsumer");
+static_assert(offsetof(SimFrameInfo, removeDiseaseConsumer) == 0x3e0, "SimFrameInfo::removeDiseaseConsumer");
+static_assert(offsetof(SimFrameInfo, addRadiationEmitter) == 0x3f8, "SimFrameInfo::addRadiationEmitter");
+static_assert(offsetof(SimFrameInfo, modifyRadiationEmitter) == 0x410, "SimFrameInfo::modifyRadiationEmitter");
+static_assert(offsetof(SimFrameInfo, removeRadiationEmitter) == 0x428, "SimFrameInfo::removeRadiationEmitter");
+static_assert(offsetof(SimFrameInfo, debugProperties) == 0x440, "SimFrameInfo::debugProperties");
+
+static_assert(sizeof(SimFrameManager) == 0xd0, "SimFrameManager size");
+static_assert(offsetof(SimFrameManager, mutex) == 0x0, "SimFrameManager::mutex");
+static_assert(offsetof(SimFrameManager, current) == 0x28, "SimFrameManager::current");
+static_assert(offsetof(SimFrameManager, freeFrames) == 0x30, "SimFrameManager::freeFrames");
+static_assert(offsetof(SimFrameManager, queuedFrames) == 0x48, "SimFrameManager::queuedFrames");
+static_assert(offsetof(SimFrameManager, processingFrames) == 0x60, "SimFrameManager::processingFrames");
+static_assert(offsetof(SimFrameManager, processedFrames) == 0x78, "SimFrameManager::processedFrames");
+static_assert(offsetof(SimFrameManager, activeRegions) == 0xb0, "SimFrameManager::activeRegions");
+static_assert(offsetof(SimFrameManager, nextFrame) == 0xc8, "SimFrameManager::nextFrame");
+

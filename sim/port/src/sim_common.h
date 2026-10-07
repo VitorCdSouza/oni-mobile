@@ -85,14 +85,6 @@ struct SimBase {
     void CopySimDataToGame(SimData &sim, GameData &game, const GameData &previous, int frames);
 };
 
-// Queues the messages the game sends and replays them frame by frame (still the original's code).
-struct SimFrameManager {
-    void *HandleMessage(int msg_id, int length, void *data, void *&out);
-    int BeginFrameProcessing();
-    float ProcessNextFrame(SimData &sim);
-    void EndFrameProcessing();
-};
-
 // Row copy of one per-cell array from the bordered sim grid into the game's grid (the
 // UpdateCellSOATask layout, for a single array).
 template <typename T>

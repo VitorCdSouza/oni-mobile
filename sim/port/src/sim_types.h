@@ -74,6 +74,52 @@ struct ElementChunkData;
 struct ElementChunkInfo;
 struct RadiationEmitterData;
 struct GameData;
+struct DigPoint;
+struct CellModification;
+struct CellEnergyModification;
+struct SetCellFloatValue;
+struct CellPropertiesChange;
+struct ConsumeDisease;
+struct CellDiseaseModification;
+struct CellRadiationModification;
+struct RadiationParamsModification;
+struct CellWorldZoneModification;
+struct MassConsumption;
+struct MassEmission;
+struct AddBuildingHeatExchangeMessage;
+struct ModifyBuildingHeatExchangeMessage;
+struct RemoveBuildingHeatExchangeMessage;
+struct ModifyBuildingEnergyMessage;
+struct RegisterBuildingToBuildingHeatExchangeMessage;
+struct RemoveBuildingInContactFromBuildingToBuildingHeatExchangeMessage;
+struct RemoveBuildingToBuildingHeatExchangeMessage;
+struct AddInContactBuildingToBuildingToBuildingHeatExchangeMessage;
+struct AddElementChunkMessage;
+struct ModifyElementChunkMessage;
+struct RemoveElementChunkMessage;
+struct MoveElementChunkMessage;
+struct ModifyElementChunkEnergyMessage;
+struct ModifyElementChunkAdjusterMessage;
+struct ModifyBackwallDataMessage;
+struct AddElementConsumerMessage;
+struct ModifyElementConsumerMessage;
+struct RemoveElementConsumerMessage;
+struct AddElementEmitterMessage;
+struct ModifyElementEmitterMessage;
+struct RemoveElementEmitterMessage;
+struct AddDiseaseEmitterMessage;
+struct ModifyDiseaseEmitterMessage;
+struct RemoveDiseaseEmitterMessage;
+struct AddDiseaseConsumerMessage;
+struct ModifyDiseaseConsumerMessage;
+struct RemoveDiseaseConsumerMessage;
+struct AddRadiationEmitterMessage;
+struct ModifyRadiationEmitterMessage;
+struct RemoveRadiationEmitterMessage;
+struct DebugProperties;
+struct NewGameFrame;
+struct SimFrameInfo;
+struct SimFrameManager;
 
 struct CellSOA {
     std::vector<uint16_t> elementIdx;
@@ -811,6 +857,419 @@ struct GameData {
     void * propertyTextureLiquidData;
     void * propertyTextureMaterialData;
     uint8_t * propertyTextureExposedToSunlight;
+};
+
+struct DigPoint {
+    int32_t cellIdx;
+    int32_t callbackIdx;
+    bool skipEvent;
+    bool backwall;
+    uint8_t pad_0xa[2];
+};
+
+struct CellModification {
+    int32_t cellIdx;
+    int32_t callbackIdx;
+    float temperature;
+    float mass;
+    int32_t diseaseCount;
+    uint16_t elementIdx;
+    uint8_t replaceType;
+    uint8_t diseaseIdx;
+    uint8_t addSubType;
+    uint8_t pad_0x19[3];
+};
+
+struct CellEnergyModification {
+    int32_t cellIdx;
+    float kilojoules;
+    float maxTemperature;
+    int32_t id;
+};
+
+struct SetCellFloatValue {
+    int32_t cellIdx;
+    float value;
+};
+
+struct CellPropertiesChange {
+    int32_t cellIdx;
+    int32_t callbackIdx;
+    uint8_t properties;
+    uint8_t set;
+    uint8_t pad0;
+    uint8_t pad1;
+};
+
+struct ConsumeDisease {
+    int32_t gameCell;
+    int32_t callbackIdx;
+    float percentToConsume;
+    int32_t maxToConsume;
+};
+
+struct CellDiseaseModification {
+    int32_t cellIdx;
+    uint8_t diseaseIdx;
+    uint8_t pad0;
+    uint8_t pad1;
+    uint8_t pad2;
+    int32_t diseaseCount;
+};
+
+struct CellRadiationModification {
+    int32_t cellIdx;
+    float radiationDelta;
+    int32_t callbackIdx;
+};
+
+struct RadiationParamsModification {
+    int32_t RadiationParamsType;
+    float value;
+};
+
+struct CellWorldZoneModification {
+    int32_t cell;
+    uint8_t zoneID;
+    uint8_t pad_0x5[3];
+};
+
+struct MassConsumption {
+    int32_t cellIdx;
+    int32_t callbackIdx;
+    float mass;
+    uint16_t elementIdx;
+    uint8_t radius;
+    uint8_t height;
+};
+
+struct MassEmission {
+    int32_t cellIdx;
+    int32_t callbackIdx;
+    float mass;
+    float temperature;
+    int32_t diseaseCount;
+    uint16_t elementIdx;
+    uint8_t diseaseIdx;
+    uint8_t pad_0x17[1];
+};
+
+struct AddBuildingHeatExchangeMessage {
+    int32_t callbackIdx;
+    uint16_t elemIdx;
+    uint8_t pad0;
+    uint8_t pad1;
+    float mass;
+    float temperature;
+    float thermalConductivity;
+    float overheatTemperature;
+    float operatingKilowatts;
+    int32_t minX;
+    int32_t minY;
+    int32_t maxX;
+    int32_t maxY;
+};
+
+struct ModifyBuildingHeatExchangeMessage {
+    int32_t callbackIdx;
+    uint16_t elemIdx;
+    uint8_t pad0;
+    uint8_t pad1;
+    float mass;
+    float temperature;
+    float thermalConductivity;
+    float overheatTemperature;
+    float operatingKilowatts;
+    int32_t minX;
+    int32_t minY;
+    int32_t maxX;
+    int32_t maxY;
+};
+
+struct RemoveBuildingHeatExchangeMessage {
+    int32_t handle;
+    int32_t callbackIdx;
+};
+
+struct ModifyBuildingEnergyMessage {
+    int32_t handle;
+    float deltaKJ;
+    float minTemperature;
+    float maxTemperature;
+};
+
+struct RegisterBuildingToBuildingHeatExchangeMessage {
+    int32_t callbackIdx;
+    int32_t structureTemperatureHandler;
+};
+
+struct RemoveBuildingInContactFromBuildingToBuildingHeatExchangeMessage {
+    int32_t selfHandler;
+    int32_t buildingNoLongerInContactHandler;
+};
+
+struct RemoveBuildingToBuildingHeatExchangeMessage {
+    int32_t callbackIdx;
+    int32_t selfHandler;
+};
+
+struct AddInContactBuildingToBuildingToBuildingHeatExchangeMessage {
+    int32_t selfHandler;
+    int32_t buildingInContactHandle;
+    int32_t cellsInContact;
+};
+
+struct AddElementChunkMessage {
+    int32_t gameCell;
+    int32_t callbackIdx;
+    float mass;
+    float temperature;
+    float surfaceArea;
+    float thickness;
+    float groundTransferScale;
+    uint16_t elementIdx;
+    uint8_t pad0;
+    uint8_t pad1;
+};
+
+struct ModifyElementChunkMessage {
+    int32_t handle;
+    float temperature;
+    float heatCapacity;
+};
+
+struct RemoveElementChunkMessage {
+    int32_t handle;
+    int32_t callbackIdx;
+};
+
+struct MoveElementChunkMessage {
+    int32_t handle;
+    int32_t gameCell;
+};
+
+struct ModifyElementChunkEnergyMessage {
+    int32_t handle;
+    float deltaKJ;
+};
+
+struct ModifyElementChunkAdjusterMessage {
+    int32_t handle;
+    float temperature;
+    float heatCapacity;
+    float thermalConductivity;
+};
+
+struct ModifyBackwallDataMessage {
+    int32_t gameCell;
+    uint16_t elementIdx;
+    uint16_t pad;
+    float mass;
+    float temperature;
+};
+
+struct AddElementConsumerMessage {
+    int32_t cellIdx;
+    int32_t callbackIdx;
+    uint8_t radius;
+    uint8_t configuration;
+    uint16_t elementIdx;
+};
+
+struct ModifyElementConsumerMessage {
+    int32_t handle;
+    int32_t cell;
+    float consumptionRate;
+};
+
+struct RemoveElementConsumerMessage {
+    int32_t handle;
+    int32_t callbackIdx;
+};
+
+struct AddElementEmitterMessage {
+    float maxPressure;
+    int32_t callbackIdx;
+    int32_t onBlockedCB;
+    int32_t onUnblockedCB;
+};
+
+struct ModifyElementEmitterMessage {
+    int32_t handle;
+    int32_t cellIdx;
+    float emitInterval;
+    float emitMass;
+    float emitTemperature;
+    float maxPressure;
+    int32_t diseaseCount;
+    uint16_t elementIdx;
+    uint8_t maxDepth;
+    uint8_t diseaseIdx;
+};
+
+struct RemoveElementEmitterMessage {
+    int32_t handle;
+    int32_t callbackIdx;
+};
+
+struct AddDiseaseEmitterMessage {
+    int32_t callbackIdx;
+};
+
+struct ModifyDiseaseEmitterMessage {
+    int32_t handle;
+    int32_t gameCell;
+    uint8_t diseaseIdx;
+    uint8_t maxDepth;
+    uint8_t pad_0xa[2];
+    float emitInterval;
+    int32_t emitCount;
+};
+
+struct RemoveDiseaseEmitterMessage {
+    int32_t handle;
+    int32_t callbackIdx;
+};
+
+struct AddDiseaseConsumerMessage {
+    int32_t unk_0x0;
+    int32_t unk_0x4;
+    int32_t unk_0x8;
+};
+
+struct ModifyDiseaseConsumerMessage {
+    int32_t unk_0x0;
+    int32_t unk_0x4;
+    int32_t unk_0x8;
+    int32_t unk_0xc;
+    int32_t unk_0x10;
+};
+
+struct RemoveDiseaseConsumerMessage {
+    int32_t handle;
+    int32_t callbackIdx;
+};
+
+struct AddRadiationEmitterMessage {
+    int32_t callbackIdx;
+    int32_t cell;
+    int16_t emitRadiusX;
+    int16_t emitRadiusY;
+    float emitRads;
+    float emitRate;
+    float emitSpeed;
+    float emitDirection;
+    float emitAngle;
+    int32_t emitType;
+};
+
+struct ModifyRadiationEmitterMessage {
+    int32_t handle;
+    int32_t cell;
+    int32_t callbackIdx;
+    int16_t emitRadiusX;
+    int16_t emitRadiusY;
+    float emitRads;
+    float emitRate;
+    float emitSpeed;
+    float emitDirection;
+    float emitAngle;
+    int32_t emitType;
+};
+
+struct RemoveRadiationEmitterMessage {
+    int32_t handle;
+    int32_t callbackIdx;
+};
+
+struct DebugProperties {
+    float buildingTemperatureScale;
+    float buildingToBuildingTemperatureScale;
+    uint8_t isDebugEditing;
+    uint8_t pad0;
+    uint8_t pad1;
+    uint8_t pad2;
+};
+
+struct NewGameFrame {
+    float elapsedSeconds;
+    int32_t minX;
+    int32_t minY;
+    int32_t maxX;
+    int32_t maxY;
+    float currentSunlightIntensity;
+    float currentCosmicRadiationIntensity;
+};
+
+struct SimFrameInfo {
+    float dt;
+    uint8_t pad_0x4[4];
+    std::vector<DigPoint> digs;
+    std::vector<CellModification> cellModifications;
+    std::vector<CellEnergyModification> cellEnergyModifications;
+    std::vector<uint8_t> unk_0x50;
+    std::vector<SetCellFloatValue> insulationChanges;
+    std::vector<SetCellFloatValue> strengthChanges;
+    std::vector<CellPropertiesChange> propertyChanges;
+    std::vector<uint8_t> unk_0xb0;
+    std::vector<ConsumeDisease> diseaseConsumptions;
+    std::vector<CellDiseaseModification> diseaseModifications;
+    std::vector<CellRadiationModification> radiationModifications;
+    std::vector<RadiationParamsModification> radiationParams;
+    std::vector<CellWorldZoneModification> worldZoneModifications;
+    std::vector<MassConsumption> massConsumptions;
+    std::vector<MassEmission> massEmissions;
+    std::vector<AddBuildingHeatExchangeMessage> addBuildingHeatExchange;
+    std::vector<ModifyBuildingHeatExchangeMessage> modifyBuildingHeatExchange;
+    std::vector<RemoveBuildingHeatExchangeMessage> removeBuildingHeatExchange;
+    std::vector<ModifyBuildingEnergyMessage> modifyBuildingEnergy;
+    std::vector<RegisterBuildingToBuildingHeatExchangeMessage> registerBuildingToBuilding;
+    std::vector<RemoveBuildingInContactFromBuildingToBuildingHeatExchangeMessage> removeBuildingInContact;
+    std::vector<RemoveBuildingToBuildingHeatExchangeMessage> removeBuildingToBuilding;
+    std::vector<AddInContactBuildingToBuildingToBuildingHeatExchangeMessage> addBuildingInContact;
+    std::vector<AddElementChunkMessage> addElementChunk;
+    std::vector<ModifyElementChunkMessage> modifyElementChunk;
+    std::vector<RemoveElementChunkMessage> removeElementChunk;
+    std::vector<MoveElementChunkMessage> moveElementChunk;
+    std::vector<ModifyElementChunkEnergyMessage> modifyElementChunkEnergy;
+    std::vector<ModifyElementChunkAdjusterMessage> modifyElementChunkAdjuster;
+    std::vector<ModifyBackwallDataMessage> modifyBackwall;
+    std::vector<AddElementConsumerMessage> addElementConsumer;
+    std::vector<ModifyElementConsumerMessage> modifyElementConsumer;
+    std::vector<RemoveElementConsumerMessage> removeElementConsumer;
+    std::vector<AddElementEmitterMessage> addElementEmitter;
+    std::vector<ModifyElementEmitterMessage> modifyElementEmitter;
+    std::vector<RemoveElementEmitterMessage> removeElementEmitter;
+    std::vector<AddDiseaseEmitterMessage> addDiseaseEmitter;
+    std::vector<ModifyDiseaseEmitterMessage> modifyDiseaseEmitter;
+    std::vector<RemoveDiseaseEmitterMessage> removeDiseaseEmitter;
+    std::vector<AddDiseaseConsumerMessage> addDiseaseConsumer;
+    std::vector<ModifyDiseaseConsumerMessage> modifyDiseaseConsumer;
+    std::vector<RemoveDiseaseConsumerMessage> removeDiseaseConsumer;
+    std::vector<AddRadiationEmitterMessage> addRadiationEmitter;
+    std::vector<ModifyRadiationEmitterMessage> modifyRadiationEmitter;
+    std::vector<RemoveRadiationEmitterMessage> removeRadiationEmitter;
+    DebugProperties debugProperties;
+    uint8_t pad_0x44c[4];
+};
+
+struct SimFrameManager {
+    uint8_t mutex[40];
+    SimFrameInfo * current;
+    std::vector<void *> freeFrames;
+    std::vector<void *> queuedFrames;
+    std::vector<void *> processingFrames;
+    std::vector<void *> processedFrames;
+    uint8_t pad_0x90[32];
+    std::vector<ActiveRegion> activeRegions;
+    int32_t nextFrame;
+    uint8_t pad_0xcc[4];
+    bool HandleMessage(int msg_id, int length, void *data, void *&out);
+    int BeginFrameProcessing();
+    float ProcessNextFrame(SimData &sim);
+    void EndFrameProcessing();
+    void NewFrame();
+    static void ProcessFrame(SimFrameInfo &frame, SimData &sim);
 };
 
 extern std::vector<Element> gElements;

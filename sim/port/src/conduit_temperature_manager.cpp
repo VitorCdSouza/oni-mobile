@@ -15,13 +15,6 @@ float AbsSS(float x) {
 
 constexpr int kModifyBuildingEnergy = static_cast<int>(0xaf9b1296u);
 
-struct ModifyBuildingEnergyMessage {
-    uint32_t handle;
-    float deltaKJ;
-    float minTemperature;
-    float maxTemperature;
-};
-
 }  // namespace
 
 // SimFrameManager::HandleMessage queues a message for the next frame; the frame manager lives at
@@ -138,7 +131,7 @@ ConduitTemperatureUpdateData *ConduitTemperatureManager::Update(float dt, const 
             if (1e-06f < AbsSS(clamped)) {
                 // The pipe building gets the energy the contents gave away.
                 ModifyBuildingEnergyMessage msg;
-                msg.handle = e.structureHandle;
+                msg.handle = static_cast<int32_t>(e.structureHandle);
                 msg.deltaKJ = (src - updated) * e.contentsHeatCapacity;
                 msg.minTemperature = MinSS(building, src);
                 msg.maxTemperature = MaxSS(building, src);

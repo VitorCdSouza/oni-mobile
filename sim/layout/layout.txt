@@ -692,3 +692,367 @@ struct GameData 0x318
   0x300 ptr propertyTextureLiquidData
   0x308 ptr propertyTextureMaterialData
   0x310 u8* propertyTextureExposedToSunlight
+
+# Messages the game sends through SIM_HandleMessage, queued per frame by SimFrameManager.
+# Field layouts from the C# structs (named in comments where the native name differs).
+
+struct DigPoint 0xc  # C# DigMessage
+  0x00 i32 cellIdx
+  0x04 i32 callbackIdx
+  0x08 bool skipEvent
+  0x09 bool backwall
+
+struct CellModification 0x1c  # C# ModifyCellMessage
+  0x00 i32 cellIdx
+  0x04 i32 callbackIdx
+  0x08 f32 temperature
+  0x0c f32 mass
+  0x10 i32 diseaseCount
+  0x14 u16 elementIdx
+  0x16 u8 replaceType
+  0x17 u8 diseaseIdx
+  0x18 u8 addSubType
+
+struct CellEnergyModification 0x10  # C# ModifyCellEnergyMessage
+  0x00 i32 cellIdx
+  0x04 f32 kilojoules
+  0x08 f32 maxTemperature
+  0x0c i32 id
+
+struct SetCellFloatValue 0x8  # C# SetCellFloatValueMessage
+  0x00 i32 cellIdx
+  0x04 f32 value
+
+struct CellPropertiesChange 0xc  # C# CellPropertiesMessage
+  0x00 i32 cellIdx
+  0x04 i32 callbackIdx
+  0x08 u8 properties
+  0x09 u8 set
+  0x0a u8 pad0
+  0x0b u8 pad1
+
+struct ConsumeDisease 0x10  # C# ConsumeDiseaseMessage
+  0x00 i32 gameCell
+  0x04 i32 callbackIdx
+  0x08 f32 percentToConsume
+  0x0c i32 maxToConsume
+
+struct CellDiseaseModification 0xc
+  0x00 i32 cellIdx
+  0x04 u8 diseaseIdx
+  0x05 u8 pad0
+  0x06 u8 pad1
+  0x07 u8 pad2
+  0x08 i32 diseaseCount
+
+struct CellRadiationModification 0xc
+  0x00 i32 cellIdx
+  0x04 f32 radiationDelta
+  0x08 i32 callbackIdx
+
+struct RadiationParamsModification 0x8
+  0x00 i32 RadiationParamsType
+  0x04 f32 value
+
+struct CellWorldZoneModification 0x8
+  0x00 i32 cell
+  0x04 u8 zoneID
+
+struct MassConsumption 0x10  # C# MassConsumptionMessage
+  0x00 i32 cellIdx
+  0x04 i32 callbackIdx
+  0x08 f32 mass
+  0x0c u16 elementIdx
+  0x0e u8 radius
+  0x0f u8 height
+
+struct MassEmission 0x18  # C# MassEmissionMessage
+  0x00 i32 cellIdx
+  0x04 i32 callbackIdx
+  0x08 f32 mass
+  0x0c f32 temperature
+  0x10 i32 diseaseCount
+  0x14 u16 elementIdx
+  0x16 u8 diseaseIdx
+
+struct AddBuildingHeatExchangeMessage 0x2c
+  0x00 i32 callbackIdx
+  0x04 u16 elemIdx
+  0x06 u8 pad0
+  0x07 u8 pad1
+  0x08 f32 mass
+  0x0c f32 temperature
+  0x10 f32 thermalConductivity
+  0x14 f32 overheatTemperature
+  0x18 f32 operatingKilowatts
+  0x1c i32 minX
+  0x20 i32 minY
+  0x24 i32 maxX
+  0x28 i32 maxY
+
+struct ModifyBuildingHeatExchangeMessage 0x2c
+  0x00 i32 callbackIdx
+  0x04 u16 elemIdx
+  0x06 u8 pad0
+  0x07 u8 pad1
+  0x08 f32 mass
+  0x0c f32 temperature
+  0x10 f32 thermalConductivity
+  0x14 f32 overheatTemperature
+  0x18 f32 operatingKilowatts
+  0x1c i32 minX
+  0x20 i32 minY
+  0x24 i32 maxX
+  0x28 i32 maxY
+
+struct RemoveBuildingHeatExchangeMessage 0x8
+  0x00 i32 handle
+  0x04 i32 callbackIdx
+
+struct ModifyBuildingEnergyMessage 0x10
+  0x00 i32 handle
+  0x04 f32 deltaKJ
+  0x08 f32 minTemperature
+  0x0c f32 maxTemperature
+
+struct RegisterBuildingToBuildingHeatExchangeMessage 0x8
+  0x00 i32 callbackIdx
+  0x04 i32 structureTemperatureHandler
+
+struct RemoveBuildingInContactFromBuildingToBuildingHeatExchangeMessage 0x8
+  0x00 i32 selfHandler
+  0x04 i32 buildingNoLongerInContactHandler
+
+struct RemoveBuildingToBuildingHeatExchangeMessage 0x8
+  0x00 i32 callbackIdx
+  0x04 i32 selfHandler
+
+struct AddInContactBuildingToBuildingToBuildingHeatExchangeMessage 0xc  # C# AddBuildingToBuildingHeatExchangeMessage
+  0x00 i32 selfHandler
+  0x04 i32 buildingInContactHandle
+  0x08 i32 cellsInContact
+
+struct AddElementChunkMessage 0x20
+  0x00 i32 gameCell
+  0x04 i32 callbackIdx
+  0x08 f32 mass
+  0x0c f32 temperature
+  0x10 f32 surfaceArea
+  0x14 f32 thickness
+  0x18 f32 groundTransferScale
+  0x1c u16 elementIdx
+  0x1e u8 pad0
+  0x1f u8 pad1
+
+struct ModifyElementChunkMessage 0xc  # C# SetElementChunkDataMessage
+  0x00 i32 handle
+  0x04 f32 temperature
+  0x08 f32 heatCapacity
+
+struct RemoveElementChunkMessage 0x8
+  0x00 i32 handle
+  0x04 i32 callbackIdx
+
+struct MoveElementChunkMessage 0x8
+  0x00 i32 handle
+  0x04 i32 gameCell
+
+struct ModifyElementChunkEnergyMessage 0x8
+  0x00 i32 handle
+  0x04 f32 deltaKJ
+
+struct ModifyElementChunkAdjusterMessage 0x10
+  0x00 i32 handle
+  0x04 f32 temperature
+  0x08 f32 heatCapacity
+  0x0c f32 thermalConductivity
+
+struct ModifyBackwallDataMessage 0x10  # C# SetBackwallDataMsg
+  0x00 i32 gameCell
+  0x04 u16 elementIdx
+  0x06 u16 pad
+  0x08 f32 mass
+  0x0c f32 temperature
+
+struct AddElementConsumerMessage 0xc
+  0x00 i32 cellIdx
+  0x04 i32 callbackIdx
+  0x08 u8 radius
+  0x09 u8 configuration
+  0x0a u16 elementIdx
+
+struct ModifyElementConsumerMessage 0xc  # C# SetElementConsumerDataMessage
+  0x00 i32 handle
+  0x04 i32 cell
+  0x08 f32 consumptionRate
+
+struct RemoveElementConsumerMessage 0x8
+  0x00 i32 handle
+  0x04 i32 callbackIdx
+
+struct AddElementEmitterMessage 0x10
+  0x00 f32 maxPressure
+  0x04 i32 callbackIdx
+  0x08 i32 onBlockedCB
+  0x0c i32 onUnblockedCB
+
+struct ModifyElementEmitterMessage 0x20
+  0x00 i32 handle
+  0x04 i32 cellIdx
+  0x08 f32 emitInterval
+  0x0c f32 emitMass
+  0x10 f32 emitTemperature
+  0x14 f32 maxPressure
+  0x18 i32 diseaseCount
+  0x1c u16 elementIdx
+  0x1e u8 maxDepth
+  0x1f u8 diseaseIdx
+
+struct RemoveElementEmitterMessage 0x8
+  0x00 i32 handle
+  0x04 i32 callbackIdx
+
+struct AddDiseaseEmitterMessage 0x4
+  0x00 i32 callbackIdx
+
+struct ModifyDiseaseEmitterMessage 0x14
+  0x00 i32 handle
+  0x04 i32 gameCell
+  0x08 u8 diseaseIdx
+  0x09 u8 maxDepth
+  0x0c f32 emitInterval
+  0x10 i32 emitCount
+
+struct RemoveDiseaseEmitterMessage 0x8
+  0x00 i32 handle
+  0x04 i32 callbackIdx
+
+struct AddDiseaseConsumerMessage 0xc  # not sent by the C# side
+  0x0 i32 unk_0x0
+  0x4 i32 unk_0x4
+  0x8 i32 unk_0x8
+
+struct ModifyDiseaseConsumerMessage 0x14  # not sent by the C# side
+  0x00 i32 unk_0x0
+  0x04 i32 unk_0x4
+  0x08 i32 unk_0x8
+  0x0c i32 unk_0xc
+  0x10 i32 unk_0x10
+
+struct RemoveDiseaseConsumerMessage 0x8  # not sent by the C# side
+  0x0 i32 handle
+  0x4 i32 callbackIdx
+
+struct AddRadiationEmitterMessage 0x24
+  0x00 i32 callbackIdx
+  0x04 i32 cell
+  0x08 i16 emitRadiusX
+  0x0a i16 emitRadiusY
+  0x0c f32 emitRads
+  0x10 f32 emitRate
+  0x14 f32 emitSpeed
+  0x18 f32 emitDirection
+  0x1c f32 emitAngle
+  0x20 i32 emitType
+
+struct ModifyRadiationEmitterMessage 0x28
+  0x00 i32 handle
+  0x04 i32 cell
+  0x08 i32 callbackIdx
+  0x0c i16 emitRadiusX
+  0x0e i16 emitRadiusY
+  0x10 f32 emitRads
+  0x14 f32 emitRate
+  0x18 f32 emitSpeed
+  0x1c f32 emitDirection
+  0x20 f32 emitAngle
+  0x24 i32 emitType
+
+struct RemoveRadiationEmitterMessage 0x8
+  0x00 i32 handle
+  0x04 i32 callbackIdx
+
+struct DebugProperties 0xc
+  0x00 f32 buildingTemperatureScale
+  0x04 f32 buildingToBuildingTemperatureScale
+  0x08 u8 isDebugEditing
+  0x09 u8 pad0
+  0x0a u8 pad1
+  0x0b u8 pad2
+
+# One per active world; the first one's elapsedSeconds is the frame's dt.
+struct NewGameFrame 0x1c
+  0x00 f32 elapsedSeconds
+  0x04 i32 minX
+  0x08 i32 minY
+  0x0c i32 maxX
+  0x10 i32 maxY
+  0x14 f32 currentSunlightIntensity
+  0x18 f32 currentCosmicRadiationIntensity
+
+# One game frame: its dt and every message received before the next NewGameFrame.
+struct SimFrameInfo 0x450
+  0x000 f32 dt
+  0x008 vec<DigPoint> digs
+  0x020 vec<CellModification> cellModifications
+  0x038 vec<CellEnergyModification> cellEnergyModifications
+  0x050 vec<u8> unk_0x50
+  0x068 vec<SetCellFloatValue> insulationChanges
+  0x080 vec<SetCellFloatValue> strengthChanges
+  0x098 vec<CellPropertiesChange> propertyChanges
+  0x0b0 vec<u8> unk_0xb0
+  0x0c8 vec<ConsumeDisease> diseaseConsumptions
+  0x0e0 vec<CellDiseaseModification> diseaseModifications
+  0x0f8 vec<CellRadiationModification> radiationModifications
+  0x110 vec<RadiationParamsModification> radiationParams
+  0x128 vec<CellWorldZoneModification> worldZoneModifications
+  0x140 vec<MassConsumption> massConsumptions
+  0x158 vec<MassEmission> massEmissions
+  0x170 vec<AddBuildingHeatExchangeMessage> addBuildingHeatExchange
+  0x188 vec<ModifyBuildingHeatExchangeMessage> modifyBuildingHeatExchange
+  0x1a0 vec<RemoveBuildingHeatExchangeMessage> removeBuildingHeatExchange
+  0x1b8 vec<ModifyBuildingEnergyMessage> modifyBuildingEnergy
+  0x1d0 vec<RegisterBuildingToBuildingHeatExchangeMessage> registerBuildingToBuilding
+  0x1e8 vec<RemoveBuildingInContactFromBuildingToBuildingHeatExchangeMessage> removeBuildingInContact
+  0x200 vec<RemoveBuildingToBuildingHeatExchangeMessage> removeBuildingToBuilding
+  0x218 vec<AddInContactBuildingToBuildingToBuildingHeatExchangeMessage> addBuildingInContact
+  0x230 vec<AddElementChunkMessage> addElementChunk
+  0x248 vec<ModifyElementChunkMessage> modifyElementChunk
+  0x260 vec<RemoveElementChunkMessage> removeElementChunk
+  0x278 vec<MoveElementChunkMessage> moveElementChunk
+  0x290 vec<ModifyElementChunkEnergyMessage> modifyElementChunkEnergy
+  0x2a8 vec<ModifyElementChunkAdjusterMessage> modifyElementChunkAdjuster
+  0x2c0 vec<ModifyBackwallDataMessage> modifyBackwall
+  0x2d8 vec<AddElementConsumerMessage> addElementConsumer
+  0x2f0 vec<ModifyElementConsumerMessage> modifyElementConsumer
+  0x308 vec<RemoveElementConsumerMessage> removeElementConsumer
+  0x320 vec<AddElementEmitterMessage> addElementEmitter
+  0x338 vec<ModifyElementEmitterMessage> modifyElementEmitter
+  0x350 vec<RemoveElementEmitterMessage> removeElementEmitter
+  0x368 vec<AddDiseaseEmitterMessage> addDiseaseEmitter
+  0x380 vec<ModifyDiseaseEmitterMessage> modifyDiseaseEmitter
+  0x398 vec<RemoveDiseaseEmitterMessage> removeDiseaseEmitter
+  0x3b0 vec<AddDiseaseConsumerMessage> addDiseaseConsumer
+  0x3c8 vec<ModifyDiseaseConsumerMessage> modifyDiseaseConsumer
+  0x3e0 vec<RemoveDiseaseConsumerMessage> removeDiseaseConsumer
+  0x3f8 vec<AddRadiationEmitterMessage> addRadiationEmitter
+  0x410 vec<ModifyRadiationEmitterMessage> modifyRadiationEmitter
+  0x428 vec<RemoveRadiationEmitterMessage> removeRadiationEmitter
+  0x440 DebugProperties debugProperties
+
+# Queues frames between the game thread (HandleMessage) and the sim (Begin/ProcessNext/End).
+struct SimFrameManager 0xd0
+  0x00 u8[40] mutex                # std::mutex
+  0x28 SimFrameInfo* current       # receives the messages
+  0x30 vec<ptr> freeFrames         # SimFrameInfo*, reused by NewFrame
+  0x48 vec<ptr> queuedFrames       # closed by NewGameFrame, waiting for the sim
+  0x60 vec<ptr> processingFrames   # taken by BeginFrameProcessing
+  0x78 vec<ptr> processedFrames    # handed back by EndFrameProcessing
+  0xb0 vec<ActiveRegion> activeRegions  # from the last NewGameFrame, sim coordinates
+  0xc8 i32 nextFrame               # index into processingFrames
+  method bool HandleMessage(int msg_id, int length, void *data, void *&out);
+  method int BeginFrameProcessing();
+  method float ProcessNextFrame(SimData &sim);
+  method void EndFrameProcessing();
+  method void NewFrame();
+  method static void ProcessFrame(SimFrameInfo &frame, SimData &sim);
