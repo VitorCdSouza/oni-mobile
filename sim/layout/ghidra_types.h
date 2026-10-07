@@ -37,6 +37,11 @@ struct ElementPressureData;
 struct ElementPropertyTextureData;
 struct ElementLightAbsorptionData;
 struct ElementRadiationData;
+struct BackwallSOA;
+struct Region;
+struct SimUpdateTemperatureTask;
+struct UpdateCellSOATask;
+struct UpdateBackwallTask;
 
 struct Vec_BackwallElementChangedInfo { struct BackwallElementChangedInfo *begin; struct BackwallElementChangedInfo *end; struct BackwallElementChangedInfo *cap; };
 struct Vec_BackwallShouldTransitionInfo { struct BackwallShouldTransitionInfo *begin; struct BackwallShouldTransitionInfo *end; struct BackwallShouldTransitionInfo *cap; };
@@ -94,10 +99,11 @@ struct SimData {
     uint8_t pad_0x19[1];
     uint16_t unk_0x1a;
     uint16_t vacuumElementIdx;
-    uint8_t pad_0x1e[2];
+    uint16_t unk_0x1e;
     struct CellSOA * cells;
     struct CellSOA * updatedCells;
-    uint8_t pad_0x30[40];
+    struct BackwallSOA * backwall;
+    uint8_t pad_0x38[32];
     float * unk_0x58;
     struct Vector4f * unk_0x60;
     uint8_t * unk_0x68;
@@ -382,6 +388,53 @@ struct ElementLightAbsorptionData {
 struct ElementRadiationData {
     float radiationAbsorptionFactor;
     float radiationPer1000Mass;
+};
+
+#pragma pack(push, 4)
+struct BackwallSOA {
+    int32_t unk_0x0;
+    struct Vec_u16 elementIdx;
+    struct Vec_f32 mass;
+    struct Vec_f32 temperature;
+};
+#pragma pack(pop)
+
+struct Region {
+    int32_t minX;
+    int32_t minY;
+    int32_t maxX;
+    int32_t maxY;
+};
+
+struct SimUpdateTemperatureTask {
+    void * vtable;
+    struct SimData * sim;
+    struct SimEvents * events;
+    struct Region region;
+};
+
+struct UpdateCellSOATask {
+    void * vtable;
+    struct CellSOA * src;
+    struct CellSOA * dst;
+    int32_t numRows;
+    int32_t firstRow;
+    int32_t srcStride;
+    int32_t dstFirstRow;
+    int32_t rowLength;
+    uint8_t pad_0x2c[4];
+};
+
+struct UpdateBackwallTask {
+    void * vtable;
+    struct BackwallSOA * src;
+    struct BackwallSOA * dst;
+    int32_t numRows;
+    int32_t firstRow;
+    int32_t srcStride;
+    int32_t dstFirstRow;
+    int32_t rowLength;
+    uint8_t pad_0x2c[4];
 };
 
 //@global gElements Vec_Element 0

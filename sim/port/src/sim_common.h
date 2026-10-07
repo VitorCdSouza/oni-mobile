@@ -117,3 +117,6 @@ void HeadlessUnstableFallSimpleSwap(SimData &sim, SimEvents &events, CellAccesso
 
 constexpr int32_t kSimHashVoid = -1456075980;  // SimHashes.Void
 uint8_t IsLiquidPermeable(const CellSOA *soa, unsigned long cell);
+void UpdateTemperature(SimData &sim, SimEvents &events, int a, int b);
+void UpdateTemperatureForBackwallExchange(SimData &sim, SimEvents &events, int cell);
+int DoStateTransition(SimData &sim, SimEvents &events, int cell, const ElementTemperatureData &elem);

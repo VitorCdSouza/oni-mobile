@@ -79,6 +79,9 @@ Ferramentas do ciclo:
 | `UpdateLiquid` (com a função interna de mover líquido), `IsLiquidPermeable` | replay idêntico, 96% das linhas |
 | `UpdateTemperature` | replay idêntico, 76% das linhas (o resto é assert); escrita a partir da disassembly, porque o original usa `double` no meio da conta e o decompilado mostra `float` |
 
+| `SimUpdateTemperatureTask`, `UpdateCellSOATask`, `UpdateBackwallTask`, `UpdateCellTask<Vector4<float>>` (`InternalDoTask`) | replay idêntico, 97% das linhas |
+| `UpdateTemperatureForBackwallExchange` | replay idêntico; também em `double`, a partir da disassembly |
+
 Teste de sensibilidade: trocar a constante `(double)0.2f` por `0.2` exato em `UpdateTemperature`
 (diferença relativa de 3e-9) diverge na observação 247. O replay pega erro de último bit.
 

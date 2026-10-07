@@ -25,6 +25,7 @@ static_assert(offsetof(SimData, savedOptions) == 0x18, "SimData::savedOptions");
 static_assert(offsetof(SimData, vacuumElementIdx) == 0x1c, "SimData::vacuumElementIdx");
 static_assert(offsetof(SimData, cells) == 0x20, "SimData::cells");
 static_assert(offsetof(SimData, updatedCells) == 0x28, "SimData::updatedCells");
+static_assert(offsetof(SimData, backwall) == 0x30, "SimData::backwall");
 static_assert(offsetof(SimData, displacementDirection) == 0x90, "SimData::displacementDirection");
 static_assert(offsetof(SimData, events) == 0x98, "SimData::events");
 static_assert(offsetof(SimData, components) == 0xb0, "SimData::components");
@@ -246,4 +247,41 @@ static_assert(offsetof(ElementLightAbsorptionData, inverseDefaultMass) == 0x4, "
 static_assert(sizeof(ElementRadiationData) == 0x8, "ElementRadiationData size");
 static_assert(offsetof(ElementRadiationData, radiationAbsorptionFactor) == 0x0, "ElementRadiationData::radiationAbsorptionFactor");
 static_assert(offsetof(ElementRadiationData, radiationPer1000Mass) == 0x4, "ElementRadiationData::radiationPer1000Mass");
+
+static_assert(sizeof(BackwallSOA) == 0x4c, "BackwallSOA size");
+static_assert(offsetof(BackwallSOA, elementIdx) == 0x4, "BackwallSOA::elementIdx");
+static_assert(offsetof(BackwallSOA, mass) == 0x1c, "BackwallSOA::mass");
+static_assert(offsetof(BackwallSOA, temperature) == 0x34, "BackwallSOA::temperature");
+
+static_assert(sizeof(Region) == 0x10, "Region size");
+static_assert(offsetof(Region, minX) == 0x0, "Region::minX");
+static_assert(offsetof(Region, minY) == 0x4, "Region::minY");
+static_assert(offsetof(Region, maxX) == 0x8, "Region::maxX");
+static_assert(offsetof(Region, maxY) == 0xc, "Region::maxY");
+
+static_assert(sizeof(SimUpdateTemperatureTask) == 0x28, "SimUpdateTemperatureTask size");
+static_assert(offsetof(SimUpdateTemperatureTask, vtable) == 0x0, "SimUpdateTemperatureTask::vtable");
+static_assert(offsetof(SimUpdateTemperatureTask, sim) == 0x8, "SimUpdateTemperatureTask::sim");
+static_assert(offsetof(SimUpdateTemperatureTask, events) == 0x10, "SimUpdateTemperatureTask::events");
+static_assert(offsetof(SimUpdateTemperatureTask, region) == 0x18, "SimUpdateTemperatureTask::region");
+
+static_assert(sizeof(UpdateCellSOATask) == 0x30, "UpdateCellSOATask size");
+static_assert(offsetof(UpdateCellSOATask, vtable) == 0x0, "UpdateCellSOATask::vtable");
+static_assert(offsetof(UpdateCellSOATask, src) == 0x8, "UpdateCellSOATask::src");
+static_assert(offsetof(UpdateCellSOATask, dst) == 0x10, "UpdateCellSOATask::dst");
+static_assert(offsetof(UpdateCellSOATask, numRows) == 0x18, "UpdateCellSOATask::numRows");
+static_assert(offsetof(UpdateCellSOATask, firstRow) == 0x1c, "UpdateCellSOATask::firstRow");
+static_assert(offsetof(UpdateCellSOATask, srcStride) == 0x20, "UpdateCellSOATask::srcStride");
+static_assert(offsetof(UpdateCellSOATask, dstFirstRow) == 0x24, "UpdateCellSOATask::dstFirstRow");
+static_assert(offsetof(UpdateCellSOATask, rowLength) == 0x28, "UpdateCellSOATask::rowLength");
+
+static_assert(sizeof(UpdateBackwallTask) == 0x30, "UpdateBackwallTask size");
+static_assert(offsetof(UpdateBackwallTask, vtable) == 0x0, "UpdateBackwallTask::vtable");
+static_assert(offsetof(UpdateBackwallTask, src) == 0x8, "UpdateBackwallTask::src");
+static_assert(offsetof(UpdateBackwallTask, dst) == 0x10, "UpdateBackwallTask::dst");
+static_assert(offsetof(UpdateBackwallTask, numRows) == 0x18, "UpdateBackwallTask::numRows");
+static_assert(offsetof(UpdateBackwallTask, firstRow) == 0x1c, "UpdateBackwallTask::firstRow");
+static_assert(offsetof(UpdateBackwallTask, srcStride) == 0x20, "UpdateBackwallTask::srcStride");
+static_assert(offsetof(UpdateBackwallTask, dstFirstRow) == 0x24, "UpdateBackwallTask::dstFirstRow");
+static_assert(offsetof(UpdateBackwallTask, rowLength) == 0x28, "UpdateBackwallTask::rowLength");
 

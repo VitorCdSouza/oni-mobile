@@ -111,3 +111,76 @@ void UpdateTemperature(SimData &sim, SimEvents &events, int a, int b) {
     out[a] = MaxSS(MinSS(out[a], 10000.0f), 1.0f);
     out[b] = MaxSS(MinSS(10000.0f, out[b]), 1.0f);
 }
+
+// Heat exchange between a cell and its background wall (same disassembly-first approach). The
+// wall's new temperature is stored directly; when it leaves the wall element's range by more
+// than 3 K the game is told to transition the wall.
+void UpdateTemperatureForBackwallExchange(SimData &sim, SimEvents &events, int cell) {
+    CellSOA &cells = *sim.cells;
+    BackwallSOA &wall = *sim.backwall;
+    uint16_t cell_element = cells.elementIdx[cell];
+    uint16_t wall_element = wall.elementIdx[cell];
+    // The original reads these two element indices from the global, not from `sim`.
+    if (gSimData->vacuumElementIdx == wall_element || gSimData->vacuumElementIdx == cell_element ||
+        gSimData->unk_0x1e == wall_element || gSimData->unk_0x1e == cell_element) {
+        return;
+    }
+    const ElementTemperatureData &ec = gElementTemperatureData[cell_element];
+    const ElementTemperatureData &ew = gElementTemperatureData[wall_element];
+    float wall_conductivity = ew.thermalConductivity;
+    float ins = static_cast<float>(cells.insulation[cell]);
+    float ins2 = ins * ins;
+    float cell_conductivity = (0x1.020306p-16f * ins2) * ec.thermalConductivity;
+    float area = SurfaceArea(ec, StateOf(ew.state), 1.0f);
+    switch (StateOf(ec.state)) {
+    case kLiquid: area *= ew.liquidSurfaceAreaMultiplier; break;
+    case kSolid: area *= ew.solidSurfaceAreaMultiplier; break;
+    case kGas: area *= ew.gasSurfaceAreaMultiplier; break;
+    default: break;
+    }
+    float conductance;
+    if (65024.9921875f > ins2) {
+        conductance = area * MinSS(cell_conductivity, wall_conductivity);
+    } else {
+        float log_c = logf(cell_conductivity);
+        float log_w = logf(wall_conductivity);
+        conductance = area * expf((log_w + log_c) * 0.5f);
+    }
+
+    float tc = cells.temperature[cell];
+    float *wall_temperature = &wall.temperature[cell];
+    float tw = *wall_temperature;
+    double cond = conductance;
+    double tc_d = tc;
+    double tw_d = tw;
+    double capacity_w = static_cast<float>(wall.mass[cell] * ew.specificHeatCapacity);
+    double capacity_c = static_cast<float>(cells.mass[cell] * ec.specificHeatCapacity);
+    double equilibrium = (capacity_w * tw_d + capacity_c * tc_d) / (capacity_w + capacity_c);
+    const double kRate = static_cast<double>(0.2f);
+    const double kStep = static_cast<double>(0.01f);
+    float new_tc, new_tw;
+    if (tc > tw) {
+        double diff = tc_d - tw_d;
+        double step = kStep * diff;
+        double energy = MinSD((diff * kRate) * cond, step * capacity_w);
+        energy = MinSD(step * capacity_c, energy);
+        new_tw = static_cast<float>(MinSD(energy / capacity_w + tw_d, equilibrium));
+        new_tc = static_cast<float>(MaxSD(-energy / capacity_c + tc_d, equilibrium));
+    } else {
+        double diff = tw_d - tc_d;
+        double step = kStep * diff;
+        double energy = MinSD((diff * kRate) * cond, step * capacity_c);
+        energy = MinSD(energy, step * capacity_w);
+        new_tc = static_cast<float>(MinSD(energy / capacity_c + tc_d, equilibrium));
+        new_tw = static_cast<float>(MaxSD(tw_d + -energy / capacity_w, equilibrium));
+    }
+    float *out = &sim.updatedCells->temperature[cell];
+    *out = new_tc + (*out - tc);
+    *wall_temperature = new_tw;
+    if (ew.lowTemp - 3.0f > new_tw || new_tw > 3.0f + ew.highTemp) {
+        int game_cell = ToGameCell(sim, cell);
+        if (IsValidGameCell(sim, game_cell)) {
+            events.backwallShouldTransition.push_back(BackwallShouldTransitionInfo{game_cell});
+        }
+    }
+}

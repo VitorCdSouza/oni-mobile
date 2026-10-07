@@ -34,8 +34,10 @@ struct SimData 0x748
   0x18 u8 savedOptions           # SimSavedOptions bits: 1 = ENABLE_DIAGONAL_FALLING_SAND
   0x1a u16 unk_0x1a              # an element index unstable solids never fall into
   0x1c u16 vacuumElementIdx      # element written by ClearCell
+  0x1e u16 unk_0x1e              # another special element index, skipped by backwall heat exchange
   0x20 CellSOA* cells
   0x28 CellSOA* updatedCells     # guess: written by the update, swapped with cells
+  0x30 BackwallSOA* backwall
   0x58 f32* unk_0x58             # per cell; DoSublimation adds the sublimated mass
   0x60 Vector4f* unk_0x60        # per cell; zeroed when the cell evaporates
   0x68 u8* unk_0x68              # per-cell flags, DoStateTransition sets the low 5 bits
@@ -298,3 +300,47 @@ global gElementLightAbsorptionData vec<ElementLightAbsorptionData>
 global gElementRadiationData vec<ElementRadiationData>
 global gElementStateData vec<u8>
 global gSimData SimData*
+
+# Background walls (DLC backwall layer), one entry per sim cell. Packed: the vectors sit at 4.
+struct BackwallSOA 0x4c pack=4
+  0x00 i32 unk_0x0
+  0x04 vec<u16> elementIdx
+  0x1c vec<f32> mass
+  0x34 vec<f32> temperature
+
+struct Region 0x10
+  0x0 i32 minX
+  0x4 i32 minY
+  0x8 i32 maxX
+  0xc i32 maxY
+
+# Worker-pool tasks. They are classes with a vtable at 0; the port only defines InternalDoTask.
+struct SimUpdateTemperatureTask 0x28
+  0x00 ptr vtable
+  0x08 SimData* sim
+  0x10 SimEvents* events
+  0x18 Region region
+  method void InternalDoTask();
+
+# Copy rows of the bordered sim grid into the game's grid.
+struct UpdateCellSOATask 0x30
+  0x00 ptr vtable
+  0x08 CellSOA* src
+  0x10 CellSOA* dst
+  0x18 i32 numRows
+  0x1c i32 firstRow
+  0x20 i32 srcStride
+  0x24 i32 dstFirstRow
+  0x28 i32 rowLength
+  method void InternalDoTask();
+
+struct UpdateBackwallTask 0x30
+  0x00 ptr vtable
+  0x08 BackwallSOA* src
+  0x10 BackwallSOA* dst
+  0x18 i32 numRows
+  0x1c i32 firstRow
+  0x20 i32 srcStride
+  0x24 i32 dstFirstRow
+  0x28 i32 rowLength
+  method void InternalDoTask();

@@ -37,6 +37,11 @@ struct ElementPressureData;
 struct ElementPropertyTextureData;
 struct ElementLightAbsorptionData;
 struct ElementRadiationData;
+struct BackwallSOA;
+struct Region;
+struct SimUpdateTemperatureTask;
+struct UpdateCellSOATask;
+struct UpdateBackwallTask;
 
 struct CellSOA {
     std::vector<uint16_t> elementIdx;
@@ -63,10 +68,11 @@ struct SimData {
     uint8_t pad_0x19[1];
     uint16_t unk_0x1a;
     uint16_t vacuumElementIdx;
-    uint8_t pad_0x1e[2];
+    uint16_t unk_0x1e;
     CellSOA * cells;
     CellSOA * updatedCells;
-    uint8_t pad_0x30[40];
+    BackwallSOA * backwall;
+    uint8_t pad_0x38[32];
     float * unk_0x58;
     Vector4f * unk_0x60;
     uint8_t * unk_0x68;
@@ -355,6 +361,56 @@ struct ElementLightAbsorptionData {
 struct ElementRadiationData {
     float radiationAbsorptionFactor;
     float radiationPer1000Mass;
+};
+
+#pragma pack(push, 4)
+struct BackwallSOA {
+    int32_t unk_0x0;
+    std::vector<uint16_t> elementIdx;
+    std::vector<float> mass;
+    std::vector<float> temperature;
+};
+#pragma pack(pop)
+
+struct Region {
+    int32_t minX;
+    int32_t minY;
+    int32_t maxX;
+    int32_t maxY;
+};
+
+struct SimUpdateTemperatureTask {
+    void * vtable;
+    SimData * sim;
+    SimEvents * events;
+    Region region;
+    void InternalDoTask();
+};
+
+struct UpdateCellSOATask {
+    void * vtable;
+    CellSOA * src;
+    CellSOA * dst;
+    int32_t numRows;
+    int32_t firstRow;
+    int32_t srcStride;
+    int32_t dstFirstRow;
+    int32_t rowLength;
+    uint8_t pad_0x2c[4];
+    void InternalDoTask();
+};
+
+struct UpdateBackwallTask {
+    void * vtable;
+    BackwallSOA * src;
+    BackwallSOA * dst;
+    int32_t numRows;
+    int32_t firstRow;
+    int32_t srcStride;
+    int32_t dstFirstRow;
+    int32_t rowLength;
+    uint8_t pad_0x2c[4];
+    void InternalDoTask();
 };
 
 extern std::vector<Element> gElements;

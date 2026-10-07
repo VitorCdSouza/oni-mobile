@@ -29,8 +29,10 @@ def parse(path):
             globals_.append((name, typ))
             continue
         if line.startswith('struct '):
-            _, name, size = line.split()
-            cur = {'name': name, 'size': int(size, 16), 'fields': [], 'methods': []}
+            parts = line.split()
+            name, size = parts[1], parts[2]
+            pack = next((int(p.split('=')[1]) for p in parts[3:] if p.startswith('pack=')), None)
+            cur = {'name': name, 'size': int(size, 16), 'fields': [], 'methods': [], 'pack': pack}
             structs[name] = cur
             order.append(name)
             continue
@@ -106,6 +108,8 @@ def ghidra_header(structs, order):
     out.append('')
     for name in order:
         s = structs[name]
+        if s['pack']:
+            out.append(f'#pragma pack(push, {s["pack"]})')
         out.append(f'struct {name} {{')
         pos = 0
         for off, typ, fname in sorted(s['fields']):
@@ -123,6 +127,8 @@ def ghidra_header(structs, order):
         if pos < s['size']:
             out.append(f'    uint8_t pad_{pos:#x}[{s["size"] - pos}];')
         out.append('};')
+        if s['pack']:
+            out.append('#pragma pack(pop)')
         out.append('')
     # Global variable types, read by ApplyTypes.java: "//@global <symbol> <C type name> <is pointer>".
     for gname, typ in parse.globals:
@@ -157,6 +163,8 @@ def cpp_header(structs, order):
     out += [f'struct {n};' for n in order] + ['']
     for name in order:
         s = structs[name]
+        if s['pack']:
+            out.append(f'#pragma pack(push, {s["pack"]})')
         out.append(f'struct {name} {{')
         pos = 0
         for off, typ, fname in sorted(s['fields']):
@@ -171,6 +179,8 @@ def cpp_header(structs, order):
         for m in s['methods']:
             out.append(f'    {m}')
         out.append('};')
+        if s['pack']:
+            out.append('#pragma pack(pop)')
         out.append('')
     for gname, typ in parse.globals:
         out.append(f'extern {cpp_type(typ)} {gname};')
