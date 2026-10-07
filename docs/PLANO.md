@@ -160,6 +160,30 @@ Ferramenta extra: `python3 sim/gen/rodata.py sim/libSimDLL.x86_64.so --symbol <n
 as constantes que uma função lê da memória com o valor exato. O Ghidra arredonda os literais
 (1/32767 aparece como `3.051851e-05`, mas o original usa `0x1.0002p-15f`).
 
+### Build standalone
+
+`make -C sim/port standalone` gera `sim/build/standalone/libSimDLL.so` só com o código do port: a
+camada de carga e API (`SIM_*`, `ConduitTemperatureManager_*`, `FrameSync`, thread da sim, `Load`,
+`SIM_BeginSave`, construção do `SimData`/`GameData`) foi escrita direto para ele. O replay roda
+com essa lib no lugar da original:
+
+    sim/build/replay sim/build/standalone/libSimDLL.so sim/recordings/porAgua2-c426.bin
+
+Resultado: as 5549 observações idênticas às do original, e os saves byte a byte iguais (menos o
+primeiro, que já tem lixo de memória no próprio original).
+
+Achados:
+
+- `CellSOA` nasce com elemento 0xffff, isolamento 0xff, resistência 0x84 e sem germe.
+- O slot novo de `ElementChunkInfo` não é inicializado no original (o construtor padrão não faz
+  nada): o primeiro `deltaKJ` de um detrito novo é lixo do heap somado à energia do passo (deu NaN
+  na gravação). O port usa 0; o replay mascara esse campo como padding. O jogo só usa o valor numa
+  média de kW exibida.
+- A thread da sim liga flush-to-zero (`MXCSR |= 0x8000`). No ARM o bit FZ do FPCR também zera
+  denormais na entrada, o que o x86 não faz: possível diferença no celular.
+- `DoGasInteraction` (e a tabela de interações) e `ShouldDoLiquidConversion` são código morto no
+  original.
+
 ### Gravações que faltam
 
 A gravação de 4 minutos não passa por todos os ramos. Vai ser preciso um save de laboratório no

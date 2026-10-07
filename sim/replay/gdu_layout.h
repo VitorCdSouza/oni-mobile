@@ -28,7 +28,7 @@ static const GduArray kGduArrays[] = {
     {"componentStateChangedMessages", 280, 284, 8, {-1}},
     {"removedMassEntries", 292, 296, 20, {7, -1}},
     {"emittedMassEntries", 304, 308, 16, {3, -1}},
-    {"elementChunkInfos", 316, 320, 8, {-1}},
+    {"elementChunkInfos", 316, 320, 8, {4, 5, 6, 7, -1}},
     {"elementChunkMeltedInfos", 328, 332, 4, {-1}},
     {"buildingOverheatInfos", 340, 344, 4, {-1}},
     {"buildingNoLongerOverheatedInfos", 352, 356, 4, {-1}},

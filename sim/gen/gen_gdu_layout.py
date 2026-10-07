@@ -24,6 +24,13 @@ TEXEL_SIZES = {
     'propertyTextureExposedToSunlight': 1,
 }
 
+# Bytes the original leaves uninitialized in some entries, masked like padding: a new
+# ElementChunkInfo slot is never initialized (its default constructor does nothing), so the first
+# deltaKJ of a new debris item is heap garbage plus the step's energy.
+UNINITIALIZED_BYTES = {
+    'elementChunkInfos': [4, 5, 6, 7],
+}
+
 def load_sources(root):
     return {f: open(f, encoding='utf-8', errors='ignore').read()
             for f in glob.glob(root + '/**/*.cs', recursive=True)}
@@ -130,6 +137,7 @@ def main(root, out):
         if prev.lower() == 'num' + fn.lower() and offsets[prev][1] == 'int':
             elem = size_align(ft[:-1], structs, enums)[0]
             pads = padding_bytes(ft[:-1], structs, enums)
+            pads += UNINITIALIZED_BYTES.get(fn, [])
             if len(pads) > 8:
                 raise SystemExit(f'{ft}: more than 8 padding bytes')
             pad_list = ', '.join(str(p) for p in pads + [-1])
