@@ -1,14 +1,9 @@
 // Germ growth and death per cell (Disease::PostProcess).
 #include <math.h>
 
+#include "binary_buffer.h"
 #include "sim_common.h"
 
-// C# Klei.AI.Disease.RangeInfo: minViable, minGrowth, maxGrowth, maxViable.
-struct DiseaseInfo {
-    struct RangeInfo {
-        float v[4];
-    };
-};
 
 // Half life at a temperature: interpolated between the half lives of the two RangeInfo bounds
 // around it, infinite (no change) between minGrowth and maxGrowth or when a bound's half life is.
@@ -77,24 +72,23 @@ void Disease::PostProcess(SimData &sim, SimEvents &events, int min_x, int max_x,
                 continue;
             }
             float half_life = CalculateRangeHalfLife(
-                upd.temperature[c], *reinterpret_cast<const DiseaseInfo::RangeInfo *>(Range(idx, kTemperatureRange)),
-                *reinterpret_cast<const DiseaseInfo::RangeInfo *>(Range(idx, kTemperatureHalfLives)));
+                upd.temperature[c], Info(idx).temperatureRange, Info(idx).temperatureHalfLives);
             float rate = HalfLifeToGrowthRate(half_life);
             int count = upd.diseaseCount[c];
             float fc = static_cast<float>(count);
             uint16_t e = upd.elementIdx[c];
             float mass = upd.mass[c];
             float value = (upd.diseaseAccumulatedError[c] - fc) + rate * fc;
-            float min_count = Table<float>(idx, kMinCountPerKG)[e] * mass;
-            float max_count = mass * Table<float>(idx, kMaxCountPerKG)[e];
+            float min_count = Info(idx).growth.minCountPerKG[e] * mass;
+            float max_count = mass * Info(idx).growth.maxCountPerKG[e];
             const float *half_lives;
             if (!(max_count < fc) && fc >= min_count) {
-                half_lives = Table<float>(idx, kPopulationHalfLife);
+                half_lives = Info(idx).growth.populationHalfLife.data();
             } else if (min_count > static_cast<float>(upd.diseaseCount[c])) {
                 half_lives = nullptr;
-                value -= 0.2f * Table<float>(idx, kUnderPopulationDeathRate)[e];
+                value -= 0.2f * Info(idx).growth.underPopulationDeathRate[e];
             } else {
-                half_lives = Table<float>(idx, kOverPopulationHalfLife);
+                half_lives = Info(idx).growth.overPopulationHalfLife.data();
             }
             if (half_lives != nullptr) {
                 float growth = HalfLifeToGrowthRate(half_lives[e]);
@@ -102,7 +96,7 @@ void Disease::PostProcess(SimData &sim, SimEvents &events, int min_x, int max_x,
                 value += (growth - 1.0f) * static_cast<float>(count);
             }
             if (radiation) {
-                value -= upd.unk_0xf0[c] * Field(idx, kRadiationKillRate);
+                value -= upd.unk_0xf0[c] * Info(idx).radiationKillRate;
             }
             int whole = static_cast<int>(value);
             upd.diseaseAccumulatedError[c] = value - static_cast<float>(whole);
@@ -130,13 +124,72 @@ void Disease::PostProcess(SimData &sim, SimEvents &events, int min_x, int max_x,
 // Index of the disease with this name hash (the first uint32 of its record), 0xff if none.
 // Only the first 255 records are searched.
 uint8_t Disease::GetDiseaseIndex(uint32_t hash) const {
-    size_t count = static_cast<size_t>(recordsEnd - records) / 0x110;
-    for (size_t i = 0; i < count && i <= 0xfe; i++) {
-        uint32_t record_hash;
-        __builtin_memcpy(&record_hash, records + i * 0x110, sizeof record_hash);
-        if (record_hash == hash) {
+    for (size_t i = 0; i < infos.size() && i <= 0xfe; i++) {
+        if (infos[i].hash == hash) {
             return static_cast<uint8_t>(i);
         }
     }
     return 0xff;
+}
+
+void DiseaseInfo::ElemGrowthInfo::Initialize(int element_count) {
+    size_t n = static_cast<size_t>(static_cast<long>(element_count));
+    underPopulationDeathRate.resize(n);
+    populationHalfLife.resize(n);
+    overPopulationHalfLife.resize(n);
+    diffusionScale.resize(n);
+    minCountPerKG.resize(n);
+    maxCountPerKG.resize(n);
+    minDiffusionCount.resize(n);
+    minDiffusionInfestationTickCount.resize(n);
+}
+
+namespace {
+
+void ReadRange(BinaryBufferReader &reader, DiseaseInfo::RangeInfo &range) {
+    for (float &v : range.v) {
+        reader >> v;
+    }
+}
+
+}  // namespace
+
+// Message: int germ count, int element count, then per germ: name, hash, strength, four
+// RangeInfo (temperature, temperature half lives, pressure, pressure half lives), radiation kill
+// rate and the ElemGrowthInfo of every element.
+Disease::Disease(StreamReader &stream) {
+    BinaryBufferReader &reader = reinterpret_cast<BinaryBufferReader &>(stream);
+    int count = reader.Read<int32_t>();
+    int element_count = reader.Read<int32_t>();
+    names.resize(static_cast<size_t>(static_cast<long>(count)));
+    infos.resize(static_cast<size_t>(static_cast<long>(count)));
+    if (static_cast<long>(element_count) != static_cast<long>(gElements.size())) {
+        AssertFunc("BREAKPT:", 0x4a, "Disease.cpp");
+        KCrashReporterReportMessage("Disease.cpp", 0x4a,
+                                    "Elements table contains %d elements but diseases are only listing %d growth info "
+                                    "entries",
+                                    element_count, static_cast<int>(gElements.size()));
+    }
+    for (int i = 0; i < count; i++) {
+        DiseaseInfo &d = infos[static_cast<size_t>(i)];
+        reader >> names[static_cast<size_t>(i)];
+        reader >> d.hash;
+        reader >> d.strength;
+        ReadRange(reader, d.temperatureRange);
+        ReadRange(reader, d.temperatureHalfLives);
+        ReadRange(reader, d.pressureRange);
+        ReadRange(reader, d.pressureHalfLives);
+        reader >> d.radiationKillRate;
+        d.growth.Initialize(element_count);
+        for (size_t e = 0; e < static_cast<size_t>(static_cast<long>(element_count)); e++) {
+            reader >> d.growth.underPopulationDeathRate[e];
+            reader >> d.growth.populationHalfLife[e];
+            reader >> d.growth.overPopulationHalfLife[e];
+            reader >> d.growth.diffusionScale[e];
+            reader >> d.growth.minCountPerKG[e];
+            reader >> d.growth.maxCountPerKG[e];
+            reader >> d.growth.minDiffusionCount[e];
+            reader >> d.growth.minDiffusionInfestationTickCount[e];
+        }
+    }
 }

@@ -1,6 +1,9 @@
 // Helpers shared by the port's simulation code.
 #pragma once
+#include <cstddef>
 #include <cstdint>
+#include <string>
+#include <vector>
 
 #include "sim_types.h"
 
@@ -12,48 +15,54 @@ void KCrashReporterReportMessage(const char *file, int line, const char *format,
 // True for a non-zero, non-NaN float (how the original's "!= 0.0f" asserts compile).
 inline bool IsNonZero(float x) { return x < 0.0f || x > 0.0f; }
 
-// The disease table. Only what the port uses is declared: the first member points at one
-// 0x110-byte record per disease, whose float at +4 weighs germs when two kinds meet.
-struct Disease {
-    const uint8_t *records;     // std::vector of 0x110-byte records: begin, end
-    const uint8_t *recordsEnd;
+// Germ types, sent by the game at load (one DiseaseInfo per germ, Klei.AI.Disease in C#).
+struct DiseaseInfo {
+    // C# Klei.AI.Disease.RangeInfo: minViable, minGrowth, maxGrowth, maxViable.
+    struct RangeInfo {
+        float v[4];
+    };
+    // C# ElemGrowthInfo, one vector entry per element.
+    struct ElemGrowthInfo {
+        std::vector<float> underPopulationDeathRate;
+        std::vector<float> populationHalfLife;
+        std::vector<float> overPopulationHalfLife;
+        std::vector<float> diffusionScale;
+        std::vector<float> minCountPerKG;
+        std::vector<float> maxCountPerKG;
+        std::vector<int32_t> minDiffusionCount;
+        std::vector<uint8_t> minDiffusionInfestationTickCount;
+        void Initialize(int element_count);
+    };
+    uint32_t hash;                   // name hash
+    float strength;                  // weighs germs when two kinds meet in a cell
+    RangeInfo temperatureRange;
+    RangeInfo temperatureHalfLives;
+    RangeInfo pressureRange;
+    RangeInfo pressureHalfLives;
+    ElemGrowthInfo growth;
+    float radiationKillRate;
+};
+static_assert(sizeof(DiseaseInfo) == 0x110, "DiseaseInfo size");
+static_assert(offsetof(DiseaseInfo, growth) == 0x48, "DiseaseInfo::growth offset");
+static_assert(offsetof(DiseaseInfo, radiationKillRate) == 0x108, "DiseaseInfo::radiationKillRate offset");
 
-    float Weight(uint8_t disease_idx) const {
-        float w;
-        __builtin_memcpy(&w, records + static_cast<size_t>(disease_idx) * 0x110 + 4, sizeof w);
-        return w;
-    }
-    // Per-element tables inside a disease record (std::vector begin pointers).
-    template <typename T>
-    const T *Table(uint8_t disease_idx, size_t offset) const {
-        const T *table;
-        __builtin_memcpy(&table, records + static_cast<size_t>(disease_idx) * 0x110 + offset, sizeof table);
-        return table;
-    }
-    float Field(uint8_t disease_idx, size_t offset) const {
-        float v;
-        __builtin_memcpy(&v, records + static_cast<size_t>(disease_idx) * 0x110 + offset, sizeof v);
-        return v;
-    }
-    const float *Range(uint8_t disease_idx, size_t offset) const {
-        return reinterpret_cast<const float *>(records + static_cast<size_t>(disease_idx) * 0x110 + offset);
-    }
-    // Record offsets: RangeInfo (minViable, minGrowth, maxGrowth, maxViable) of temperatures and
-    // of their half lives, then the C# ElemGrowthInfo fields as per-element vectors.
-    static constexpr size_t kTemperatureRange = 0x08;
-    static constexpr size_t kTemperatureHalfLives = 0x18;
-    static constexpr size_t kUnderPopulationDeathRate = 0x48;
-    static constexpr size_t kPopulationHalfLife = 0x60;
-    static constexpr size_t kOverPopulationHalfLife = 0x78;
-    static constexpr size_t kMinCountPerKG = 0xa8;
-    static constexpr size_t kMaxCountPerKG = 0xc0;
-    static constexpr size_t kRadiationKillRate = 0x108;
+struct StreamReader;
+
+struct Disease {
+    std::vector<DiseaseInfo> infos;
+    std::vector<std::string> names;
+
+    Disease(StreamReader &reader);
+
+    const DiseaseInfo &Info(uint8_t disease_idx) const { return infos[disease_idx]; }
+    float Weight(uint8_t disease_idx) const { return Info(disease_idx).strength; }
     void AddDiseaseToCell(CellSOA *soa, int cell, unsigned char disease_idx, int count);
     float GetDiffusionScale(const SimData &sim, int cell);
     uint8_t GetDiseaseIndex(uint32_t hash) const;
     void PostProcess(SimData &sim, SimEvents &events, int min_x, int max_x, int min_y, int max_y);
     void UpdateCells(float dt, SimData &sim, SimEvents &events, int a, int b);
 };
+static_assert(sizeof(Disease) == 0x30, "Disease size");
 extern Disease *gDisease;
 
 #define SIM_ASSERT(cond, line, file)                       \

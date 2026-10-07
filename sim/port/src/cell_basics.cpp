@@ -79,13 +79,13 @@ float Disease::GetDiffusionScale(const SimData &sim, int cell) {
     uint8_t idx = cells.diseaseIdx[cell];
     int count = cells.diseaseCount[cell];
     uint16_t element = cells.elementIdx[cell];
-    if (Table<int32_t>(idx, 0xd8)[element] > count) {
+    if (Info(idx).growth.minDiffusionCount[element] > count) {
         return 0.0f;
     }
-    if (Table<uint8_t>(idx, 0xf0)[element] > cells.diseaseInfestationTickCount[cell]) {
+    if (Info(idx).growth.minDiffusionInfestationTickCount[element] > cells.diseaseInfestationTickCount[cell]) {
         return 0.0f;
     }
-    return Table<float>(idx, 0x90)[element];
+    return Info(idx).growth.diffusionScale[element];
 }
 
 // Germs spreading between two neighbouring cells of the same state: 1/8 of the dominant side
