@@ -81,6 +81,12 @@ static time_t replayed_time(time_t *out) {
     return v;
 }
 
+static unsigned g_threads;
+
+// std::thread::hardware_concurrency() inside the library, overridden with SIM_THREADS to check
+// that results do not depend on the core count (the phone has 8, the PC 28).
+static unsigned replayed_hardware_concurrency(void) { return g_threads; }
+
 static int game_handler(int message_id, void *data) {
     (void)data;
     printf("callback %d\n", message_id);
@@ -224,6 +230,14 @@ int main(int argc, char **argv) {
     const char *base = strrchr(argv[1], '/') ? strrchr(argv[1], '/') + 1 : argv[1];
     if (gotpatch(base, "time", (void *)replayed_time) == 0) {
         fprintf(stderr, "replay: note: %s does not import time()\n", base);
+    }
+
+    const char *threads = getenv("SIM_THREADS");
+    if (threads) {
+        g_threads = (unsigned)atoi(threads);
+        if (gotpatch(base, "_ZNSt6thread20hardware_concurrencyEv", (void *)replayed_hardware_concurrency) == 0) {
+            fprintf(stderr, "replay: note: %s does not import hardware_concurrency()\n", base);
+        }
     }
 
     g_in = fopen(argv[2], "rb");

@@ -6,3 +6,5 @@ tools/jdk-*/
 sim/decomp/
 sim/ghidra.log
 sim/build/
+save-backup/
+sim/recordings/

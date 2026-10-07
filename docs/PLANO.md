@@ -25,11 +25,29 @@ Nada deste repositório (código decompilado, assets, binários do jogo) é dist
    e gerar primeiro uma build IL2CPP para **Linux**, para separar problemas de AOT dos problemas de Android.
 3. **Shaders**: extrair os shaders customizados (a build Linux guarda GLSL) e testar a conversão para GLES 3.
 
+### Resultados da Fase 0 até aqui
+
+- Decompilação: 425 funções da simulação (~34 mil linhas de pseudo-C do Ghidra), 100 do profiler
+  embutido, 418 de STL/runtime e 163 sem nome.
+- Interface com o C#: ~30 funções exportadas, a maior parte por mensagens (`SIM_HandleMessage`).
+- Gravação de referência: `sim/recordings/porAgua2-c426.bin`. É o save "Por Agua Abaixo 2" no ciclo
+  426, com uns 4 minutos em velocidade 3, 3182 frames de simulação e 3 saves (750 MB, não versionado).
+- **A simulação é determinística**: dois replays da mesma gravação dão os mesmos hashes nas 5549
+  observações. O resultado também não muda com 1, 8 ou 28 núcleos (só existe uma `SimThread`).
+- A única diferença entre rodadas está no primeiro blob de save: ~478 floats de lixo vindos de
+  memória não inicializada. O `compare.py` compara saves só pelo tamanho.
+
 ## Fase 1 — SimDLL arm64
 
-Reimplementação em C++ a partir do decompilado, módulo por módulo, validada pelo replay.
+Reimplementação em C++ a partir do decompilado, validada pelo replay.
 Compilada com `-ffp-contract=off` para não divergir do x86 por FMA.
 O profiler embutido (`kprofiler_*`, sockets, HTTP) vira stub.
+
+Método incremental: cada função reescrita é injetada na própria lib original com um detour
+(salto absoluto no início da função original para a versão nova, compilada para x86_64 com as
+mesmas estruturas). As funções ainda não portadas continuam sendo chamadas pelo endereço original.
+Assim cada função é validada isoladamente contra a gravação, e a lib original é aposentada só
+quando todas as funções tiverem sido substituídas. Aí o mesmo código é compilado para arm64-v8a.
 
 ## Fase 2 — Build Android
 

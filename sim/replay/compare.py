@@ -4,6 +4,10 @@
 
 Lines are matched by position. For the first line that differs, every field that differs is
 listed, so the report reads like "observation 412, gdu: mass and temperature differ".
+
+Save blobs are compared by size only: the original library writes uninitialized memory into
+saves (a few hundred garbage floats that change between two runs of the same recording), so
+their hash is not a usable signal. Pass --strict-saves to compare them anyway.
 """
 import sys
 
@@ -15,9 +19,15 @@ def fields(line):
     return head, values
 
 
-def main(a_path, b_path):
+def drop_save_hash(line):
+    return ' '.join(p for p in line.split() if not p.startswith('blob=')) if ' save ' in line else line
+
+
+def main(a_path, b_path, strict_saves=False):
     with open(a_path) as a, open(b_path) as b:
         a_lines, b_lines = a.read().splitlines(), b.read().splitlines()
+    if not strict_saves:
+        a_lines, b_lines = [drop_save_hash(x) for x in a_lines], [drop_save_hash(x) for x in b_lines]
     for i, (la, lb) in enumerate(zip(a_lines, b_lines)):
         if la == lb:
             continue
@@ -35,4 +45,5 @@ def main(a_path, b_path):
 
 
 if __name__ == '__main__':
-    sys.exit(main(sys.argv[1], sys.argv[2]))
+    args = [a for a in sys.argv[1:] if not a.startswith('--')]
+    sys.exit(main(args[0], args[1], strict_saves='--strict-saves' in sys.argv))
