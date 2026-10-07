@@ -31,6 +31,8 @@ struct Disease {
     }
     void AddDiseaseToCell(CellSOA *soa, int cell, unsigned char disease_idx, int count);
     float GetDiffusionScale(const SimData &sim, int cell);
+    uint8_t GetDiseaseIndex(uint32_t hash) const;
+    void PostProcess(SimData &sim, SimEvents &events, int min_x, int max_x, int min_y, int max_y);
     void UpdateCells(float dt, SimData &sim, SimEvents &events, int a, int b);
 };
 extern Disease *gDisease;
@@ -57,6 +59,8 @@ struct Vector4 {
 struct SimBase {
     void UpdatedCellsToCells(SimData &sim, Vector2<int> min, Vector2<int> max);
     void CopyUpdatedCellsToCells(SimData &sim);
+    void ConsolidateEvents(SimData &sim);
+    void UpdateData(SimData &sim);
 };
 
 constexpr uint16_t kInvalidElement = 0xffff;
@@ -146,3 +150,9 @@ uint8_t IsLiquidPermeable(const CellSOA *soa, unsigned long cell);
 void UpdateTemperature(SimData &sim, SimEvents &events, int a, int b);
 void UpdateTemperatureForBackwallExchange(SimData &sim, SimEvents &events, int cell);
 int DoStateTransition(SimData &sim, SimEvents &events, int cell, const ElementTemperatureData &elem);
+float UpdatePressure(SimData &sim, SimEvents &events, const CellSOA *old, CellSOA *upd, int cell, uint16_t element,
+                     signed char state, float flow, int other);
+float DoGasPressureDisplacement(uint16_t element, int cell, int neighbour, int beyond, SimData &sim);
+float DoLiquidPressureDisplacement(uint16_t element, int cell, int neighbour, int beyond, SimData &sim);
+void UpdateLiquid(SimData &sim, SimEvents &events, int cell);
+void PostProcessCell(SimData &sim, SimEvents &events, int cell);

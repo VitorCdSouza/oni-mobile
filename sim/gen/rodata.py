@@ -24,7 +24,10 @@ def main(path, addrs):
     segs = list(segments(data))
     for a in addrs:
         v = int(a, 16)
-        off = next(o + v - va for va, o, sz in segs if va <= v < va + sz)
+        off = next((o + v - va for va, o, sz in segs if va <= v < va + sz), None)
+        if off is None:
+            print(f'{a}: (not file-backed: .bss, written at run time)')
+            continue
         f, = struct.unpack_from('<f', data, off)
         u, = struct.unpack_from('<I', data, off)
         d, = struct.unpack_from('<d', data, off)

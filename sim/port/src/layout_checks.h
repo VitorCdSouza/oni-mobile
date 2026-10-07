@@ -20,12 +20,15 @@ static_assert(offsetof(SimData, width) == 0x0, "SimData::width");
 static_assert(offsetof(SimData, height) == 0x4, "SimData::height");
 static_assert(offsetof(SimData, numGameCells) == 0x8, "SimData::numGameCells");
 static_assert(offsetof(SimData, rngState) == 0xc, "SimData::rngState");
+static_assert(offsetof(SimData, flowDirection) == 0x10, "SimData::flowDirection");
 static_assert(offsetof(SimData, gasDirection) == 0x14, "SimData::gasDirection");
 static_assert(offsetof(SimData, savedOptions) == 0x18, "SimData::savedOptions");
 static_assert(offsetof(SimData, vacuumElementIdx) == 0x1c, "SimData::vacuumElementIdx");
 static_assert(offsetof(SimData, cells) == 0x20, "SimData::cells");
 static_assert(offsetof(SimData, updatedCells) == 0x28, "SimData::updatedCells");
 static_assert(offsetof(SimData, backwall) == 0x30, "SimData::backwall");
+static_assert(offsetof(SimData, radiationLight) == 0x40, "SimData::radiationLight");
+static_assert(offsetof(SimData, activeRegions) == 0x70, "SimData::activeRegions");
 static_assert(offsetof(SimData, displacementDirection) == 0x90, "SimData::displacementDirection");
 static_assert(offsetof(SimData, events) == 0x98, "SimData::events");
 static_assert(offsetof(SimData, components) == 0xb0, "SimData::components");
@@ -254,9 +257,18 @@ static_assert(offsetof(ElementRadiationData, radiationAbsorptionFactor) == 0x0, 
 static_assert(offsetof(ElementRadiationData, radiationPer1000Mass) == 0x4, "ElementRadiationData::radiationPer1000Mass");
 
 static_assert(sizeof(BackwallSOA) == 0x4c, "BackwallSOA size");
+static_assert(offsetof(BackwallSOA, noneElementIdx) == 0x0, "BackwallSOA::noneElementIdx");
 static_assert(offsetof(BackwallSOA, elementIdx) == 0x4, "BackwallSOA::elementIdx");
 static_assert(offsetof(BackwallSOA, mass) == 0x1c, "BackwallSOA::mass");
 static_assert(offsetof(BackwallSOA, temperature) == 0x34, "BackwallSOA::temperature");
+
+static_assert(sizeof(ActiveRegion) == 0x18, "ActiveRegion size");
+static_assert(offsetof(ActiveRegion, minX) == 0x0, "ActiveRegion::minX");
+static_assert(offsetof(ActiveRegion, minY) == 0x4, "ActiveRegion::minY");
+static_assert(offsetof(ActiveRegion, maxX) == 0x8, "ActiveRegion::maxX");
+static_assert(offsetof(ActiveRegion, maxY) == 0xc, "ActiveRegion::maxY");
+static_assert(offsetof(ActiveRegion, sunlightIntensity) == 0x10, "ActiveRegion::sunlightIntensity");
+static_assert(offsetof(ActiveRegion, cosmicRadiationIntensity) == 0x14, "ActiveRegion::cosmicRadiationIntensity");
 
 static_assert(sizeof(Region) == 0x10, "Region size");
 static_assert(offsetof(Region, minX) == 0x0, "Region::minX");

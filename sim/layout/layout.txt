@@ -30,6 +30,7 @@ struct SimData 0x748
   0x04 i32 height
   0x08 i32 numGameCells          # (width - 2) * (height - 2)
   0x0c u32 rngState              # MSVC-style rand(): x = x * 214013 + 2531011, (x >> 16) & 0x7fff
+  0x10 i32 flowDirection         # +1 / -1, flipped by every SimBase::UpdateData
   0x14 i32 gasDirection          # +1 / -1, flipped by every gas cell PostProcessCell visits
   0x18 u8 savedOptions           # SimSavedOptions bits: 1 = ENABLE_DIAGONAL_FALLING_SAND
   0x1a u16 unk_0x1a              # an element index unstable solids never fall into
@@ -38,8 +39,11 @@ struct SimData 0x748
   0x20 CellSOA* cells
   0x28 CellSOA* updatedCells     # guess: written by the update, swapped with cells
   0x30 BackwallSOA* backwall
+  0x38 u8* unk_0x38              # per cell; 0xff marks cells outside every world (drained each tick)
+  0x40 vec<f32> radiationLight   # how much sky radiation reaches each cell (1.0 at the top)
   0x58 f32* unk_0x58             # per cell; DoSublimation adds the sublimated mass
   0x60 Vector4f* unk_0x60        # per cell; zeroed when the cell evaporates
+  0x70 vec<ActiveRegion> activeRegions
   0x68 u8* unk_0x68              # per-cell flags, DoStateTransition sets the low 5 bits
   0x88 u8* unk_0x88              # per game cell; gates spawning falling liquid (visibility?)
   0x90 u16 displacementDirection # rotates the neighbour order DisplaceGas/DisplaceLiquid try (low 2 bits)
@@ -60,6 +64,7 @@ struct SimData 0x748
   0x72c f32 unk_0x72c            # 0.8
   method void ClearCell(CellAccessor &cell);
   method uint8_t GetStableTicksRemaining(unsigned long cell);
+  method void UpdateComponents(float dt, const Region &region);
 
 struct Vector4f 0x10
   0x0 f32 x
@@ -305,10 +310,19 @@ global gSimData SimData*
 
 # Background walls (DLC backwall layer), one entry per sim cell. Packed: the vectors sit at 4.
 struct BackwallSOA 0x4c pack=4
-  0x00 i32 unk_0x0
+  0x00 u16 noneElementIdx           # element of an empty backwall
   0x04 vec<u16> elementIdx
   0x1c vec<f32> mass
   0x34 vec<f32> temperature
+
+# One active region per world, from NewGameFrame (sim coordinates: game + 1).
+struct ActiveRegion 0x18
+  0x00 i32 minX
+  0x04 i32 minY
+  0x08 i32 maxX
+  0x0c i32 maxY
+  0x10 f32 sunlightIntensity
+  0x14 f32 cosmicRadiationIntensity
 
 struct Region 0x10
   0x0 i32 minX

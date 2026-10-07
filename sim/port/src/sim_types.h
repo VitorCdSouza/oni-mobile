@@ -40,6 +40,7 @@ struct ElementPropertyTextureData;
 struct ElementLightAbsorptionData;
 struct ElementRadiationData;
 struct BackwallSOA;
+struct ActiveRegion;
 struct Region;
 struct SimUpdateTemperatureTask;
 struct UpdateCellSOATask;
@@ -94,7 +95,7 @@ struct SimData {
     int32_t height;
     int32_t numGameCells;
     uint32_t rngState;
-    uint8_t pad_0x10[4];
+    int32_t flowDirection;
     int32_t gasDirection;
     uint8_t savedOptions;
     uint8_t pad_0x19[1];
@@ -104,11 +105,12 @@ struct SimData {
     CellSOA * cells;
     CellSOA * updatedCells;
     BackwallSOA * backwall;
-    uint8_t pad_0x38[32];
+    uint8_t * unk_0x38;
+    std::vector<float> radiationLight;
     float * unk_0x58;
     Vector4f * unk_0x60;
     uint8_t * unk_0x68;
-    uint8_t pad_0x70[24];
+    std::vector<ActiveRegion> activeRegions;
     uint8_t * unk_0x88;
     uint16_t displacementDirection;
     uint8_t pad_0x92[6];
@@ -134,6 +136,7 @@ struct SimData {
     uint8_t pad_0x730[24];
     void ClearCell(CellAccessor &cell);
     uint8_t GetStableTicksRemaining(unsigned long cell);
+    void UpdateComponents(float dt, const Region &region);
 };
 
 struct Vector4f {
@@ -400,12 +403,22 @@ struct ElementRadiationData {
 
 #pragma pack(push, 4)
 struct BackwallSOA {
-    int32_t unk_0x0;
+    uint16_t noneElementIdx;
+    uint8_t pad_0x2[2];
     std::vector<uint16_t> elementIdx;
     std::vector<float> mass;
     std::vector<float> temperature;
 };
 #pragma pack(pop)
+
+struct ActiveRegion {
+    int32_t minX;
+    int32_t minY;
+    int32_t maxX;
+    int32_t maxY;
+    float sunlightIntensity;
+    float cosmicRadiationIntensity;
+};
 
 struct Region {
     int32_t minX;

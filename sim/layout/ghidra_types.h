@@ -40,6 +40,7 @@ struct ElementPropertyTextureData;
 struct ElementLightAbsorptionData;
 struct ElementRadiationData;
 struct BackwallSOA;
+struct ActiveRegion;
 struct Region;
 struct SimUpdateTemperatureTask;
 struct UpdateCellSOATask;
@@ -52,6 +53,7 @@ struct ConduitTemperatureData;
 struct ConduitTemperatureUpdateData;
 struct ConduitTemperatureManager;
 
+struct Vec_ActiveRegion { struct ActiveRegion *begin; struct ActiveRegion *end; struct ActiveRegion *cap; };
 struct Vec_BackwallElementChangedInfo { struct BackwallElementChangedInfo *begin; struct BackwallElementChangedInfo *end; struct BackwallElementChangedInfo *cap; };
 struct Vec_BackwallShouldTransitionInfo { struct BackwallShouldTransitionInfo *begin; struct BackwallShouldTransitionInfo *end; struct BackwallShouldTransitionInfo *cap; };
 struct Vec_BuildingContact { struct BuildingContact *begin; struct BuildingContact *end; struct BuildingContact *cap; };
@@ -129,7 +131,7 @@ struct SimData {
     int32_t height;
     int32_t numGameCells;
     uint32_t rngState;
-    uint8_t pad_0x10[4];
+    int32_t flowDirection;
     int32_t gasDirection;
     uint8_t savedOptions;
     uint8_t pad_0x19[1];
@@ -139,11 +141,12 @@ struct SimData {
     struct CellSOA * cells;
     struct CellSOA * updatedCells;
     struct BackwallSOA * backwall;
-    uint8_t pad_0x38[32];
+    uint8_t * unk_0x38;
+    struct Vec_f32 radiationLight;
     float * unk_0x58;
     struct Vector4f * unk_0x60;
     uint8_t * unk_0x68;
-    uint8_t pad_0x70[24];
+    struct Vec_ActiveRegion activeRegions;
     uint8_t * unk_0x88;
     uint16_t displacementDirection;
     uint8_t pad_0x92[6];
@@ -431,12 +434,22 @@ struct ElementRadiationData {
 
 #pragma pack(push, 4)
 struct BackwallSOA {
-    int32_t unk_0x0;
+    uint16_t noneElementIdx;
+    uint8_t pad_0x2[2];
     struct Vec_u16 elementIdx;
     struct Vec_f32 mass;
     struct Vec_f32 temperature;
 };
 #pragma pack(pop)
+
+struct ActiveRegion {
+    int32_t minX;
+    int32_t minY;
+    int32_t maxX;
+    int32_t maxY;
+    float sunlightIntensity;
+    float cosmicRadiationIntensity;
+};
 
 struct Region {
     int32_t minX;

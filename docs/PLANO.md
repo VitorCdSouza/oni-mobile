@@ -82,6 +82,21 @@ Ferramentas do ciclo:
 | `SimUpdateTemperatureTask`, `UpdateCellSOATask`, `UpdateBackwallTask`, `UpdateCellTask<Vector4<float>>` (`InternalDoTask`) | replay idêntico, 97% das linhas |
 | `UpdateTemperatureForBackwallExchange` | replay idêntico; também em `double`, a partir da disassembly |
 
+| `BuildingHeatExchange::Update`, `BuildingToBuildingHeatExchange::Update` | replay idêntico, 86% das linhas |
+| `ConduitTemperatureManager::Update`, `ClampEnergyTransfer`, `ModifyTemperature` | replay idêntico |
+| `UpdatePressure`, `DoGasPressureDisplacement`, `DoLiquidPressureDisplacement`, `Displace*Directional` | replay idêntico |
+| `Disease::UpdateCells`, `Disease::GetDiffusionScale` | replay idêntico |
+| `SimBase::UpdateData` (o tick inteiro: temperatura, pressão, líquidos, germes, radiação, pós-processamento) | replay idêntico, 97% das linhas |
+
+Achados do loop principal:
+
+- `SimBase::GetNumWorkers` devolve 1: a fila de tarefas tem um único worker, então o original já roda
+  as tarefas em série. O port faz o mesmo e continua exato.
+- Os dois passes de deslocamento por pressão começam na linha `min(minY, 3)` (provavelmente era para
+  ser `max`): para regiões acima do fundo do mapa eles varrem a partir da linha 3. Replicado.
+- A radiação usa um kernel 5x5 fixo (inicializado na primeira chamada) e uma grade de "luz do céu"
+  em `SimData+0x40`, propagada de cima para baixo.
+
 Teste de sensibilidade: trocar a constante `(double)0.2f` por `0.2` exato em `UpdateTemperature`
 (diferença relativa de 3e-9) diverge na observação 247. O replay pega erro de último bit.
 
