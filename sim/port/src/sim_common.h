@@ -156,3 +156,10 @@ float DoGasPressureDisplacement(uint16_t element, int cell, int neighbour, int b
 float DoLiquidPressureDisplacement(uint16_t element, int cell, int neighbour, int beyond, SimData &sim);
 void UpdateLiquid(SimData &sim, SimEvents &events, int cell);
 void PostProcessCell(SimData &sim, SimEvents &events, int cell);
+
+// Two germ populations in one cell: what survives (Disease::CalculateFinalDiseaseCount).
+struct DiseaseCount {
+    uint8_t idx;
+    int count;
+};
+DiseaseCount CombineDisease(const Disease &disease, uint8_t idx_a, int count_a, uint8_t idx_b, int count_b);

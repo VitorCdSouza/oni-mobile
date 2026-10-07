@@ -49,6 +49,8 @@ def size_of(typ, structs):
     m = re.fullmatch(r'(.+)\[(\d+)\]', typ)
     if m:
         return size_of(m.group(1), structs) * int(m.group(2))
+    if typ.startswith('queue<'):
+        return 0x50  # std::queue over a libstdc++ std::deque
     if typ.startswith('vec<') or typ.endswith('*'):
         return 24 if typ.startswith('vec<') else 8
     if typ in PRIM:
@@ -119,6 +121,10 @@ def ghidra_header(structs, order):
                 out.append(f'    uint8_t pad_{pos:#x}[{off - pos}];')
             m = re.fullmatch(r'(.+)\[(\d+)\]', typ)
             base, count = (m.group(1), m.group(2)) if m else (typ, None)
+            if base.startswith('queue<'):
+                out.append(f'    uint8_t {fname}[80];')
+                pos = off + size_of(typ, structs)
+                continue
             t = f'struct {vec_struct_name(base[4:-1])}' if base.startswith('vec<') else c_type(base)
             out.append(f'    {t} {fname}' + (f'[{count}]' if count else '') + ';')
             pos = off + size_of(typ, structs)
@@ -146,6 +152,8 @@ CPP_PRIM = {'u8': 'uint8_t', 'bool': 'bool', 'u16': 'uint16_t', 'i16': 'int16_t'
 
 
 def cpp_type(typ):
+    if typ.startswith('queue<'):
+        return f'std::queue<{cpp_type(typ[6:-1])}>'
     if typ.startswith('vec<'):
         return f'std::vector<{cpp_type(typ[4:-1])}>'
     if typ.endswith('*'):
@@ -157,7 +165,7 @@ def cpp_header(structs, order):
     order = embedded_first(structs, order)
     out = ['// Generated from sim/layout/layout.txt. Do not edit.',
            '// The original SimDLL structures, laid out exactly like the original.',
-           '#pragma once', '#include <cstdint>', '#include <vector>', '',
+           '#pragma once', '#include <cstdint>', '#include <queue>', '#include <vector>', '',
            '// Enums used in member function signatures (they shape the mangled names).',
            'namespace SpawnFXHashes { enum Type : int32_t {}; }', '']
     out += [f'struct {n};' for n in order] + ['']

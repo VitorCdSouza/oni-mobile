@@ -32,6 +32,7 @@ static_assert(offsetof(SimData, activeRegions) == 0x70, "SimData::activeRegions"
 static_assert(offsetof(SimData, displacementDirection) == 0x90, "SimData::displacementDirection");
 static_assert(offsetof(SimData, events) == 0x98, "SimData::events");
 static_assert(offsetof(SimData, components) == 0xb0, "SimData::components");
+static_assert(offsetof(SimData, elementConsumer) == 0xc8, "SimData::elementConsumer");
 static_assert(offsetof(SimData, buildingHeatExchange) == 0x430, "SimData::buildingHeatExchange");
 static_assert(offsetof(SimData, buildingToBuildingHeatExchange) == 0x4d0, "SimData::buildingToBuildingHeatExchange");
 static_assert(offsetof(SimData, headless) == 0x719, "SimData::headless");
@@ -373,4 +374,39 @@ static_assert(offsetof(ConduitTemperatureManager, frozen) == 0x98, "ConduitTempe
 static_assert(offsetof(ConduitTemperatureManager, temperatures) == 0xb0, "ConduitTemperatureManager::temperatures");
 static_assert(offsetof(ConduitTemperatureManager, result) == 0xc8, "ConduitTemperatureManager::result");
 static_assert(offsetof(ConduitTemperatureManager, mutex) == 0x120, "ConduitTemperatureManager::mutex");
+
+static_assert(sizeof(FloodFillInfo) == 0x6, "FloodFillInfo size");
+static_assert(offsetof(FloodFillInfo, x) == 0x0, "FloodFillInfo::x");
+static_assert(offsetof(FloodFillInfo, y) == 0x2, "FloodFillInfo::y");
+static_assert(offsetof(FloodFillInfo, distance) == 0x4, "FloodFillInfo::distance");
+
+static_assert(sizeof(ConsumedMassInfo) == 0x14, "ConsumedMassInfo size");
+static_assert(offsetof(ConsumedMassInfo, simHandle) == 0x0, "ConsumedMassInfo::simHandle");
+static_assert(offsetof(ConsumedMassInfo, removedElemIdx) == 0x4, "ConsumedMassInfo::removedElemIdx");
+static_assert(offsetof(ConsumedMassInfo, diseaseIdx) == 0x6, "ConsumedMassInfo::diseaseIdx");
+static_assert(offsetof(ConsumedMassInfo, mass) == 0x8, "ConsumedMassInfo::mass");
+static_assert(offsetof(ConsumedMassInfo, temperature) == 0xc, "ConsumedMassInfo::temperature");
+static_assert(offsetof(ConsumedMassInfo, diseaseCount) == 0x10, "ConsumedMassInfo::diseaseCount");
+
+static_assert(sizeof(ElementConsumerData) == 0x10, "ElementConsumerData size");
+static_assert(offsetof(ElementConsumerData, consumptionRate) == 0x0, "ElementConsumerData::consumptionRate");
+static_assert(offsetof(ElementConsumerData, radius) == 0x4, "ElementConsumerData::radius");
+static_assert(offsetof(ElementConsumerData, configuration) == 0x5, "ElementConsumerData::configuration");
+static_assert(offsetof(ElementConsumerData, elementIdx) == 0x6, "ElementConsumerData::elementIdx");
+static_assert(offsetof(ElementConsumerData, roundRobin) == 0x8, "ElementConsumerData::roundRobin");
+static_assert(offsetof(ElementConsumerData, x) == 0xa, "ElementConsumerData::x");
+static_assert(offsetof(ElementConsumerData, y) == 0xc, "ElementConsumerData::y");
+
+static_assert(sizeof(ElementConsumer) == 0x120, "ElementConsumer size");
+static_assert(offsetof(ElementConsumer, vtable) == 0x0, "ElementConsumer::vtable");
+static_assert(offsetof(ElementConsumer, data) == 0x8, "ElementConsumer::data");
+static_assert(offsetof(ElementConsumer, denseToHandle) == 0x20, "ElementConsumer::denseToHandle");
+static_assert(offsetof(ElementConsumer, freeHandles) == 0x38, "ElementConsumer::freeHandles");
+static_assert(offsetof(ElementConsumer, handleToDense) == 0x50, "ElementConsumer::handleToDense");
+static_assert(offsetof(ElementConsumer, versions) == 0x68, "ElementConsumer::versions");
+static_assert(offsetof(ElementConsumer, componentVtable) == 0x80, "ElementConsumer::componentVtable");
+static_assert(offsetof(ElementConsumer, visited) == 0x88, "ElementConsumer::visited");
+static_assert(offsetof(ElementConsumer, queue) == 0xa0, "ElementConsumer::queue");
+static_assert(offsetof(ElementConsumer, reachable) == 0xf0, "ElementConsumer::reachable");
+static_assert(offsetof(ElementConsumer, consumed) == 0x108, "ElementConsumer::consumed");
 

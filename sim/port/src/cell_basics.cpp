@@ -31,13 +31,6 @@ uint8_t SimData::GetStableTicksRemaining(unsigned long cell) {
     return static_cast<uint8_t>(start);
 }
 
-namespace {
-
-struct DiseaseCount {
-    uint8_t idx;
-    int count;
-};
-
 // Disease::CalculateFinalDiseaseCount: two germ populations in one cell fight; the stronger
 // (count times weight) one survives with what is left of it.
 DiseaseCount CombineDisease(const Disease &disease, uint8_t idx_a, int count_a, uint8_t idx_b, int count_b) {
@@ -64,8 +57,6 @@ DiseaseCount CombineDisease(const Disease &disease, uint8_t idx_a, int count_a, 
     }
     return {idx_a, count_a};
 }
-
-}  // namespace
 
 void Disease::AddDiseaseToCell(CellSOA *soa, int cell, unsigned char disease_idx, int count) {
     uint8_t current = soa->diseaseIdx[cell];

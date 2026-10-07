@@ -2,12 +2,14 @@
 // The original SimDLL structures, laid out exactly like the original.
 #pragma once
 #include <cstdint>
+#include <queue>
 #include <vector>
 
 // Enums used in member function signatures (they shape the mangled names).
 namespace SpawnFXHashes { enum Type : int32_t {}; }
 
 struct CellSOA;
+struct ElementConsumer;
 struct BuildingHeatExchange;
 struct BuildingToBuildingHeatExchange;
 struct SimData;
@@ -52,6 +54,9 @@ struct BuildingToBuildingHeatExchangeData;
 struct ConduitTemperatureData;
 struct ConduitTemperatureUpdateData;
 struct ConduitTemperatureManager;
+struct FloodFillInfo;
+struct ConsumedMassInfo;
+struct ElementConsumerData;
 
 struct CellSOA {
     std::vector<uint16_t> elementIdx;
@@ -65,6 +70,21 @@ struct CellSOA {
     std::vector<uint8_t> diseaseInfestationTickCount;
     std::vector<float> diseaseAccumulatedError;
     std::vector<float> unk_0xf0;
+};
+
+struct ElementConsumer {
+    void * vtable;
+    std::vector<ElementConsumerData> data;
+    std::vector<uint32_t> denseToHandle;
+    std::vector<uint32_t> freeHandles;
+    std::vector<int32_t> handleToDense;
+    std::vector<uint8_t> versions;
+    void * componentVtable;
+    std::vector<int32_t> visited;
+    std::queue<FloodFillInfo> queue;
+    std::vector<int32_t> reachable;
+    std::vector<ConsumedMassInfo> consumed;
+    void Update(float dt, SimData &sim, const Region &region);
 };
 
 struct BuildingHeatExchange {
@@ -120,7 +140,8 @@ struct SimData {
     uint8_t unk_0xa8;
     uint8_t pad_0xa9[7];
     std::vector<void *> components;
-    uint8_t pad_0xc8[872];
+    ElementConsumer elementConsumer;
+    uint8_t pad_0x1e8[584];
     BuildingHeatExchange buildingHeatExchange;
     BuildingToBuildingHeatExchange buildingToBuildingHeatExchange;
     uint8_t pad_0x558[448];
@@ -529,6 +550,34 @@ struct ConduitTemperatureManager {
     float ClampEnergyTransfer(float dt, float src_temperature, float src_capacity, float dst_temperature, float dst_capacity, float energy);
     float ModifyTemperature(float temperature, float capacity, float other_temperature, float other_capacity, float energy);
     ConduitTemperatureUpdateData *Update(float dt, const BuildingTemperatureInfo *buildings);
+};
+
+struct FloodFillInfo {
+    uint16_t x;
+    uint16_t y;
+    uint16_t distance;
+};
+
+struct ConsumedMassInfo {
+    int32_t simHandle;
+    uint16_t removedElemIdx;
+    uint8_t diseaseIdx;
+    uint8_t pad_0x7[1];
+    float mass;
+    float temperature;
+    int32_t diseaseCount;
+};
+
+struct ElementConsumerData {
+    float consumptionRate;
+    uint8_t radius;
+    uint8_t configuration;
+    uint16_t elementIdx;
+    uint8_t roundRobin;
+    uint8_t pad_0x9[1];
+    uint16_t x;
+    uint16_t y;
+    uint8_t pad_0xe[2];
 };
 
 extern std::vector<Element> gElements;

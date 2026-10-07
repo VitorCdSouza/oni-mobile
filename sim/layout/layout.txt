@@ -52,6 +52,7 @@ struct SimData 0x748
   0xa4 f32 unk_0xa4              # 0.001
   0xa8 u8 unk_0xa8               # when set, ignores unk_0x88
   0xb0 vec<ptr> components       # std::vector<SimComponent*>
+  0xc8 ElementConsumer elementConsumer
   0x430 BuildingHeatExchange buildingHeatExchange
   0x4d0 BuildingToBuildingHeatExchange buildingToBuildingHeatExchange
   0x718 bool unk_0x718
@@ -446,3 +447,40 @@ struct ConduitTemperatureManager 0x148
   method ConduitTemperatureUpdateData *Update(float dt, const BuildingTemperatureInfo *buildings);
 
 global gConduitTemperatureManager ConduitTemperatureManager*
+
+# Flood fill step: cell coordinates and distance from the start.
+struct FloodFillInfo 0x6
+  0x0 u16 x
+  0x2 u16 y
+  0x4 u16 distance
+
+struct ConsumedMassInfo 0x14
+  0x00 i32 simHandle
+  0x04 u16 removedElemIdx
+  0x06 u8 diseaseIdx
+  0x08 f32 mass
+  0x0c f32 temperature
+  0x10 i32 diseaseCount
+
+struct ElementConsumerData 0x10
+  0x0 f32 consumptionRate         # kg/s
+  0x4 u8 radius
+  0x5 u8 configuration            # 0 element, 1 any liquid, 2 any gas
+  0x6 u16 elementIdx
+  0x8 u8 roundRobin               # where the next search for "any" starts
+  0xa u16 x
+  0xc u16 y
+
+struct ElementConsumer 0x120
+  0x000 ptr vtable
+  0x008 vec<ElementConsumerData> data
+  0x020 vec<u32> denseToHandle
+  0x038 vec<u32> freeHandles
+  0x050 vec<i32> handleToDense
+  0x068 vec<u8> versions
+  0x080 ptr componentVtable
+  0x088 vec<i32> visited
+  0x0a0 queue<FloodFillInfo> queue
+  0x0f0 vec<i32> reachable
+  0x108 vec<ConsumedMassInfo> consumed
+  method void Update(float dt, SimData &sim, const Region &region);

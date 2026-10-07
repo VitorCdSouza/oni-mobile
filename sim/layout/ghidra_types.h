@@ -8,6 +8,7 @@ typedef unsigned long long uint64_t;
 typedef long long int64_t;
 
 struct CellSOA;
+struct ElementConsumer;
 struct BuildingHeatExchange;
 struct BuildingToBuildingHeatExchange;
 struct SimData;
@@ -52,6 +53,9 @@ struct BuildingToBuildingHeatExchangeData;
 struct ConduitTemperatureData;
 struct ConduitTemperatureUpdateData;
 struct ConduitTemperatureManager;
+struct FloodFillInfo;
+struct ConsumedMassInfo;
+struct ElementConsumerData;
 
 struct Vec_ActiveRegion { struct ActiveRegion *begin; struct ActiveRegion *end; struct ActiveRegion *cap; };
 struct Vec_BackwallElementChangedInfo { struct BackwallElementChangedInfo *begin; struct BackwallElementChangedInfo *end; struct BackwallElementChangedInfo *cap; };
@@ -64,9 +68,11 @@ struct Vec_CallbackInfo { struct CallbackInfo *begin; struct CallbackInfo *end; 
 struct Vec_CellMeltedInfo { struct CellMeltedInfo *begin; struct CellMeltedInfo *end; struct CellMeltedInfo *cap; };
 struct Vec_ComponentStateChangedMessage { struct ComponentStateChangedMessage *begin; struct ComponentStateChangedMessage *end; struct ComponentStateChangedMessage *cap; };
 struct Vec_ConduitTemperatureData { struct ConduitTemperatureData *begin; struct ConduitTemperatureData *end; struct ConduitTemperatureData *cap; };
+struct Vec_ConsumedMassInfo { struct ConsumedMassInfo *begin; struct ConsumedMassInfo *end; struct ConsumedMassInfo *cap; };
 struct Vec_ConsumedRadiationCallback { struct ConsumedRadiationCallback *begin; struct ConsumedRadiationCallback *end; struct ConsumedRadiationCallback *cap; };
 struct Vec_DiseaseConsumptionCallback { struct DiseaseConsumptionCallback *begin; struct DiseaseConsumptionCallback *end; struct DiseaseConsumptionCallback *cap; };
 struct Vec_Element { struct Element *begin; struct Element *end; struct Element *cap; };
+struct Vec_ElementConsumerData { struct ElementConsumerData *begin; struct ElementConsumerData *end; struct ElementConsumerData *cap; };
 struct Vec_ElementLightAbsorptionData { struct ElementLightAbsorptionData *begin; struct ElementLightAbsorptionData *end; struct ElementLightAbsorptionData *cap; };
 struct Vec_ElementLiquidData { struct ElementLiquidData *begin; struct ElementLiquidData *end; struct ElementLiquidData *cap; };
 struct Vec_ElementPostProcessData { struct ElementPostProcessData *begin; struct ElementPostProcessData *end; struct ElementPostProcessData *cap; };
@@ -103,6 +109,20 @@ struct CellSOA {
     struct Vec_u8 diseaseInfestationTickCount;
     struct Vec_f32 diseaseAccumulatedError;
     struct Vec_f32 unk_0xf0;
+};
+
+struct ElementConsumer {
+    void * vtable;
+    struct Vec_ElementConsumerData data;
+    struct Vec_u32 denseToHandle;
+    struct Vec_u32 freeHandles;
+    struct Vec_i32 handleToDense;
+    struct Vec_u8 versions;
+    void * componentVtable;
+    struct Vec_i32 visited;
+    uint8_t queue[80];
+    struct Vec_i32 reachable;
+    struct Vec_ConsumedMassInfo consumed;
 };
 
 struct BuildingHeatExchange {
@@ -156,7 +176,8 @@ struct SimData {
     uint8_t unk_0xa8;
     uint8_t pad_0xa9[7];
     struct Vec_ptr components;
-    uint8_t pad_0xc8[872];
+    struct ElementConsumer elementConsumer;
+    uint8_t pad_0x1e8[584];
     struct BuildingHeatExchange buildingHeatExchange;
     struct BuildingToBuildingHeatExchange buildingToBuildingHeatExchange;
     uint8_t pad_0x558[448];
@@ -553,6 +574,34 @@ struct ConduitTemperatureManager {
     struct ConduitTemperatureUpdateData result;
     uint8_t pad_0xec[52];
     uint8_t mutex[40];
+};
+
+struct FloodFillInfo {
+    uint16_t x;
+    uint16_t y;
+    uint16_t distance;
+};
+
+struct ConsumedMassInfo {
+    int32_t simHandle;
+    uint16_t removedElemIdx;
+    uint8_t diseaseIdx;
+    uint8_t pad_0x7[1];
+    float mass;
+    float temperature;
+    int32_t diseaseCount;
+};
+
+struct ElementConsumerData {
+    float consumptionRate;
+    uint8_t radius;
+    uint8_t configuration;
+    uint16_t elementIdx;
+    uint8_t roundRobin;
+    uint8_t pad_0x9[1];
+    uint16_t x;
+    uint16_t y;
+    uint8_t pad_0xe[2];
 };
 
 //@global gElements Vec_Element 0
