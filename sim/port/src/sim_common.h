@@ -12,8 +12,16 @@ void KCrashReporterReportMessage(const char *file, int line, const char *format,
 // True for a non-zero, non-NaN float (how the original's "!= 0.0f" asserts compile).
 inline bool IsNonZero(float x) { return x < 0.0f || x > 0.0f; }
 
-// The disease table; only the entry points the port calls are declared.
+// The disease table. Only what the port uses is declared: the first member points at one
+// 0x110-byte record per disease, whose float at +4 weighs germs when two kinds meet.
 struct Disease {
+    const uint8_t *records;
+
+    float Weight(uint8_t disease_idx) const {
+        float w;
+        __builtin_memcpy(&w, records + static_cast<size_t>(disease_idx) * 0x110 + 4, sizeof w);
+        return w;
+    }
     void AddDiseaseToCell(CellSOA *soa, int cell, unsigned char disease_idx, int count);
 };
 extern Disease *gDisease;

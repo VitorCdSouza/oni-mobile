@@ -32,6 +32,7 @@ struct SimData 0x748
   0x0c u32 rngState              # MSVC-style rand(): x = x * 214013 + 2531011, (x >> 16) & 0x7fff
   0x14 i32 gasDirection          # +1 / -1, flipped by every gas cell PostProcessCell visits
   0x18 u8 unk_0x18
+  0x1a u16 unk_0x1a              # an element index unstable solids never fall into
   0x1c u16 vacuumElementIdx      # element written by ClearCell
   0x20 CellSOA* cells
   0x28 CellSOA* updatedCells     # guess: written by the update, swapped with cells

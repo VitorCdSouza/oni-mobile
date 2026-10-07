@@ -91,7 +91,8 @@ struct SimData {
     uint8_t pad_0x10[4];
     int32_t gasDirection;
     uint8_t unk_0x18;
-    uint8_t pad_0x19[3];
+    uint8_t pad_0x19[1];
+    uint16_t unk_0x1a;
     uint16_t vacuumElementIdx;
     uint8_t pad_0x1e[2];
     struct CellSOA * cells;
