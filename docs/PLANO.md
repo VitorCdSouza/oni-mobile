@@ -93,6 +93,20 @@ Ferramentas do ciclo:
 | `DiseaseEmitter::Update` | replay idêntico, **20%** (nenhum emissor de germe ativo na gravação) |
 | `ElementChunk::Update` | replay idêntico, 95% |
 | `RadiationEmitter::Update` (com `Line`, rasterizador de elipse e callbacks) | replay idêntico, **42%** (modos de pulso não exercitados) |
+| `UpdateDataListOnly` dos componentes (e os thunks clonados), `SimData::UpdateComponentsDataListOnly` | replay idêntico (frames pausados) |
+| `SimBase::Step`, `SimBase::ConsolidateEvents`, `SimBase::CopySimDataToGame` | replay idêntico, 91% |
+| `UpdateFlowTexture`, `UpdateLiquidPropertyTexture`, `UpdateExposedToSunPropertyTexture` (e `LerpColor`, `GetEstimatedLiquidGradientValue`) | replay idêntico, 94%; texturas entraram no hash do replay |
+| `Disease::PostProcess`, `CalculateRangeHalfLife`, `HalfLifeToGrowthRate`, `GetDiseaseIndex`, `GetElementIndex` | replay idêntico, 90% |
+| `SimFrameManager`: `NewFrame`, `Begin/EndFrameProcessing`, `ProcessNextFrame`, `HandleMessage`, `ProcessFrame` | replay idêntico, 73-75% |
+| Register / Modify / Unregister de todos os componentes, `InitializeFromMessageData` | replay idêntico, 69% |
+| `ProcessCellModifications`, `AddGas/Liquid/Solid`, `RemoveGas/Liquid/Solid`, `ReplaceElement`, `ReplaceAndDisplaceElement`, `RectangularRemoved`, `SimData::ClearBackwall` | replay idêntico, 66% |
+
+Com isso o caminho inteiro de um frame (mensagens, tick, componentes, cópia para o jogo) roda no
+port. O que ainda chama o original: assert, relatório de crash, logger e `Math::FloatConstants::PI`.
+Contagem: 124 funções do original substituídas, ~108 KB de 208 KB (contando o código da STL
+embutido). Falta a camada de carga e API: `SIM_*`, `FrameSync`, `Sim::Main`, construtor e
+destrutor do `SimData`, `CreateElementsTable`, tabela de germes, `Load`/`Save`, `Start`,
+`PrepareGameData(Update)` e o `GameData`.
 
 Achados dos componentes:
 
@@ -105,6 +119,26 @@ Achados dos componentes:
   AMD: nem o original é bit a bit igual entre PCs. O port usa a mesma instrução no x86 e `1/sqrt` no
   ARM.
 - O laço de linhas do emissor contínuo termina em `2 * radiusX` (não `radiusY`): replicado.
+- `RadiationEmitter::Register` calcula a duração do pulso com `emitRads` no lugar de `emitRate`
+  (o `Modify` usa o campo certo): replicado.
+- `BuildingToBuildingHeatExchange::Register` publica o handle novo no callback, e o
+  `ProcessFrame` publica de novo: o jogo recebe dois eventos. Replicado.
+- `Unregister` só olha o bit de handle inválido, não a versão. `ElementEmitter::Register` zera o
+  slot de emissão pelo índice denso, não pelo índice do handle.
+- `Handle` tem construtor de cópia próprio no original, então é devolvido por ponteiro oculto e
+  passado por referência invisível. O port declara o mesmo para chamar e ser chamado pelo original.
+
+Achados do frame e da cópia para o jogo:
+
+- `ConsolidateEvents` junta os eventos `buildingNoLongerOverheated` em `buildingOverheat`.
+- O minério gerado é ordenado com `std::sort` antes de juntar duplicatas. Como `std::sort` não é
+  estável, o resultado depende do algoritmo: o port leva uma cópia do introsort da libstdc++
+  (`stl_sort.h`), testada contra o `std::sort` do PC, para dar o mesmo resultado com a libc++ do
+  Android.
+- `UpdateLiquidPropertyTexture` não escreve a última linha do mapa; usa `powf`, e
+  `HalfLifeToGrowthRate` usa `exp2f` (mesma ressalva da libm no Android).
+- `SetDebugProperties` muda a escala de troca de calor dos prédios (o jogo manda 100, não o
+  padrão 0,001) e a flag de edição de debug.
 
 Achados do loop principal:
 
@@ -143,6 +177,10 @@ modo sandbox, montado para exercitar mecânicas específicas. Lista até agora:
   terra ou regolito sem apoio (`DoUnstableCheckWithDiagonals`, hoje sem nenhuma cobertura);
 - um emissor de radiação pulsante (ex.: colmeia de Beeta) e um emissor de germes ativo (latrina
   em uso, Morb) dentro da área visível.
+- minério gerado (`spawnOre`): a gravação atual não gera nenhum, então a ordenação e a junção de
+  duplicatas em `CopySimDataToGame` estão sem cobertura;
+- `AddSolid` com subtipo 0 (sólido caindo e empilhando), `AddLiquid` em célula sólida, `Dig` de
+  parede de fundo.
 
 ## Fase 2 — Build Android
 
