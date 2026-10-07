@@ -163,3 +163,5 @@ struct DiseaseCount {
     int count;
 };
 DiseaseCount CombineDisease(const Disease &disease, uint8_t idx_a, int count_a, uint8_t idx_b, int count_b);
+void GetReachableCells(SimData &sim, int x, int y, int radius, std::vector<int> &visited,
+                       std::queue<FloodFillInfo> &queue, std::vector<int> &reachable, bool skip_solid);

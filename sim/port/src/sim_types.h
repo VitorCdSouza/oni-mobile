@@ -10,6 +10,7 @@ namespace SpawnFXHashes { enum Type : int32_t {}; }
 
 struct CellSOA;
 struct ElementConsumer;
+struct ElementEmitter;
 struct BuildingHeatExchange;
 struct BuildingToBuildingHeatExchange;
 struct SimData;
@@ -57,6 +58,8 @@ struct ConduitTemperatureManager;
 struct FloodFillInfo;
 struct ConsumedMassInfo;
 struct ElementConsumerData;
+struct ElementEmitterData;
+struct EmittedMassInfo;
 
 struct CellSOA {
     std::vector<uint16_t> elementIdx;
@@ -84,6 +87,21 @@ struct ElementConsumer {
     std::queue<FloodFillInfo> queue;
     std::vector<int32_t> reachable;
     std::vector<ConsumedMassInfo> consumed;
+    void Update(float dt, SimData &sim, const Region &region);
+};
+
+struct ElementEmitter {
+    void * vtable;
+    std::vector<ElementEmitterData> data;
+    std::vector<uint32_t> denseToHandle;
+    std::vector<uint32_t> freeHandles;
+    std::vector<int32_t> handleToDense;
+    std::vector<uint8_t> versions;
+    void * componentVtable;
+    std::vector<EmittedMassInfo> emitted;
+    std::vector<int32_t> visited;
+    std::vector<int32_t> reachable;
+    std::queue<FloodFillInfo> queue;
     void Update(float dt, SimData &sim, const Region &region);
 };
 
@@ -141,7 +159,8 @@ struct SimData {
     uint8_t pad_0xa9[7];
     std::vector<void *> components;
     ElementConsumer elementConsumer;
-    uint8_t pad_0x1e8[584];
+    ElementEmitter elementEmitter;
+    uint8_t pad_0x308[296];
     BuildingHeatExchange buildingHeatExchange;
     BuildingToBuildingHeatExchange buildingToBuildingHeatExchange;
     uint8_t pad_0x558[448];
@@ -578,6 +597,34 @@ struct ElementConsumerData {
     uint16_t x;
     uint16_t y;
     uint8_t pad_0xe[2];
+};
+
+struct ElementEmitterData {
+    float timer;
+    float emitInterval;
+    float emitMass;
+    float emitTemperature;
+    float maxPressure;
+    int32_t diseaseCount;
+    uint16_t x;
+    uint16_t y;
+    uint16_t elementIdx;
+    uint8_t range;
+    uint8_t startIndex;
+    uint8_t blocked;
+    uint8_t diseaseIdx;
+    uint8_t pad_0x22[2];
+    int32_t onBlockedCallback;
+    int32_t onUnblockedCallback;
+};
+
+struct EmittedMassInfo {
+    uint16_t elemIdx;
+    uint8_t diseaseIdx;
+    uint8_t pad0;
+    float mass;
+    float temperature;
+    int32_t diseaseCount;
 };
 
 extern std::vector<Element> gElements;

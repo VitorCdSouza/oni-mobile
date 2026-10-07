@@ -53,6 +53,7 @@ struct SimData 0x748
   0xa8 u8 unk_0xa8               # when set, ignores unk_0x88
   0xb0 vec<ptr> components       # std::vector<SimComponent*>
   0xc8 ElementConsumer elementConsumer
+  0x1e8 ElementEmitter elementEmitter
   0x430 BuildingHeatExchange buildingHeatExchange
   0x4d0 BuildingToBuildingHeatExchange buildingToBuildingHeatExchange
   0x718 bool unk_0x718
@@ -483,4 +484,43 @@ struct ElementConsumer 0x120
   0x0a0 queue<FloodFillInfo> queue
   0x0f0 vec<i32> reachable
   0x108 vec<ConsumedMassInfo> consumed
+  method void Update(float dt, SimData &sim, const Region &region);
+
+struct ElementEmitterData 0x2c
+  0x00 f32 timer
+  0x04 f32 emitInterval
+  0x08 f32 emitMass
+  0x0c f32 emitTemperature         # negative: the element's default temperature
+  0x10 f32 maxPressure
+  0x14 i32 diseaseCount
+  0x18 u16 x
+  0x1a u16 y
+  0x1c u16 elementIdx
+  0x1e u8 range
+  0x1f u8 startIndex
+  0x20 u8 blocked
+  0x21 u8 diseaseIdx
+  0x24 i32 onBlockedCallback
+  0x28 i32 onUnblockedCallback
+
+struct EmittedMassInfo 0x10
+  0x0 u16 elemIdx
+  0x2 u8 diseaseIdx
+  0x3 u8 pad0
+  0x4 f32 mass
+  0x8 f32 temperature
+  0xc i32 diseaseCount
+
+struct ElementEmitter 0x120
+  0x000 ptr vtable
+  0x008 vec<ElementEmitterData> data
+  0x020 vec<u32> denseToHandle
+  0x038 vec<u32> freeHandles
+  0x050 vec<i32> handleToDense
+  0x068 vec<u8> versions
+  0x080 ptr componentVtable
+  0x088 vec<EmittedMassInfo> emitted       # by handle index, what the game reads back
+  0x0a0 vec<i32> visited
+  0x0b8 vec<i32> reachable
+  0x0d0 queue<FloodFillInfo> queue
   method void Update(float dt, SimData &sim, const Region &region);

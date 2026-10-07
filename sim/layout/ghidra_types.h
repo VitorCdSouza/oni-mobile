@@ -9,6 +9,7 @@ typedef long long int64_t;
 
 struct CellSOA;
 struct ElementConsumer;
+struct ElementEmitter;
 struct BuildingHeatExchange;
 struct BuildingToBuildingHeatExchange;
 struct SimData;
@@ -56,6 +57,8 @@ struct ConduitTemperatureManager;
 struct FloodFillInfo;
 struct ConsumedMassInfo;
 struct ElementConsumerData;
+struct ElementEmitterData;
+struct EmittedMassInfo;
 
 struct Vec_ActiveRegion { struct ActiveRegion *begin; struct ActiveRegion *end; struct ActiveRegion *cap; };
 struct Vec_BackwallElementChangedInfo { struct BackwallElementChangedInfo *begin; struct BackwallElementChangedInfo *end; struct BackwallElementChangedInfo *cap; };
@@ -73,6 +76,7 @@ struct Vec_ConsumedRadiationCallback { struct ConsumedRadiationCallback *begin; 
 struct Vec_DiseaseConsumptionCallback { struct DiseaseConsumptionCallback *begin; struct DiseaseConsumptionCallback *end; struct DiseaseConsumptionCallback *cap; };
 struct Vec_Element { struct Element *begin; struct Element *end; struct Element *cap; };
 struct Vec_ElementConsumerData { struct ElementConsumerData *begin; struct ElementConsumerData *end; struct ElementConsumerData *cap; };
+struct Vec_ElementEmitterData { struct ElementEmitterData *begin; struct ElementEmitterData *end; struct ElementEmitterData *cap; };
 struct Vec_ElementLightAbsorptionData { struct ElementLightAbsorptionData *begin; struct ElementLightAbsorptionData *end; struct ElementLightAbsorptionData *cap; };
 struct Vec_ElementLiquidData { struct ElementLiquidData *begin; struct ElementLiquidData *end; struct ElementLiquidData *cap; };
 struct Vec_ElementPostProcessData { struct ElementPostProcessData *begin; struct ElementPostProcessData *end; struct ElementPostProcessData *cap; };
@@ -80,6 +84,7 @@ struct Vec_ElementPressureData { struct ElementPressureData *begin; struct Eleme
 struct Vec_ElementPropertyTextureData { struct ElementPropertyTextureData *begin; struct ElementPropertyTextureData *end; struct ElementPropertyTextureData *cap; };
 struct Vec_ElementRadiationData { struct ElementRadiationData *begin; struct ElementRadiationData *end; struct ElementRadiationData *cap; };
 struct Vec_ElementTemperatureData { struct ElementTemperatureData *begin; struct ElementTemperatureData *end; struct ElementTemperatureData *cap; };
+struct Vec_EmittedMassInfo { struct EmittedMassInfo *begin; struct EmittedMassInfo *end; struct EmittedMassInfo *cap; };
 struct Vec_MassConsumedCallback { struct MassConsumedCallback *begin; struct MassConsumedCallback *end; struct MassConsumedCallback *cap; };
 struct Vec_MassEmittedCallback { struct MassEmittedCallback *begin; struct MassEmittedCallback *end; struct MassEmittedCallback *cap; };
 struct Vec_MeltedInfo { struct MeltedInfo *begin; struct MeltedInfo *end; struct MeltedInfo *cap; };
@@ -123,6 +128,20 @@ struct ElementConsumer {
     uint8_t queue[80];
     struct Vec_i32 reachable;
     struct Vec_ConsumedMassInfo consumed;
+};
+
+struct ElementEmitter {
+    void * vtable;
+    struct Vec_ElementEmitterData data;
+    struct Vec_u32 denseToHandle;
+    struct Vec_u32 freeHandles;
+    struct Vec_i32 handleToDense;
+    struct Vec_u8 versions;
+    void * componentVtable;
+    struct Vec_EmittedMassInfo emitted;
+    struct Vec_i32 visited;
+    struct Vec_i32 reachable;
+    uint8_t queue[80];
 };
 
 struct BuildingHeatExchange {
@@ -177,7 +196,8 @@ struct SimData {
     uint8_t pad_0xa9[7];
     struct Vec_ptr components;
     struct ElementConsumer elementConsumer;
-    uint8_t pad_0x1e8[584];
+    struct ElementEmitter elementEmitter;
+    uint8_t pad_0x308[296];
     struct BuildingHeatExchange buildingHeatExchange;
     struct BuildingToBuildingHeatExchange buildingToBuildingHeatExchange;
     uint8_t pad_0x558[448];
@@ -602,6 +622,34 @@ struct ElementConsumerData {
     uint16_t x;
     uint16_t y;
     uint8_t pad_0xe[2];
+};
+
+struct ElementEmitterData {
+    float timer;
+    float emitInterval;
+    float emitMass;
+    float emitTemperature;
+    float maxPressure;
+    int32_t diseaseCount;
+    uint16_t x;
+    uint16_t y;
+    uint16_t elementIdx;
+    uint8_t range;
+    uint8_t startIndex;
+    uint8_t blocked;
+    uint8_t diseaseIdx;
+    uint8_t pad_0x22[2];
+    int32_t onBlockedCallback;
+    int32_t onUnblockedCallback;
+};
+
+struct EmittedMassInfo {
+    uint16_t elemIdx;
+    uint8_t diseaseIdx;
+    uint8_t pad0;
+    float mass;
+    float temperature;
+    int32_t diseaseCount;
 };
 
 //@global gElements Vec_Element 0

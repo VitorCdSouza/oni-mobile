@@ -33,6 +33,7 @@ static_assert(offsetof(SimData, displacementDirection) == 0x90, "SimData::displa
 static_assert(offsetof(SimData, events) == 0x98, "SimData::events");
 static_assert(offsetof(SimData, components) == 0xb0, "SimData::components");
 static_assert(offsetof(SimData, elementConsumer) == 0xc8, "SimData::elementConsumer");
+static_assert(offsetof(SimData, elementEmitter) == 0x1e8, "SimData::elementEmitter");
 static_assert(offsetof(SimData, buildingHeatExchange) == 0x430, "SimData::buildingHeatExchange");
 static_assert(offsetof(SimData, buildingToBuildingHeatExchange) == 0x4d0, "SimData::buildingToBuildingHeatExchange");
 static_assert(offsetof(SimData, headless) == 0x719, "SimData::headless");
@@ -409,4 +410,42 @@ static_assert(offsetof(ElementConsumer, visited) == 0x88, "ElementConsumer::visi
 static_assert(offsetof(ElementConsumer, queue) == 0xa0, "ElementConsumer::queue");
 static_assert(offsetof(ElementConsumer, reachable) == 0xf0, "ElementConsumer::reachable");
 static_assert(offsetof(ElementConsumer, consumed) == 0x108, "ElementConsumer::consumed");
+
+static_assert(sizeof(ElementEmitterData) == 0x2c, "ElementEmitterData size");
+static_assert(offsetof(ElementEmitterData, timer) == 0x0, "ElementEmitterData::timer");
+static_assert(offsetof(ElementEmitterData, emitInterval) == 0x4, "ElementEmitterData::emitInterval");
+static_assert(offsetof(ElementEmitterData, emitMass) == 0x8, "ElementEmitterData::emitMass");
+static_assert(offsetof(ElementEmitterData, emitTemperature) == 0xc, "ElementEmitterData::emitTemperature");
+static_assert(offsetof(ElementEmitterData, maxPressure) == 0x10, "ElementEmitterData::maxPressure");
+static_assert(offsetof(ElementEmitterData, diseaseCount) == 0x14, "ElementEmitterData::diseaseCount");
+static_assert(offsetof(ElementEmitterData, x) == 0x18, "ElementEmitterData::x");
+static_assert(offsetof(ElementEmitterData, y) == 0x1a, "ElementEmitterData::y");
+static_assert(offsetof(ElementEmitterData, elementIdx) == 0x1c, "ElementEmitterData::elementIdx");
+static_assert(offsetof(ElementEmitterData, range) == 0x1e, "ElementEmitterData::range");
+static_assert(offsetof(ElementEmitterData, startIndex) == 0x1f, "ElementEmitterData::startIndex");
+static_assert(offsetof(ElementEmitterData, blocked) == 0x20, "ElementEmitterData::blocked");
+static_assert(offsetof(ElementEmitterData, diseaseIdx) == 0x21, "ElementEmitterData::diseaseIdx");
+static_assert(offsetof(ElementEmitterData, onBlockedCallback) == 0x24, "ElementEmitterData::onBlockedCallback");
+static_assert(offsetof(ElementEmitterData, onUnblockedCallback) == 0x28, "ElementEmitterData::onUnblockedCallback");
+
+static_assert(sizeof(EmittedMassInfo) == 0x10, "EmittedMassInfo size");
+static_assert(offsetof(EmittedMassInfo, elemIdx) == 0x0, "EmittedMassInfo::elemIdx");
+static_assert(offsetof(EmittedMassInfo, diseaseIdx) == 0x2, "EmittedMassInfo::diseaseIdx");
+static_assert(offsetof(EmittedMassInfo, pad0) == 0x3, "EmittedMassInfo::pad0");
+static_assert(offsetof(EmittedMassInfo, mass) == 0x4, "EmittedMassInfo::mass");
+static_assert(offsetof(EmittedMassInfo, temperature) == 0x8, "EmittedMassInfo::temperature");
+static_assert(offsetof(EmittedMassInfo, diseaseCount) == 0xc, "EmittedMassInfo::diseaseCount");
+
+static_assert(sizeof(ElementEmitter) == 0x120, "ElementEmitter size");
+static_assert(offsetof(ElementEmitter, vtable) == 0x0, "ElementEmitter::vtable");
+static_assert(offsetof(ElementEmitter, data) == 0x8, "ElementEmitter::data");
+static_assert(offsetof(ElementEmitter, denseToHandle) == 0x20, "ElementEmitter::denseToHandle");
+static_assert(offsetof(ElementEmitter, freeHandles) == 0x38, "ElementEmitter::freeHandles");
+static_assert(offsetof(ElementEmitter, handleToDense) == 0x50, "ElementEmitter::handleToDense");
+static_assert(offsetof(ElementEmitter, versions) == 0x68, "ElementEmitter::versions");
+static_assert(offsetof(ElementEmitter, componentVtable) == 0x80, "ElementEmitter::componentVtable");
+static_assert(offsetof(ElementEmitter, emitted) == 0x88, "ElementEmitter::emitted");
+static_assert(offsetof(ElementEmitter, visited) == 0xa0, "ElementEmitter::visited");
+static_assert(offsetof(ElementEmitter, reachable) == 0xb8, "ElementEmitter::reachable");
+static_assert(offsetof(ElementEmitter, queue) == 0xd0, "ElementEmitter::queue");
 
