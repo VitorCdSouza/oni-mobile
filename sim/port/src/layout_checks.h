@@ -42,6 +42,7 @@ static_assert(offsetof(SimData, diseaseEmitter) == 0x558, "SimData::diseaseEmitt
 static_assert(offsetof(SimData, diseaseConsumer) == 0x678, "SimData::diseaseConsumer");
 static_assert(offsetof(SimData, headless) == 0x719, "SimData::headless");
 static_assert(offsetof(SimData, radiationEnabled) == 0x71a, "SimData::radiationEnabled");
+static_assert(offsetof(SimData, worldRects) == 0x730, "SimData::worldRects");
 
 static_assert(sizeof(Vector4f) == 0x10, "Vector4f size");
 static_assert(offsetof(Vector4f, x) == 0x0, "Vector4f::x");
@@ -279,6 +280,12 @@ static_assert(offsetof(BackwallSOA, noneElementIdx) == 0x0, "BackwallSOA::noneEl
 static_assert(offsetof(BackwallSOA, elementIdx) == 0x4, "BackwallSOA::elementIdx");
 static_assert(offsetof(BackwallSOA, mass) == 0x1c, "BackwallSOA::mass");
 static_assert(offsetof(BackwallSOA, temperature) == 0x34, "BackwallSOA::temperature");
+
+static_assert(sizeof(WorldRect) == 0x10, "WorldRect size");
+static_assert(offsetof(WorldRect, x) == 0x0, "WorldRect::x");
+static_assert(offsetof(WorldRect, y) == 0x4, "WorldRect::y");
+static_assert(offsetof(WorldRect, width) == 0x8, "WorldRect::width");
+static_assert(offsetof(WorldRect, height) == 0xc, "WorldRect::height");
 
 static_assert(sizeof(ActiveRegion) == 0x18, "ActiveRegion size");
 static_assert(offsetof(ActiveRegion, minX) == 0x0, "ActiveRegion::minX");

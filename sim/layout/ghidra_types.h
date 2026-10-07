@@ -49,6 +49,7 @@ struct ElementPropertyTextureData;
 struct ElementLightAbsorptionData;
 struct ElementRadiationData;
 struct BackwallSOA;
+struct WorldRect;
 struct ActiveRegion;
 struct Region;
 struct SimUpdateTemperatureTask;
@@ -116,6 +117,7 @@ struct Vec_SpawnOreInfo { struct SpawnOreInfo *begin; struct SpawnOreInfo *end; 
 struct Vec_SubstanceChangeInfo { struct SubstanceChangeInfo *begin; struct SubstanceChangeInfo *end; struct SubstanceChangeInfo *cap; };
 struct Vec_UnstableCellInfo { struct UnstableCellInfo *begin; struct UnstableCellInfo *end; struct UnstableCellInfo *cap; };
 struct Vec_WorldDamageInfo { struct WorldDamageInfo *begin; struct WorldDamageInfo *end; struct WorldDamageInfo *cap; };
+struct Vec_WorldRect { struct WorldRect *begin; struct WorldRect *end; struct WorldRect *cap; };
 struct Vec_f32 { float *begin; float *end; float *cap; };
 struct Vec_i32 { int32_t *begin; int32_t *end; int32_t *cap; };
 struct Vec_ptr { void * *begin; void * *end; void * *cap; };
@@ -279,7 +281,7 @@ struct SimData {
     float unk_0x724;
     float unk_0x728;
     float unk_0x72c;
-    uint8_t pad_0x730[24];
+    struct Vec_WorldRect worldRects;
 };
 
 struct Vector4f {
@@ -564,6 +566,13 @@ struct BackwallSOA {
     struct Vec_f32 temperature;
 };
 #pragma pack(pop)
+
+struct WorldRect {
+    int32_t x;
+    int32_t y;
+    int32_t width;
+    int32_t height;
+};
 
 struct ActiveRegion {
     int32_t minX;

@@ -55,11 +55,11 @@ static const GduCellArray kGduCellArrays[] = {
     {"backwallTemperature", 92, 4},
     {"accumulatedFlow", 448, 4},
 };
-// Property textures: size not known from the struct, recorded as pointers only.
+// Property textures, one texel per game cell (texel size 0: not hashed).
 static const GduCellArray kGduTextures[] = {
-    {"propertyTextureFlow", 456, 0},
-    {"propertyTextureLiquid", 464, 0},
-    {"propertyTextureLiquidData", 472, 0},
-    {"propertyTextureMaterialData", 480, 0},
-    {"propertyTextureExposedToSunlight", 488, 0},
+    {"propertyTextureFlow", 456, 8},
+    {"propertyTextureLiquid", 464, 4},
+    {"propertyTextureLiquidData", 472, 4},
+    {"propertyTextureMaterialData", 480, 4},
+    {"propertyTextureExposedToSunlight", 488, 1},
 };

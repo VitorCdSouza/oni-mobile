@@ -15,6 +15,15 @@ PRIMS = {
 }
 
 
+# Bytes per game cell of the property textures, from the allocations in GameData::GameData.
+TEXEL_SIZES = {
+    'propertyTextureFlow': 8,
+    'propertyTextureLiquid': 4,
+    'propertyTextureLiquidData': 4,
+    'propertyTextureMaterialData': 4,
+    'propertyTextureExposedToSunlight': 1,
+}
+
 def load_sources(root):
     return {f: open(f, encoding='utf-8', errors='ignore').read()
             for f in glob.glob(root + '/**/*.cs', recursive=True)}
@@ -126,13 +135,13 @@ def main(root, out):
             pad_list = ', '.join(str(p) for p in pads + [-1])
             arrays.append(f'    {{"{fn}", {offsets[prev][0]}, {offsets[fn][0]}, {elem}, {{{pad_list}}}}},')
         elif ft == 'IntPtr':
-            textures.append(f'    {{"{fn}", {offsets[fn][0]}, 0}},')
+            textures.append(f'    {{"{fn}", {offsets[fn][0]}, {TEXEL_SIZES.get(fn, 0)}}},')
         else:
             elem = size_align(ft[:-1], structs, enums)[0]
             cells.append(f'    {{"{fn}", {offsets[fn][0]}, {elem}}},')
     lines += ['static const GduArray kGduArrays[] = {'] + arrays + ['};']
     lines += ['static const GduCellArray kGduCellArrays[] = {'] + cells + ['};']
-    lines += ['// Property textures: size not known from the struct, recorded as pointers only.',
+    lines += ['// Property textures, one texel per game cell (texel size 0: not hashed).',
               'static const GduCellArray kGduTextures[] = {'] + textures + ['};']
     open(out, 'w').write('\n'.join(lines) + '\n')
 

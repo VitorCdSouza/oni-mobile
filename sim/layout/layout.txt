@@ -69,6 +69,7 @@ struct SimData 0x748
   0x724 f32 unk_0x724            # 0.3
   0x728 f32 unk_0x728            # 0.7
   0x72c f32 unk_0x72c            # 0.8
+  0x730 vec<WorldRect> worldRects # one per world; read by UpdateExposedToSunPropertyTexture
   method void ClearCell(CellAccessor &cell);
   method uint8_t GetStableTicksRemaining(unsigned long cell);
   method void UpdateComponents(float dt, const Region &region);
@@ -333,6 +334,13 @@ struct BackwallSOA 0x4c pack=4
   0x04 vec<u16> elementIdx
   0x1c vec<f32> mass
   0x34 vec<f32> temperature
+
+# A world's rectangle in game coordinates (sim column x + 1 is its first column).
+struct WorldRect 0x10
+  0x0 i32 x
+  0x4 i32 y
+  0x8 i32 width
+  0xc i32 height
 
 # One active region per world, from NewGameFrame (sim coordinates: game + 1).
 struct ActiveRegion 0x18

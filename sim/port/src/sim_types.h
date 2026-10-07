@@ -50,6 +50,7 @@ struct ElementPropertyTextureData;
 struct ElementLightAbsorptionData;
 struct ElementRadiationData;
 struct BackwallSOA;
+struct WorldRect;
 struct ActiveRegion;
 struct Region;
 struct SimUpdateTemperatureTask;
@@ -241,7 +242,7 @@ struct SimData {
     float unk_0x724;
     float unk_0x728;
     float unk_0x72c;
-    uint8_t pad_0x730[24];
+    std::vector<WorldRect> worldRects;
     void ClearCell(CellAccessor &cell);
     uint8_t GetStableTicksRemaining(unsigned long cell);
     void UpdateComponents(float dt, const Region &region);
@@ -532,6 +533,13 @@ struct BackwallSOA {
     std::vector<float> temperature;
 };
 #pragma pack(pop)
+
+struct WorldRect {
+    int32_t x;
+    int32_t y;
+    int32_t width;
+    int32_t height;
+};
 
 struct ActiveRegion {
     int32_t minX;

@@ -165,6 +165,13 @@ static void observe_gdu(const uint8_t *gdu) {
         memcpy(&p, gdu + kGduCellArrays[i].ptr_offset, sizeof p);
         observe("gdu", kGduCellArrays[i].name, p, cells * (size_t)kGduCellArrays[i].elem_size);
     }
+    for (size_t i = 0; i < sizeof kGduTextures / sizeof kGduTextures[0]; i++) {
+        void *p;
+        memcpy(&p, gdu + kGduTextures[i].ptr_offset, sizeof p);
+        if (kGduTextures[i].elem_size > 0) {
+            observe("gdu", kGduTextures[i].name, p, cells * (size_t)kGduTextures[i].elem_size);
+        }
+    }
     for (size_t i = 0; i < sizeof kGduArrays / sizeof kGduArrays[0]; i++) {
         int32_t count;
         void *p;
