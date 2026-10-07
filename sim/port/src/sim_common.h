@@ -101,6 +101,9 @@ bool DisplaceLiquid(SimData &sim, SimEvents &events, CellSOA *soa, int cell, uin
 
 // minss semantics: the second operand wins unless the first is strictly smaller (matters for NaN).
 inline float MinSS(float a, float b) { return a < b ? a : b; }
+inline float MaxSS(float a, float b) { return a > b ? a : b; }
+inline double MinSD(double a, double b) { return a < b ? a : b; }
+inline double MaxSD(double a, double b) { return a > b ? a : b; }
 
 bool DoDensityDisplacement(SimData &sim, SimEvents &events, int cell, const ElementPostProcessData &elem,
                            float factor);

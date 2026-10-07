@@ -77,6 +77,14 @@ Ferramentas do ciclo:
 | `SimData::ClearCell`, `SimData::GetStableTicksRemaining`, `Disease::AddDiseaseToCell` | replay idêntico, 90% das linhas |
 | `DoUnstableCheckWithDiagonals`, `HeadlessUnstableFallSimpleSwap` | replay idêntico, **0% das linhas** (opção desligada no save gravado) |
 | `UpdateLiquid` (com a função interna de mover líquido), `IsLiquidPermeable` | replay idêntico, 96% das linhas |
+| `UpdateTemperature` | replay idêntico, 76% das linhas (o resto é assert); escrita a partir da disassembly, porque o original usa `double` no meio da conta e o decompilado mostra `float` |
+
+Teste de sensibilidade: trocar a constante `(double)0.2f` por `0.2` exato em `UpdateTemperature`
+(diferença relativa de 3e-9) diverge na observação 247. O replay pega erro de último bit.
+
+Atenção para o Android: `UpdateTemperature` chama `logf`/`expf` (células sem isolamento dos dois
+lados). A libm do Android (bionic) pode diferir da glibc no último bit, então ali o resultado no
+celular pode não ser idêntico ao do PC. Não afeta jogabilidade; afeta só a comparação bit a bit.
 
 Ferramenta extra: `python3 sim/gen/rodata.py sim/libSimDLL.x86_64.so --symbol <nome mangled>` lista
 as constantes que uma função lê da memória com o valor exato. O Ghidra arredonda os literais
