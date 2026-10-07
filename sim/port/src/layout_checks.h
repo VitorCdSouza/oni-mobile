@@ -497,6 +497,8 @@ static_assert(offsetof(DiseaseEmitter, queue) == 0xa0, "DiseaseEmitter::queue");
 static_assert(offsetof(DiseaseEmitter, visited) == 0xf0, "DiseaseEmitter::visited");
 static_assert(offsetof(DiseaseEmitter, reachable) == 0x108, "DiseaseEmitter::reachable");
 
+static_assert(sizeof(DiseaseConsumerData) == 0xc, "DiseaseConsumerData size");
+
 static_assert(sizeof(DiseaseConsumer) == 0xa0, "DiseaseConsumer size");
 static_assert(offsetof(DiseaseConsumer, vtable) == 0x0, "DiseaseConsumer::vtable");
 static_assert(offsetof(DiseaseConsumer, data) == 0x8, "DiseaseConsumer::data");

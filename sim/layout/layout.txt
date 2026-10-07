@@ -596,10 +596,13 @@ struct DiseaseEmitter 0x120
   method void Modify(const SimData &sim, const ModifyDiseaseEmitterMessage &msg);
   method void Unregister(Handle handle);
 
-# Only the vector the game reads back is mapped.
+# The game never sends disease consumer messages; the record is not mapped beyond its size.
+struct DiseaseConsumerData 0xc
+  0x0 u8[12] unk_0x0
+
 struct DiseaseConsumer 0xa0
   0x00 ptr vtable
-  0x08 vec<u8> data                # element type not mapped yet
+  0x08 vec<DiseaseConsumerData> data
   0x20 vec<u32> denseToHandle
   0x38 vec<u32> freeHandles
   0x50 vec<i32> handleToDense

@@ -69,6 +69,7 @@ struct ElementEmitterData;
 struct EmittedMassInfo;
 struct DiseaseEmitterData;
 struct DiseaseEmittedInfo;
+struct DiseaseConsumerData;
 struct ElementChunkData;
 struct ElementChunkInfo;
 struct RadiationEmitterData;
@@ -149,6 +150,7 @@ struct Vec_ConsumeDisease { struct ConsumeDisease *begin; struct ConsumeDisease 
 struct Vec_ConsumedMassInfo { struct ConsumedMassInfo *begin; struct ConsumedMassInfo *end; struct ConsumedMassInfo *cap; };
 struct Vec_ConsumedRadiationCallback { struct ConsumedRadiationCallback *begin; struct ConsumedRadiationCallback *end; struct ConsumedRadiationCallback *cap; };
 struct Vec_DigPoint { struct DigPoint *begin; struct DigPoint *end; struct DigPoint *cap; };
+struct Vec_DiseaseConsumerData { struct DiseaseConsumerData *begin; struct DiseaseConsumerData *end; struct DiseaseConsumerData *cap; };
 struct Vec_DiseaseConsumptionCallback { struct DiseaseConsumptionCallback *begin; struct DiseaseConsumptionCallback *end; struct DiseaseConsumptionCallback *cap; };
 struct Vec_DiseaseEmittedInfo { struct DiseaseEmittedInfo *begin; struct DiseaseEmittedInfo *end; struct DiseaseEmittedInfo *cap; };
 struct Vec_DiseaseEmitterData { struct DiseaseEmitterData *begin; struct DiseaseEmitterData *end; struct DiseaseEmitterData *cap; };
@@ -313,7 +315,7 @@ struct DiseaseEmitter {
 
 struct DiseaseConsumer {
     void * vtable;
-    struct Vec_u8 data;
+    struct Vec_DiseaseConsumerData data;
     struct Vec_u32 denseToHandle;
     struct Vec_u32 freeHandles;
     struct Vec_i32 handleToDense;
@@ -845,6 +847,10 @@ struct DiseaseEmittedInfo {
     uint8_t diseaseIdx;
     uint8_t pad_0x1[3];
     int32_t count;
+};
+
+struct DiseaseConsumerData {
+    uint8_t unk_0x0[12];
 };
 
 struct ElementChunkData {

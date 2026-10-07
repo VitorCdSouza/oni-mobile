@@ -81,6 +81,7 @@ struct ElementEmitterData;
 struct EmittedMassInfo;
 struct DiseaseEmitterData;
 struct DiseaseEmittedInfo;
+struct DiseaseConsumerData;
 struct ElementChunkData;
 struct ElementChunkInfo;
 struct RadiationEmitterData;
@@ -267,7 +268,7 @@ struct DiseaseEmitter {
 
 struct DiseaseConsumer {
     void * vtable;
-    std::vector<uint8_t> data;
+    std::vector<DiseaseConsumerData> data;
     std::vector<uint32_t> denseToHandle;
     std::vector<uint32_t> freeHandles;
     std::vector<int32_t> handleToDense;
@@ -816,6 +817,10 @@ struct DiseaseEmittedInfo {
     uint8_t diseaseIdx;
     uint8_t pad_0x1[3];
     int32_t count;
+};
+
+struct DiseaseConsumerData {
+    uint8_t unk_0x0[12];
 };
 
 struct ElementChunkData {
