@@ -10,6 +10,7 @@ typedef long long int64_t;
 struct CellSOA;
 struct ElementConsumer;
 struct ElementEmitter;
+struct RadiationEmitter;
 struct ElementChunk;
 struct BuildingHeatExchange;
 struct BuildingToBuildingHeatExchange;
@@ -65,6 +66,7 @@ struct DiseaseEmitterData;
 struct DiseaseEmittedInfo;
 struct ElementChunkData;
 struct ElementChunkInfo;
+struct RadiationEmitterData;
 
 struct Vec_ActiveRegion { struct ActiveRegion *begin; struct ActiveRegion *end; struct ActiveRegion *cap; };
 struct Vec_BackwallElementChangedInfo { struct BackwallElementChangedInfo *begin; struct BackwallElementChangedInfo *end; struct BackwallElementChangedInfo *cap; };
@@ -99,6 +101,7 @@ struct Vec_MassConsumedCallback { struct MassConsumedCallback *begin; struct Mas
 struct Vec_MassEmittedCallback { struct MassEmittedCallback *begin; struct MassEmittedCallback *end; struct MassEmittedCallback *cap; };
 struct Vec_MeltedInfo { struct MeltedInfo *begin; struct MeltedInfo *end; struct MeltedInfo *cap; };
 struct Vec_PhysicsData { struct PhysicsData *begin; struct PhysicsData *end; struct PhysicsData *cap; };
+struct Vec_RadiationEmitterData { struct RadiationEmitterData *begin; struct RadiationEmitterData *end; struct RadiationEmitterData *cap; };
 struct Vec_SpawnFXInfo { struct SpawnFXInfo *begin; struct SpawnFXInfo *end; struct SpawnFXInfo *cap; };
 struct Vec_SpawnFallingLiquidInfo { struct SpawnFallingLiquidInfo *begin; struct SpawnFallingLiquidInfo *end; struct SpawnFallingLiquidInfo *cap; };
 struct Vec_SpawnOreInfo { struct SpawnOreInfo *begin; struct SpawnOreInfo *end; struct SpawnOreInfo *cap; };
@@ -152,6 +155,16 @@ struct ElementEmitter {
     struct Vec_i32 visited;
     struct Vec_i32 reachable;
     uint8_t queue[80];
+};
+
+struct RadiationEmitter {
+    void * vtable;
+    struct Vec_RadiationEmitterData data;
+    struct Vec_u32 denseToHandle;
+    struct Vec_u32 freeHandles;
+    struct Vec_i32 handleToDense;
+    struct Vec_u8 versions;
+    void * componentVtable;
 };
 
 struct ElementChunk {
@@ -232,7 +245,7 @@ struct SimData {
     struct Vec_ptr components;
     struct ElementConsumer elementConsumer;
     struct ElementEmitter elementEmitter;
-    uint8_t pad_0x308[136];
+    struct RadiationEmitter radiationEmitter;
     struct ElementChunk elementChunk;
     struct BuildingHeatExchange buildingHeatExchange;
     struct BuildingToBuildingHeatExchange buildingToBuildingHeatExchange;
@@ -722,6 +735,21 @@ struct ElementChunkData {
 struct ElementChunkInfo {
     float temperature;
     float deltaKJ;
+};
+
+struct RadiationEmitterData {
+    int32_t cell;
+    uint16_t radiusX;
+    uint16_t radiusY;
+    float intensity;
+    float pulseInterval;
+    float pulseDuration;
+    float direction;
+    float angle;
+    float timer;
+    float pulseTimer;
+    int32_t type;
+    int32_t step;
 };
 
 //@global gElements Vec_Element 0

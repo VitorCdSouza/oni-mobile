@@ -11,6 +11,7 @@ namespace SpawnFXHashes { enum Type : int32_t {}; }
 struct CellSOA;
 struct ElementConsumer;
 struct ElementEmitter;
+struct RadiationEmitter;
 struct ElementChunk;
 struct BuildingHeatExchange;
 struct BuildingToBuildingHeatExchange;
@@ -66,6 +67,7 @@ struct DiseaseEmitterData;
 struct DiseaseEmittedInfo;
 struct ElementChunkData;
 struct ElementChunkInfo;
+struct RadiationEmitterData;
 
 struct CellSOA {
     std::vector<uint16_t> elementIdx;
@@ -108,6 +110,17 @@ struct ElementEmitter {
     std::vector<int32_t> visited;
     std::vector<int32_t> reachable;
     std::queue<FloodFillInfo> queue;
+    void Update(float dt, SimData &sim, const Region &region);
+};
+
+struct RadiationEmitter {
+    void * vtable;
+    std::vector<RadiationEmitterData> data;
+    std::vector<uint32_t> denseToHandle;
+    std::vector<uint32_t> freeHandles;
+    std::vector<int32_t> handleToDense;
+    std::vector<uint8_t> versions;
+    void * componentVtable;
     void Update(float dt, SimData &sim, const Region &region);
 };
 
@@ -193,7 +206,7 @@ struct SimData {
     std::vector<void *> components;
     ElementConsumer elementConsumer;
     ElementEmitter elementEmitter;
-    uint8_t pad_0x308[136];
+    RadiationEmitter radiationEmitter;
     ElementChunk elementChunk;
     BuildingHeatExchange buildingHeatExchange;
     BuildingToBuildingHeatExchange buildingToBuildingHeatExchange;
@@ -695,6 +708,21 @@ struct ElementChunkData {
 struct ElementChunkInfo {
     float temperature;
     float deltaKJ;
+};
+
+struct RadiationEmitterData {
+    int32_t cell;
+    uint16_t radiusX;
+    uint16_t radiusY;
+    float intensity;
+    float pulseInterval;
+    float pulseDuration;
+    float direction;
+    float angle;
+    float timer;
+    float pulseTimer;
+    int32_t type;
+    int32_t step;
 };
 
 extern std::vector<Element> gElements;

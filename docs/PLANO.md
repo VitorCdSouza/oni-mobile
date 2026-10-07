@@ -88,6 +88,24 @@ Ferramentas do ciclo:
 | `Disease::UpdateCells`, `Disease::GetDiffusionScale` | replay idêntico |
 | `SimBase::UpdateData` (o tick inteiro: temperatura, pressão, líquidos, germes, radiação, pós-processamento) | replay idêntico, 97% das linhas |
 
+| `SimData::UpdateComponents` (despacho), `ElementConsumer::Update`, `GetReachableCells`, `FloodRemoved` | replay idêntico, 98% |
+| `ElementEmitter::Update` (e o thunk clonado `_ZThn128_`) | replay idêntico, 74% |
+| `DiseaseEmitter::Update` | replay idêntico, **20%** (nenhum emissor de germe ativo na gravação) |
+| `ElementChunk::Update` | replay idêntico, 95% |
+| `RadiationEmitter::Update` (com `Line`, rasterizador de elipse e callbacks) | replay idêntico, **42%** (modos de pulso não exercitados) |
+
+Achados dos componentes:
+
+- O thunk de interface de `ElementEmitter::Update` (o que a vtable chama) é uma cópia inteira da
+  função no original, não um salto; o port define os dois. `DiseaseEmitter::UpdateDataListOnly` e
+  `BuildingHeatExchange::UpdateDataListOnly` também têm thunks clonados.
+- Várias funções devolvem structs por ponteiro oculto (`Handle`, `EmittedMassInfo`, a contagem de
+  germes): ficam como funções internas do port, sem patch por nome.
+- O rasterizador de elipse do `RadiationEmitter` usa `rsqrtss`, cuja aproximação muda entre Intel e
+  AMD: nem o original é bit a bit igual entre PCs. O port usa a mesma instrução no x86 e `1/sqrt` no
+  ARM.
+- O laço de linhas do emissor contínuo termina em `2 * radiusX` (não `radiusY`): replicado.
+
 Achados do loop principal:
 
 - `SimBase::GetNumWorkers` devolve 1: a fila de tarefas tem um único worker, então o original já roda
@@ -122,7 +140,9 @@ modo sandbox, montado para exercitar mecânicas específicas. Lista até agora:
 - gás muito quente encostado num tile sólido, derretendo 5 kg por vez (`DoPartialMelt`; a gravação
   atual nunca passa das verificações iniciais);
 - um save com a opção "areia caindo na diagonal" (`ENABLE_DIAGONAL_FALLING_SAND`) ligada e areia,
-  terra ou regolito sem apoio (`DoUnstableCheckWithDiagonals`, hoje sem nenhuma cobertura).
+  terra ou regolito sem apoio (`DoUnstableCheckWithDiagonals`, hoje sem nenhuma cobertura);
+- um emissor de radiação pulsante (ex.: colmeia de Beeta) e um emissor de germes ativo (latrina
+  em uso, Morb) dentro da área visível.
 
 ## Fase 2 — Build Android
 

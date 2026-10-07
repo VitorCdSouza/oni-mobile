@@ -54,6 +54,7 @@ struct SimData 0x748
   0xb0 vec<ptr> components       # std::vector<SimComponent*>
   0xc8 ElementConsumer elementConsumer
   0x1e8 ElementEmitter elementEmitter
+  0x308 RadiationEmitter radiationEmitter
   0x390 ElementChunk elementChunk
   0x430 BuildingHeatExchange buildingHeatExchange
   0x4d0 BuildingToBuildingHeatExchange buildingToBuildingHeatExchange
@@ -580,4 +581,31 @@ struct ElementChunk 0xa0
   0x68 vec<u8> versions
   0x80 ptr componentVtable
   0x88 vec<ElementChunkInfo> info
+  method void Update(float dt, SimData &sim, const Region &region);
+
+# Radiation sources (buildings, critters). type: 0 continuous ellipse with line of sight,
+# 1/2 expanding ring with line of sight (2 spreads the intensity over the ring), 3 expanding
+# ring without line of sight, 5 ring that absorbs radiation, 4 nothing.
+struct RadiationEmitterData 0x2c
+  0x00 i32 cell
+  0x04 u16 radiusX
+  0x06 u16 radiusY
+  0x08 f32 intensity
+  0x0c f32 pulseInterval           # 0: continuous
+  0x10 f32 pulseDuration
+  0x14 f32 direction               # degrees
+  0x18 f32 angle                   # cone width in degrees; 360: all around
+  0x1c f32 timer
+  0x20 f32 pulseTimer
+  0x24 i32 type
+  0x28 i32 step                    # current ring of a pulse
+
+struct RadiationEmitter 0x88
+  0x00 ptr vtable
+  0x08 vec<RadiationEmitterData> data
+  0x20 vec<u32> denseToHandle
+  0x38 vec<u32> freeHandles
+  0x50 vec<i32> handleToDense
+  0x68 vec<u8> versions
+  0x80 ptr componentVtable
   method void Update(float dt, SimData &sim, const Region &region);

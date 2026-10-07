@@ -34,6 +34,7 @@ static_assert(offsetof(SimData, events) == 0x98, "SimData::events");
 static_assert(offsetof(SimData, components) == 0xb0, "SimData::components");
 static_assert(offsetof(SimData, elementConsumer) == 0xc8, "SimData::elementConsumer");
 static_assert(offsetof(SimData, elementEmitter) == 0x1e8, "SimData::elementEmitter");
+static_assert(offsetof(SimData, radiationEmitter) == 0x308, "SimData::radiationEmitter");
 static_assert(offsetof(SimData, elementChunk) == 0x390, "SimData::elementChunk");
 static_assert(offsetof(SimData, buildingHeatExchange) == 0x430, "SimData::buildingHeatExchange");
 static_assert(offsetof(SimData, buildingToBuildingHeatExchange) == 0x4d0, "SimData::buildingToBuildingHeatExchange");
@@ -503,4 +504,27 @@ static_assert(offsetof(ElementChunk, handleToDense) == 0x50, "ElementChunk::hand
 static_assert(offsetof(ElementChunk, versions) == 0x68, "ElementChunk::versions");
 static_assert(offsetof(ElementChunk, componentVtable) == 0x80, "ElementChunk::componentVtable");
 static_assert(offsetof(ElementChunk, info) == 0x88, "ElementChunk::info");
+
+static_assert(sizeof(RadiationEmitterData) == 0x2c, "RadiationEmitterData size");
+static_assert(offsetof(RadiationEmitterData, cell) == 0x0, "RadiationEmitterData::cell");
+static_assert(offsetof(RadiationEmitterData, radiusX) == 0x4, "RadiationEmitterData::radiusX");
+static_assert(offsetof(RadiationEmitterData, radiusY) == 0x6, "RadiationEmitterData::radiusY");
+static_assert(offsetof(RadiationEmitterData, intensity) == 0x8, "RadiationEmitterData::intensity");
+static_assert(offsetof(RadiationEmitterData, pulseInterval) == 0xc, "RadiationEmitterData::pulseInterval");
+static_assert(offsetof(RadiationEmitterData, pulseDuration) == 0x10, "RadiationEmitterData::pulseDuration");
+static_assert(offsetof(RadiationEmitterData, direction) == 0x14, "RadiationEmitterData::direction");
+static_assert(offsetof(RadiationEmitterData, angle) == 0x18, "RadiationEmitterData::angle");
+static_assert(offsetof(RadiationEmitterData, timer) == 0x1c, "RadiationEmitterData::timer");
+static_assert(offsetof(RadiationEmitterData, pulseTimer) == 0x20, "RadiationEmitterData::pulseTimer");
+static_assert(offsetof(RadiationEmitterData, type) == 0x24, "RadiationEmitterData::type");
+static_assert(offsetof(RadiationEmitterData, step) == 0x28, "RadiationEmitterData::step");
+
+static_assert(sizeof(RadiationEmitter) == 0x88, "RadiationEmitter size");
+static_assert(offsetof(RadiationEmitter, vtable) == 0x0, "RadiationEmitter::vtable");
+static_assert(offsetof(RadiationEmitter, data) == 0x8, "RadiationEmitter::data");
+static_assert(offsetof(RadiationEmitter, denseToHandle) == 0x20, "RadiationEmitter::denseToHandle");
+static_assert(offsetof(RadiationEmitter, freeHandles) == 0x38, "RadiationEmitter::freeHandles");
+static_assert(offsetof(RadiationEmitter, handleToDense) == 0x50, "RadiationEmitter::handleToDense");
+static_assert(offsetof(RadiationEmitter, versions) == 0x68, "RadiationEmitter::versions");
+static_assert(offsetof(RadiationEmitter, componentVtable) == 0x80, "RadiationEmitter::componentVtable");
 
