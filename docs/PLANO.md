@@ -184,6 +184,19 @@ Achados:
 - `DoGasInteraction` (e a tabela de interações) e `ShouldDoLiquidConversion` são código morto no
   original.
 
+### arm64
+
+`tools/arm64/Dockerfile` monta um container com `g++-aarch64-linux-gnu` e `qemu-user`. Dentro dele:
+
+    make -C sim/port standalone CXX=aarch64-linux-gnu-g++ BUILD=../build/arm64
+    aarch64-linux-gnu-gcc -O2 -o sim/build/arm64/replay sim/replay/replay.c -ldl
+    qemu-aarch64 -L /usr/aarch64-linux-gnu sim/build/arm64/replay sim/build/arm64/standalone/libSimDLL.so <gravação>
+
+Resultado: as 5549 observações idênticas às do original x86 (37 min sob qemu). Isso usa a libm da
+glibc; a do Android (bionic) ainda pode diferir no último bit em `logf`/`expf`/`exp2f`/`powf`.
+
+Desempenho no PC (replay inteiro, Xeon E5-2690 v4): original 69,8 s, port 62,7 s.
+
 ### Gravações que faltam
 
 A gravação de 4 minutos não passa por todos os ramos. Vai ser preciso um save de laboratório no
@@ -210,6 +223,17 @@ modo sandbox, montado para exercitar mecânicas específicas. Lista até agora:
 
 IL2CPP arm64, stub de Steam, FMOD Android, AssetBundles refeitos, shaders convertidos.
 Primeiro objetivo: chegar ao menu principal no aparelho.
+
+Plugins nativos do jogo e o que cada um precisa no Android:
+
+- `libSimDLL.so`: o port (pronto, arm64 validado).
+- `libfmodstudio.so`: FMOD 2.03.12 (`FMOD.VERSION.number = 0x20312` no FMODUnity.dll); a build
+  Android sai do site da FMOD (precisa de conta).
+- `libresonanceaudio.so`: plugin de áudio espacial do Google para FMOD, código aberto, tem build
+  Android.
+- `cimgui.so`: Dear ImGui 1.82 em C (menu de debug), código aberto, compila para arm64.
+- `libsteam_api.so`, `libsdkencryptedappticket.so`: substituir por stubs (Steamworks.NET chama via
+  DllImport).
 
 ## Fase 3 — Jogabilidade
 
