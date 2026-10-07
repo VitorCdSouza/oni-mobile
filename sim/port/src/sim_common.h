@@ -74,6 +74,24 @@ struct SimFrameManager {
     void EndFrameProcessing();
 };
 
+// Row copy of one per-cell array from the bordered sim grid into the game's grid (the
+// UpdateCellSOATask layout, for a single array).
+template <typename T>
+struct UpdateCellTask {
+    void *vtable;
+    T *src;
+    T *dst;
+    int32_t numRows;
+    int32_t firstRow;
+    int32_t srcStride;
+    int32_t dstFirstRow;
+    int32_t rowLength;
+    void InternalDoTask();
+};
+static_assert(sizeof(UpdateCellTask<Vector4<float>>) == 0x30, "UpdateCellTask size");
+template <>
+void UpdateCellTask<Vector4<float>>::InternalDoTask();
+
 // The interface every component exposes at offset 0x80; SimData::components points there.
 struct SimComponent {
     virtual void Update(float dt, SimData &sim, const Region &region) = 0;

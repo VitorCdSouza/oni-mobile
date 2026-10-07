@@ -15,6 +15,7 @@ struct ElementChunk;
 struct BuildingHeatExchange;
 struct BuildingToBuildingHeatExchange;
 struct DiseaseEmitter;
+struct DiseaseConsumer;
 struct SimData;
 struct Vector4f;
 struct CellAccessor;
@@ -35,6 +36,9 @@ struct SpawnFXInfo;
 struct ComponentStateChangedMessage;
 struct BackwallElementChangedInfo;
 struct BackwallShouldTransitionInfo;
+struct SolidInfo;
+struct LiquidChangeInfo;
+struct SolidSubstanceChangeInfo;
 struct PhysicsData;
 struct Element;
 struct ElementTemperatureData;
@@ -67,6 +71,7 @@ struct DiseaseEmittedInfo;
 struct ElementChunkData;
 struct ElementChunkInfo;
 struct RadiationEmitterData;
+struct GameData;
 
 struct Vec_ActiveRegion { struct ActiveRegion *begin; struct ActiveRegion *end; struct ActiveRegion *cap; };
 struct Vec_BackwallElementChangedInfo { struct BackwallElementChangedInfo *begin; struct BackwallElementChangedInfo *end; struct BackwallElementChangedInfo *cap; };
@@ -97,11 +102,14 @@ struct Vec_ElementPropertyTextureData { struct ElementPropertyTextureData *begin
 struct Vec_ElementRadiationData { struct ElementRadiationData *begin; struct ElementRadiationData *end; struct ElementRadiationData *cap; };
 struct Vec_ElementTemperatureData { struct ElementTemperatureData *begin; struct ElementTemperatureData *end; struct ElementTemperatureData *cap; };
 struct Vec_EmittedMassInfo { struct EmittedMassInfo *begin; struct EmittedMassInfo *end; struct EmittedMassInfo *cap; };
+struct Vec_LiquidChangeInfo { struct LiquidChangeInfo *begin; struct LiquidChangeInfo *end; struct LiquidChangeInfo *cap; };
 struct Vec_MassConsumedCallback { struct MassConsumedCallback *begin; struct MassConsumedCallback *end; struct MassConsumedCallback *cap; };
 struct Vec_MassEmittedCallback { struct MassEmittedCallback *begin; struct MassEmittedCallback *end; struct MassEmittedCallback *cap; };
 struct Vec_MeltedInfo { struct MeltedInfo *begin; struct MeltedInfo *end; struct MeltedInfo *cap; };
 struct Vec_PhysicsData { struct PhysicsData *begin; struct PhysicsData *end; struct PhysicsData *cap; };
 struct Vec_RadiationEmitterData { struct RadiationEmitterData *begin; struct RadiationEmitterData *end; struct RadiationEmitterData *cap; };
+struct Vec_SolidInfo { struct SolidInfo *begin; struct SolidInfo *end; struct SolidInfo *cap; };
+struct Vec_SolidSubstanceChangeInfo { struct SolidSubstanceChangeInfo *begin; struct SolidSubstanceChangeInfo *end; struct SolidSubstanceChangeInfo *cap; };
 struct Vec_SpawnFXInfo { struct SpawnFXInfo *begin; struct SpawnFXInfo *end; struct SpawnFXInfo *cap; };
 struct Vec_SpawnFallingLiquidInfo { struct SpawnFallingLiquidInfo *begin; struct SpawnFallingLiquidInfo *end; struct SpawnFallingLiquidInfo *cap; };
 struct Vec_SpawnOreInfo { struct SpawnOreInfo *begin; struct SpawnOreInfo *end; struct SpawnOreInfo *cap; };
@@ -213,6 +221,17 @@ struct DiseaseEmitter {
     struct Vec_i32 reachable;
 };
 
+struct DiseaseConsumer {
+    void * vtable;
+    struct Vec_u8 data;
+    struct Vec_u32 denseToHandle;
+    struct Vec_u32 freeHandles;
+    struct Vec_i32 handleToDense;
+    struct Vec_u8 versions;
+    void * componentVtable;
+    struct Vec_DiseaseEmittedInfo consumed;
+};
+
 struct SimData {
     int32_t width;
     int32_t height;
@@ -250,7 +269,7 @@ struct SimData {
     struct BuildingHeatExchange buildingHeatExchange;
     struct BuildingToBuildingHeatExchange buildingToBuildingHeatExchange;
     struct DiseaseEmitter diseaseEmitter;
-    uint8_t pad_0x678[160];
+    struct DiseaseConsumer diseaseConsumer;
     uint8_t unk_0x718;
     uint8_t headless;
     uint8_t radiationEnabled;
@@ -294,7 +313,7 @@ struct SimEvents {
     struct Vec_DiseaseConsumptionCallback diseaseConsumed;
     struct Vec_SpawnFXInfo spawnFX;
     struct Vec_ComponentStateChangedMessage componentStateChanged;
-    struct Vec_i32 unk_0x198;
+    struct Vec_SpawnOreInfo digInfo;
     struct Vec_BackwallElementChangedInfo backwallElementChanged;
     struct Vec_BackwallShouldTransitionInfo backwallShouldTransition;
 };
@@ -402,6 +421,19 @@ struct BackwallElementChangedInfo {
 
 struct BackwallShouldTransitionInfo {
     int32_t gameCell;
+};
+
+struct SolidInfo {
+    int32_t cellIdx;
+    int32_t isSolid;
+};
+
+struct LiquidChangeInfo {
+    int32_t cellIdx;
+};
+
+struct SolidSubstanceChangeInfo {
+    int32_t cellIdx;
 };
 
 struct PhysicsData {
@@ -750,6 +782,52 @@ struct RadiationEmitterData {
     float pulseTimer;
     int32_t type;
     int32_t step;
+};
+
+struct GameData {
+    int32_t width;
+    int32_t height;
+    int32_t numFramesProcessed;
+    uint8_t pad_0xc[4];
+    struct Vec_SubstanceChangeInfo substanceChanges;
+    struct Vec_CallbackInfo callbacks;
+    struct Vec_SpawnFallingLiquidInfo spawnFallingLiquid;
+    struct Vec_SpawnOreInfo spawnOre;
+    struct Vec_SpawnOreInfo digInfo;
+    struct Vec_UnstableCellInfo unstableCells;
+    struct Vec_WorldDamageInfo worldDamage;
+    struct Vec_BuildingTemperatureInfo buildingTemperatures;
+    struct Vec_MassConsumedCallback massConsumed;
+    struct Vec_MassEmittedCallback massEmitted;
+    struct Vec_DiseaseConsumptionCallback diseaseConsumed;
+    struct Vec_ConsumedRadiationCallback radiationConsumed;
+    struct Vec_SpawnFXInfo spawnFX;
+    struct Vec_SolidInfo solidInfo;
+    struct Vec_LiquidChangeInfo liquidChanges;
+    struct Vec_SolidSubstanceChangeInfo solidSubstanceChanges;
+    struct Vec_ConsumedMassInfo removedMass;
+    struct Vec_EmittedMassInfo emittedMass;
+    struct Vec_ElementChunkInfo elementChunkInfos;
+    struct Vec_DiseaseEmittedInfo diseaseEmitted;
+    struct Vec_DiseaseEmittedInfo diseaseConsumedInfos;
+    struct Vec_MeltedInfo elementChunkMelted;
+    struct Vec_MeltedInfo buildingMelted;
+    struct Vec_MeltedInfo buildingOverheat;
+    struct Vec_MeltedInfo buildingNoLongerOverheated;
+    struct Vec_ComponentStateChangedMessage componentStateChanged;
+    struct Vec_CellMeltedInfo cellMelted;
+    struct Vec_BackwallElementChangedInfo backwallElementChanged;
+    struct Vec_BackwallShouldTransitionInfo backwallShouldTransition;
+    struct CellSOA * cells;
+    struct BackwallSOA * backwall;
+    struct Vector4f * flow;
+    float * accumulatedFlow;
+    uint8_t * visibleGrid;
+    void * propertyTextureFlow;
+    void * propertyTextureLiquid;
+    void * propertyTextureLiquidData;
+    void * propertyTextureMaterialData;
+    uint8_t * propertyTextureExposedToSunlight;
 };
 
 //@global gElements Vec_Element 0

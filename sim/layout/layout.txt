@@ -41,7 +41,8 @@ struct SimData 0x748
   0x30 BackwallSOA* backwall
   0x38 u8* unk_0x38              # per cell; 0xff marks cells outside every world (drained each tick)
   0x40 vec<f32> radiationLight   # how much sky radiation reaches each cell (1.0 at the top)
-  0x58 f32* unk_0x58             # per cell; DoSublimation adds the sublimated mass
+  0x58 f32* unk_0x58             # per cell; DoSublimation adds the sublimated mass. The game reads it
+                                 # as accumulatedFlow; cleared every 15th CopySimDataToGame
   0x60 Vector4f* unk_0x60        # per cell; zeroed when the cell evaporates
   0x70 vec<ActiveRegion> activeRegions
   0x68 u8* unk_0x68              # per-cell flags, DoStateTransition sets the low 5 bits
@@ -59,6 +60,7 @@ struct SimData 0x748
   0x430 BuildingHeatExchange buildingHeatExchange
   0x4d0 BuildingToBuildingHeatExchange buildingToBuildingHeatExchange
   0x558 DiseaseEmitter diseaseEmitter
+  0x678 DiseaseConsumer diseaseConsumer
   0x718 bool unk_0x718
   0x719 bool headless
   0x71a bool radiationEnabled
@@ -103,7 +105,7 @@ struct SimEvents 0x1e0
   0x150 vec<DiseaseConsumptionCallback> diseaseConsumed
   0x168 vec<SpawnFXInfo> spawnFX
   0x180 vec<ComponentStateChangedMessage> componentStateChanged
-  0x198 vec<i32> unk_0x198
+  0x198 vec<SpawnOreInfo> digInfo  # never filled by the sim, only handed over and cleared
   0x1b0 vec<BackwallElementChangedInfo> backwallElementChanged
   0x1c8 vec<BackwallShouldTransitionInfo> backwallShouldTransition
   method void ChangeSubstance(const SimData &sim, unsigned long cell);
@@ -194,6 +196,17 @@ struct BackwallElementChangedInfo 0x4
 
 struct BackwallShouldTransitionInfo 0x4
   0x0 i32 gameCell
+
+# Built by CopySimDataToGame from the frame's substance changes.
+struct SolidInfo 0x8
+  0x0 i32 cellIdx
+  0x4 i32 isSolid                  # -1 when the cell became solid, 0 when it stopped being solid
+
+struct LiquidChangeInfo 0x4
+  0x0 i32 cellIdx
+
+struct SolidSubstanceChangeInfo 0x4
+  0x0 i32 cellIdx
 
 # Element table sent by the game (CreateSimElementsTable, Sim.Element in C#, Pack = 4).
 struct Element 0xa4
@@ -558,6 +571,17 @@ struct DiseaseEmitter 0x120
   method void Update(float dt, SimData &sim, const Region &region);
   method void UpdateDataListOnly(SimData &sim);
 
+# Only the vector the game reads back is mapped.
+struct DiseaseConsumer 0xa0
+  0x00 ptr vtable
+  0x08 vec<u8> data                # element type not mapped yet
+  0x20 vec<u32> denseToHandle
+  0x38 vec<u32> freeHandles
+  0x50 vec<i32> handleToDense
+  0x68 vec<u8> versions
+  0x80 ptr componentVtable
+  0x88 vec<DiseaseEmittedInfo> consumed
+
 # Debris items lying in the world, exchanging heat with their cell (and a solid floor).
 struct ElementChunkData 0x2c
   0x00 i32 cell
@@ -614,3 +638,49 @@ struct RadiationEmitter 0x88
   0x68 vec<u8> versions
   0x80 ptr componentVtable
   method void Update(float dt, SimData &sim, const Region &region);
+
+# What the sim hands to the game each frame; PrepareGameDataUpdate turns it into the C#
+# GameDataUpdate (pointer + count per vector). Grids are game-sized (no border).
+struct GameData 0x318
+  0x000 i32 width
+  0x004 i32 height
+  0x008 i32 numFramesProcessed
+  0x010 vec<SubstanceChangeInfo> substanceChanges
+  0x028 vec<CallbackInfo> callbacks
+  0x040 vec<SpawnFallingLiquidInfo> spawnFallingLiquid
+  0x058 vec<SpawnOreInfo> spawnOre
+  0x070 vec<SpawnOreInfo> digInfo
+  0x088 vec<UnstableCellInfo> unstableCells
+  0x0a0 vec<WorldDamageInfo> worldDamage
+  0x0b8 vec<BuildingTemperatureInfo> buildingTemperatures
+  0x0d0 vec<MassConsumedCallback> massConsumed
+  0x0e8 vec<MassEmittedCallback> massEmitted
+  0x100 vec<DiseaseConsumptionCallback> diseaseConsumed
+  0x118 vec<ConsumedRadiationCallback> radiationConsumed
+  0x130 vec<SpawnFXInfo> spawnFX
+  0x148 vec<SolidInfo> solidInfo
+  0x160 vec<LiquidChangeInfo> liquidChanges
+  0x178 vec<SolidSubstanceChangeInfo> solidSubstanceChanges
+  0x190 vec<ConsumedMassInfo> removedMass
+  0x1a8 vec<EmittedMassInfo> emittedMass
+  0x1c0 vec<ElementChunkInfo> elementChunkInfos
+  0x1d8 vec<DiseaseEmittedInfo> diseaseEmitted
+  0x1f0 vec<DiseaseEmittedInfo> diseaseConsumedInfos
+  0x208 vec<MeltedInfo> elementChunkMelted
+  0x220 vec<MeltedInfo> buildingMelted
+  0x238 vec<MeltedInfo> buildingOverheat
+  0x250 vec<MeltedInfo> buildingNoLongerOverheated
+  0x268 vec<ComponentStateChangedMessage> componentStateChanged
+  0x280 vec<CellMeltedInfo> cellMelted
+  0x298 vec<BackwallElementChangedInfo> backwallElementChanged
+  0x2b0 vec<BackwallShouldTransitionInfo> backwallShouldTransition
+  0x2c8 CellSOA* cells
+  0x2d0 BackwallSOA* backwall
+  0x2d8 Vector4f* flow
+  0x2e0 f32* accumulatedFlow
+  0x2e8 u8* visibleGrid            # swapped with SimData::unk_0x88 every frame
+  0x2f0 ptr propertyTextureFlow
+  0x2f8 ptr propertyTextureLiquid
+  0x300 ptr propertyTextureLiquidData
+  0x308 ptr propertyTextureMaterialData
+  0x310 u8* propertyTextureExposedToSunlight

@@ -497,3 +497,65 @@ void SimBase::Step(SimData &sim, GameData &game, const GameData &previous) {
     frames.EndFrameProcessing();
     CopySimDataToGame(sim, game, previous, frame_count);
 }
+
+namespace {
+
+// Element by element, like the original, so the source may even be the destination.
+template <typename T>
+void AppendAll(std::vector<T> &dst, const std::vector<T> &src) {
+    size_t count = src.size();
+    for (size_t i = 0; i < count; ++i) {
+        dst.push_back(src[i]);
+    }
+}
+
+}  // namespace
+
+// Moves the events each update task collected into the frame's events, then empties the task
+// lists. The order of the lists matches the original. Its quirks are kept: the
+// buildingNoLongerOverheated events end up in buildingOverheat, and digInfo is only cleared.
+void SimBase::ConsolidateEvents(SimData &sim) {
+    SimEvents &out = *sim.events;
+    for (SimEvents *task : Field<std::vector<SimEvents *>>(this, 0xf8)) {
+        SimEvents &in = *task;
+        AppendAll(out.substanceChanges, in.substanceChanges);
+        AppendAll(out.spawnOre, in.spawnOre);
+        AppendAll(out.spawnFallingLiquid, in.spawnFallingLiquid);
+        AppendAll(out.unstableCells, in.unstableCells);
+        AppendAll(out.elementChunkMelted, in.elementChunkMelted);
+        AppendAll(out.buildingMelted, in.buildingMelted);
+        AppendAll(out.buildingOverheat, in.buildingOverheat);
+        AppendAll(out.buildingOverheat, in.buildingNoLongerOverheated);
+        AppendAll(out.cellMelted, in.cellMelted);
+        AppendAll(out.callbacks, in.callbacks);
+        AppendAll(out.worldDamage, in.worldDamage);
+        AppendAll(out.massConsumed, in.massConsumed);
+        AppendAll(out.massEmitted, in.massEmitted);
+        AppendAll(out.diseaseConsumed, in.diseaseConsumed);
+        AppendAll(out.spawnFX, in.spawnFX);
+        AppendAll(out.componentStateChanged, in.componentStateChanged);
+        AppendAll(out.radiationConsumed, in.radiationConsumed);
+        AppendAll(out.backwallElementChanged, in.backwallElementChanged);
+        AppendAll(out.backwallShouldTransition, in.backwallShouldTransition);
+        in.substanceChanges.clear();
+        in.spawnFallingLiquid.clear();
+        in.elementChunkMelted.clear();
+        in.buildingMelted.clear();
+        in.buildingOverheat.clear();
+        in.buildingNoLongerOverheated.clear();
+        in.cellMelted.clear();
+        in.spawnOre.clear();
+        in.spawnFX.clear();
+        in.unstableCells.clear();
+        in.callbacks.clear();
+        in.worldDamage.clear();
+        in.massConsumed.clear();
+        in.radiationConsumed.clear();
+        in.massEmitted.clear();
+        in.diseaseConsumed.clear();
+        in.componentStateChanged.clear();
+        in.digInfo.clear();
+        in.backwallElementChanged.clear();
+        in.backwallShouldTransition.clear();
+    }
+}

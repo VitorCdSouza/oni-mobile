@@ -16,6 +16,7 @@ struct ElementChunk;
 struct BuildingHeatExchange;
 struct BuildingToBuildingHeatExchange;
 struct DiseaseEmitter;
+struct DiseaseConsumer;
 struct SimData;
 struct Vector4f;
 struct CellAccessor;
@@ -36,6 +37,9 @@ struct SpawnFXInfo;
 struct ComponentStateChangedMessage;
 struct BackwallElementChangedInfo;
 struct BackwallShouldTransitionInfo;
+struct SolidInfo;
+struct LiquidChangeInfo;
+struct SolidSubstanceChangeInfo;
 struct PhysicsData;
 struct Element;
 struct ElementTemperatureData;
@@ -68,6 +72,7 @@ struct DiseaseEmittedInfo;
 struct ElementChunkData;
 struct ElementChunkInfo;
 struct RadiationEmitterData;
+struct GameData;
 
 struct CellSOA {
     std::vector<uint16_t> elementIdx;
@@ -178,6 +183,17 @@ struct DiseaseEmitter {
     void UpdateDataListOnly(SimData &sim);
 };
 
+struct DiseaseConsumer {
+    void * vtable;
+    std::vector<uint8_t> data;
+    std::vector<uint32_t> denseToHandle;
+    std::vector<uint32_t> freeHandles;
+    std::vector<int32_t> handleToDense;
+    std::vector<uint8_t> versions;
+    void * componentVtable;
+    std::vector<DiseaseEmittedInfo> consumed;
+};
+
 struct SimData {
     int32_t width;
     int32_t height;
@@ -215,7 +231,7 @@ struct SimData {
     BuildingHeatExchange buildingHeatExchange;
     BuildingToBuildingHeatExchange buildingToBuildingHeatExchange;
     DiseaseEmitter diseaseEmitter;
-    uint8_t pad_0x678[160];
+    DiseaseConsumer diseaseConsumer;
     bool unk_0x718;
     bool headless;
     bool radiationEnabled;
@@ -263,7 +279,7 @@ struct SimEvents {
     std::vector<DiseaseConsumptionCallback> diseaseConsumed;
     std::vector<SpawnFXInfo> spawnFX;
     std::vector<ComponentStateChangedMessage> componentStateChanged;
-    std::vector<int32_t> unk_0x198;
+    std::vector<SpawnOreInfo> digInfo;
     std::vector<BackwallElementChangedInfo> backwallElementChanged;
     std::vector<BackwallShouldTransitionInfo> backwallShouldTransition;
     void ChangeSubstance(const SimData &sim, unsigned long cell);
@@ -373,6 +389,19 @@ struct BackwallElementChangedInfo {
 
 struct BackwallShouldTransitionInfo {
     int32_t gameCell;
+};
+
+struct SolidInfo {
+    int32_t cellIdx;
+    int32_t isSolid;
+};
+
+struct LiquidChangeInfo {
+    int32_t cellIdx;
+};
+
+struct SolidSubstanceChangeInfo {
+    int32_t cellIdx;
 };
 
 struct PhysicsData {
@@ -728,6 +757,52 @@ struct RadiationEmitterData {
     float pulseTimer;
     int32_t type;
     int32_t step;
+};
+
+struct GameData {
+    int32_t width;
+    int32_t height;
+    int32_t numFramesProcessed;
+    uint8_t pad_0xc[4];
+    std::vector<SubstanceChangeInfo> substanceChanges;
+    std::vector<CallbackInfo> callbacks;
+    std::vector<SpawnFallingLiquidInfo> spawnFallingLiquid;
+    std::vector<SpawnOreInfo> spawnOre;
+    std::vector<SpawnOreInfo> digInfo;
+    std::vector<UnstableCellInfo> unstableCells;
+    std::vector<WorldDamageInfo> worldDamage;
+    std::vector<BuildingTemperatureInfo> buildingTemperatures;
+    std::vector<MassConsumedCallback> massConsumed;
+    std::vector<MassEmittedCallback> massEmitted;
+    std::vector<DiseaseConsumptionCallback> diseaseConsumed;
+    std::vector<ConsumedRadiationCallback> radiationConsumed;
+    std::vector<SpawnFXInfo> spawnFX;
+    std::vector<SolidInfo> solidInfo;
+    std::vector<LiquidChangeInfo> liquidChanges;
+    std::vector<SolidSubstanceChangeInfo> solidSubstanceChanges;
+    std::vector<ConsumedMassInfo> removedMass;
+    std::vector<EmittedMassInfo> emittedMass;
+    std::vector<ElementChunkInfo> elementChunkInfos;
+    std::vector<DiseaseEmittedInfo> diseaseEmitted;
+    std::vector<DiseaseEmittedInfo> diseaseConsumedInfos;
+    std::vector<MeltedInfo> elementChunkMelted;
+    std::vector<MeltedInfo> buildingMelted;
+    std::vector<MeltedInfo> buildingOverheat;
+    std::vector<MeltedInfo> buildingNoLongerOverheated;
+    std::vector<ComponentStateChangedMessage> componentStateChanged;
+    std::vector<CellMeltedInfo> cellMelted;
+    std::vector<BackwallElementChangedInfo> backwallElementChanged;
+    std::vector<BackwallShouldTransitionInfo> backwallShouldTransition;
+    CellSOA * cells;
+    BackwallSOA * backwall;
+    Vector4f * flow;
+    float * accumulatedFlow;
+    uint8_t * visibleGrid;
+    void * propertyTextureFlow;
+    void * propertyTextureLiquid;
+    void * propertyTextureLiquidData;
+    void * propertyTextureMaterialData;
+    uint8_t * propertyTextureExposedToSunlight;
 };
 
 extern std::vector<Element> gElements;

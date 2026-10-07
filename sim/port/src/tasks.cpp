@@ -87,21 +87,7 @@ void UpdateBackwallTask::InternalDoTask() {
     }
 }
 
-// The same row copy for one per-cell Vector4 array (unk_0x60).
-template <typename T>
-struct UpdateCellTask {
-    void *vtable;
-    T *src;
-    T *dst;
-    int32_t numRows;
-    int32_t firstRow;
-    int32_t srcStride;
-    int32_t dstFirstRow;
-    int32_t rowLength;
-    void InternalDoTask();
-};
-static_assert(sizeof(UpdateCellTask<Vector4<float>>) == 0x30, "UpdateCellTask size");
-
+// The row copy for the per-cell Vector4 array (unk_0x60).
 template <>
 void UpdateCellTask<Vector4<float>>::InternalDoTask() {
     for (int y = firstRow; y < firstRow + numRows; y++) {

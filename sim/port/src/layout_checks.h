@@ -39,6 +39,7 @@ static_assert(offsetof(SimData, elementChunk) == 0x390, "SimData::elementChunk")
 static_assert(offsetof(SimData, buildingHeatExchange) == 0x430, "SimData::buildingHeatExchange");
 static_assert(offsetof(SimData, buildingToBuildingHeatExchange) == 0x4d0, "SimData::buildingToBuildingHeatExchange");
 static_assert(offsetof(SimData, diseaseEmitter) == 0x558, "SimData::diseaseEmitter");
+static_assert(offsetof(SimData, diseaseConsumer) == 0x678, "SimData::diseaseConsumer");
 static_assert(offsetof(SimData, headless) == 0x719, "SimData::headless");
 static_assert(offsetof(SimData, radiationEnabled) == 0x71a, "SimData::radiationEnabled");
 
@@ -70,6 +71,7 @@ static_assert(offsetof(SimEvents, massEmitted) == 0x138, "SimEvents::massEmitted
 static_assert(offsetof(SimEvents, diseaseConsumed) == 0x150, "SimEvents::diseaseConsumed");
 static_assert(offsetof(SimEvents, spawnFX) == 0x168, "SimEvents::spawnFX");
 static_assert(offsetof(SimEvents, componentStateChanged) == 0x180, "SimEvents::componentStateChanged");
+static_assert(offsetof(SimEvents, digInfo) == 0x198, "SimEvents::digInfo");
 static_assert(offsetof(SimEvents, backwallElementChanged) == 0x1b0, "SimEvents::backwallElementChanged");
 static_assert(offsetof(SimEvents, backwallShouldTransition) == 0x1c8, "SimEvents::backwallShouldTransition");
 
@@ -157,6 +159,16 @@ static_assert(offsetof(BackwallElementChangedInfo, gameCell) == 0x0, "BackwallEl
 
 static_assert(sizeof(BackwallShouldTransitionInfo) == 0x4, "BackwallShouldTransitionInfo size");
 static_assert(offsetof(BackwallShouldTransitionInfo, gameCell) == 0x0, "BackwallShouldTransitionInfo::gameCell");
+
+static_assert(sizeof(SolidInfo) == 0x8, "SolidInfo size");
+static_assert(offsetof(SolidInfo, cellIdx) == 0x0, "SolidInfo::cellIdx");
+static_assert(offsetof(SolidInfo, isSolid) == 0x4, "SolidInfo::isSolid");
+
+static_assert(sizeof(LiquidChangeInfo) == 0x4, "LiquidChangeInfo size");
+static_assert(offsetof(LiquidChangeInfo, cellIdx) == 0x0, "LiquidChangeInfo::cellIdx");
+
+static_assert(sizeof(SolidSubstanceChangeInfo) == 0x4, "SolidSubstanceChangeInfo size");
+static_assert(offsetof(SolidSubstanceChangeInfo, cellIdx) == 0x0, "SolidSubstanceChangeInfo::cellIdx");
 
 static_assert(sizeof(Element) == 0xa4, "Element size");
 static_assert(offsetof(Element, id) == 0x0, "Element::id");
@@ -478,6 +490,16 @@ static_assert(offsetof(DiseaseEmitter, queue) == 0xa0, "DiseaseEmitter::queue");
 static_assert(offsetof(DiseaseEmitter, visited) == 0xf0, "DiseaseEmitter::visited");
 static_assert(offsetof(DiseaseEmitter, reachable) == 0x108, "DiseaseEmitter::reachable");
 
+static_assert(sizeof(DiseaseConsumer) == 0xa0, "DiseaseConsumer size");
+static_assert(offsetof(DiseaseConsumer, vtable) == 0x0, "DiseaseConsumer::vtable");
+static_assert(offsetof(DiseaseConsumer, data) == 0x8, "DiseaseConsumer::data");
+static_assert(offsetof(DiseaseConsumer, denseToHandle) == 0x20, "DiseaseConsumer::denseToHandle");
+static_assert(offsetof(DiseaseConsumer, freeHandles) == 0x38, "DiseaseConsumer::freeHandles");
+static_assert(offsetof(DiseaseConsumer, handleToDense) == 0x50, "DiseaseConsumer::handleToDense");
+static_assert(offsetof(DiseaseConsumer, versions) == 0x68, "DiseaseConsumer::versions");
+static_assert(offsetof(DiseaseConsumer, componentVtable) == 0x80, "DiseaseConsumer::componentVtable");
+static_assert(offsetof(DiseaseConsumer, consumed) == 0x88, "DiseaseConsumer::consumed");
+
 static_assert(sizeof(ElementChunkData) == 0x2c, "ElementChunkData size");
 static_assert(offsetof(ElementChunkData, cell) == 0x0, "ElementChunkData::cell");
 static_assert(offsetof(ElementChunkData, temperature) == 0x4, "ElementChunkData::temperature");
@@ -527,4 +549,48 @@ static_assert(offsetof(RadiationEmitter, freeHandles) == 0x38, "RadiationEmitter
 static_assert(offsetof(RadiationEmitter, handleToDense) == 0x50, "RadiationEmitter::handleToDense");
 static_assert(offsetof(RadiationEmitter, versions) == 0x68, "RadiationEmitter::versions");
 static_assert(offsetof(RadiationEmitter, componentVtable) == 0x80, "RadiationEmitter::componentVtable");
+
+static_assert(sizeof(GameData) == 0x318, "GameData size");
+static_assert(offsetof(GameData, width) == 0x0, "GameData::width");
+static_assert(offsetof(GameData, height) == 0x4, "GameData::height");
+static_assert(offsetof(GameData, numFramesProcessed) == 0x8, "GameData::numFramesProcessed");
+static_assert(offsetof(GameData, substanceChanges) == 0x10, "GameData::substanceChanges");
+static_assert(offsetof(GameData, callbacks) == 0x28, "GameData::callbacks");
+static_assert(offsetof(GameData, spawnFallingLiquid) == 0x40, "GameData::spawnFallingLiquid");
+static_assert(offsetof(GameData, spawnOre) == 0x58, "GameData::spawnOre");
+static_assert(offsetof(GameData, digInfo) == 0x70, "GameData::digInfo");
+static_assert(offsetof(GameData, unstableCells) == 0x88, "GameData::unstableCells");
+static_assert(offsetof(GameData, worldDamage) == 0xa0, "GameData::worldDamage");
+static_assert(offsetof(GameData, buildingTemperatures) == 0xb8, "GameData::buildingTemperatures");
+static_assert(offsetof(GameData, massConsumed) == 0xd0, "GameData::massConsumed");
+static_assert(offsetof(GameData, massEmitted) == 0xe8, "GameData::massEmitted");
+static_assert(offsetof(GameData, diseaseConsumed) == 0x100, "GameData::diseaseConsumed");
+static_assert(offsetof(GameData, radiationConsumed) == 0x118, "GameData::radiationConsumed");
+static_assert(offsetof(GameData, spawnFX) == 0x130, "GameData::spawnFX");
+static_assert(offsetof(GameData, solidInfo) == 0x148, "GameData::solidInfo");
+static_assert(offsetof(GameData, liquidChanges) == 0x160, "GameData::liquidChanges");
+static_assert(offsetof(GameData, solidSubstanceChanges) == 0x178, "GameData::solidSubstanceChanges");
+static_assert(offsetof(GameData, removedMass) == 0x190, "GameData::removedMass");
+static_assert(offsetof(GameData, emittedMass) == 0x1a8, "GameData::emittedMass");
+static_assert(offsetof(GameData, elementChunkInfos) == 0x1c0, "GameData::elementChunkInfos");
+static_assert(offsetof(GameData, diseaseEmitted) == 0x1d8, "GameData::diseaseEmitted");
+static_assert(offsetof(GameData, diseaseConsumedInfos) == 0x1f0, "GameData::diseaseConsumedInfos");
+static_assert(offsetof(GameData, elementChunkMelted) == 0x208, "GameData::elementChunkMelted");
+static_assert(offsetof(GameData, buildingMelted) == 0x220, "GameData::buildingMelted");
+static_assert(offsetof(GameData, buildingOverheat) == 0x238, "GameData::buildingOverheat");
+static_assert(offsetof(GameData, buildingNoLongerOverheated) == 0x250, "GameData::buildingNoLongerOverheated");
+static_assert(offsetof(GameData, componentStateChanged) == 0x268, "GameData::componentStateChanged");
+static_assert(offsetof(GameData, cellMelted) == 0x280, "GameData::cellMelted");
+static_assert(offsetof(GameData, backwallElementChanged) == 0x298, "GameData::backwallElementChanged");
+static_assert(offsetof(GameData, backwallShouldTransition) == 0x2b0, "GameData::backwallShouldTransition");
+static_assert(offsetof(GameData, cells) == 0x2c8, "GameData::cells");
+static_assert(offsetof(GameData, backwall) == 0x2d0, "GameData::backwall");
+static_assert(offsetof(GameData, flow) == 0x2d8, "GameData::flow");
+static_assert(offsetof(GameData, accumulatedFlow) == 0x2e0, "GameData::accumulatedFlow");
+static_assert(offsetof(GameData, visibleGrid) == 0x2e8, "GameData::visibleGrid");
+static_assert(offsetof(GameData, propertyTextureFlow) == 0x2f0, "GameData::propertyTextureFlow");
+static_assert(offsetof(GameData, propertyTextureLiquid) == 0x2f8, "GameData::propertyTextureLiquid");
+static_assert(offsetof(GameData, propertyTextureLiquidData) == 0x300, "GameData::propertyTextureLiquidData");
+static_assert(offsetof(GameData, propertyTextureMaterialData) == 0x308, "GameData::propertyTextureMaterialData");
+static_assert(offsetof(GameData, propertyTextureExposedToSunlight) == 0x310, "GameData::propertyTextureExposedToSunlight");
 
