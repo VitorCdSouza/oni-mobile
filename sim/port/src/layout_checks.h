@@ -353,6 +353,7 @@ static_assert(offsetof(BuildingHeatExchange, temperatures) == 0x88, "BuildingHea
 
 static_assert(sizeof(BuildingContact) == 0x8, "BuildingContact size");
 static_assert(offsetof(BuildingContact, handle) == 0x0, "BuildingContact::handle");
+static_assert(offsetof(BuildingContact, cellsInContact) == 0x4, "BuildingContact::cellsInContact");
 
 static_assert(sizeof(BuildingToBuildingHeatExchangeData) == 0x20, "BuildingToBuildingHeatExchangeData size");
 static_assert(offsetof(BuildingToBuildingHeatExchangeData, handle) == 0x0, "BuildingToBuildingHeatExchangeData::handle");

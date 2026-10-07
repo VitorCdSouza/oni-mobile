@@ -729,7 +729,7 @@ struct BuildingTemperatureInfo {
 
 struct BuildingContact {
     uint32_t handle;
-    float unk_0x4;
+    int32_t cellsInContact;
 };
 
 struct BuildingToBuildingHeatExchangeData {
