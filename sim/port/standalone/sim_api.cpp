@@ -187,14 +187,14 @@ Sim *NewSim(FrameSync &sync) {
 
 void DeleteSim(Sim *sim) {
     SimBase &b = sim->base;
-    for (void *t : b.updateTasks) delete static_cast<SimUpdateTemperatureTask *>(t);
-    for (void *e : b.taskEvents) delete static_cast<SimEvents *>(e);
+    for (SimUpdateTemperatureTask *t : b.updateTasks) delete t;
+    for (SimEvents *e : b.taskEvents) delete e;
     for (void *t : b.flowTasks) delete static_cast<UpdateCellTask<Vector4<float>> *>(t);
-    for (void *t : b.cellTasks) delete static_cast<UpdateCellSOATask *>(t);
-    for (void *t : b.backwallTasks) delete static_cast<UpdateBackwallTask *>(t);
-    for (std::vector<void *> *frames :
+    for (UpdateCellSOATask *t : b.cellTasks) delete t;
+    for (UpdateBackwallTask *t : b.backwallTasks) delete t;
+    for (std::vector<SimFrameInfo *> *frames :
          {&b.frames.freeFrames, &b.frames.queuedFrames, &b.frames.processingFrames, &b.frames.processedFrames}) {
-        for (void *f : *frames) delete static_cast<SimFrameInfo *>(f);
+        for (SimFrameInfo *f : *frames) delete f;
     }
     delete b.frames.current;
     reinterpret_cast<std::mutex *>(b.frames.mutex)->~mutex();

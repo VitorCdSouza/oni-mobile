@@ -1,9 +1,17 @@
 // Generated from sim/layout/layout.txt. Do not edit.
 // The original SimDLL structures, laid out exactly like the original.
 #pragma once
+#include <pthread.h>
+#include <cstddef>
 #include <cstdint>
+#include <mutex>
 #include <queue>
 #include <vector>
+
+// Room for a std::mutex / pthread_mutex_t: 40 bytes in the original (glibc x86_64), more
+// on other platforms (48 on glibc aarch64). Only x86_64 builds keep the original layout.
+constexpr size_t kMutexBytes = sizeof(pthread_mutex_t) > sizeof(std::mutex) ? sizeof(pthread_mutex_t)
+                                                                               : sizeof(std::mutex);
 
 // Enums used in member function signatures (they shape the mangled names).
 namespace SpawnFXHashes { enum Type : int32_t {}; }
@@ -756,7 +764,7 @@ struct ConduitTemperatureManager {
     int32_t pendingIndex;
     std::vector<uint32_t> pendingRemovals0;
     std::vector<uint32_t> pendingRemovals1;
-    uint8_t mutex[40];
+    alignas(8) uint8_t mutex[kMutexBytes];
     float CalculateEnergyFlow(bool insulated, float contents_temperature, float contents_conductivity, float conduit_temperature, float conduit_conductivity, float scale);
     float ClampEnergyTransfer(float dt, float src_temperature, float src_capacity, float dst_temperature, float dst_capacity, float energy);
     float ModifyTemperature(float temperature, float capacity, float other_temperature, float other_capacity, float energy);
@@ -1321,12 +1329,12 @@ struct SimFrameInfo {
 };
 
 struct SimFrameManager {
-    uint8_t mutex[40];
+    alignas(8) uint8_t mutex[kMutexBytes];
     SimFrameInfo * current;
-    std::vector<void *> freeFrames;
-    std::vector<void *> queuedFrames;
-    std::vector<void *> processingFrames;
-    std::vector<void *> processedFrames;
+    std::vector<SimFrameInfo *> freeFrames;
+    std::vector<SimFrameInfo *> queuedFrames;
+    std::vector<SimFrameInfo *> processingFrames;
+    std::vector<SimFrameInfo *> processedFrames;
     uint8_t pad_0x90[32];
     std::vector<ActiveRegion> activeRegions;
     int32_t nextFrame;
@@ -1343,11 +1351,11 @@ struct SimBase {
     void * vtable;
     SimFrameManager frames;
     void * taskQueue;
-    std::vector<void *> updateTasks;
-    std::vector<void *> taskEvents;
+    std::vector<SimUpdateTemperatureTask *> updateTasks;
+    std::vector<SimEvents *> taskEvents;
     std::vector<void *> flowTasks;
-    std::vector<void *> cellTasks;
-    std::vector<void *> backwallTasks;
+    std::vector<UpdateCellSOATask *> cellTasks;
+    std::vector<UpdateBackwallTask *> backwallTasks;
     float remainder;
     uint8_t pad_0x15c[4];
     void UpdatedCellsToCells(SimData &sim, Vector2<int> min, Vector2<int> max);

@@ -56,7 +56,11 @@ static int gotpatch_visit(struct dl_phdr_info *info, size_t size, void *data) {
         for (size_t i = 0; i < count; i++) {
             const ElfW(Rela) *r = &rel_tables[t][i];
             unsigned long type = ELF64_R_TYPE(r->r_info);
+#if defined(__aarch64__)
+            if (type != R_AARCH64_JUMP_SLOT && type != R_AARCH64_GLOB_DAT) {
+#else
             if (type != R_X86_64_JUMP_SLOT && type != R_X86_64_GLOB_DAT) {
+#endif
                 continue;
             }
             const char *name = strtab + symtab[ELF64_R_SYM(r->r_info)].st_name;

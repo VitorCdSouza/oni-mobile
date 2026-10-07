@@ -1,7 +1,10 @@
 // Generated from sim/layout/layout.txt. Do not edit.
-// Included by the port in hybrid builds, after its own struct definitions.
+// Included after the port's struct definitions. The layout only has to match the original
+// where the hybrid build runs against it (x86_64 with libstdc++).
 #pragma once
 #include <cstddef>
+
+#if defined(__x86_64__) && defined(__GLIBCXX__)
 
 static_assert(sizeof(CellSOA) == 0x108, "CellSOA size");
 static_assert(offsetof(CellSOA, elementIdx) == 0x0, "CellSOA::elementIdx");
@@ -960,3 +963,4 @@ static_assert(offsetof(SimBase, cellTasks) == 0x128, "SimBase::cellTasks");
 static_assert(offsetof(SimBase, backwallTasks) == 0x140, "SimBase::backwallTasks");
 static_assert(offsetof(SimBase, remainder) == 0x158, "SimBase::remainder");
 
+#endif

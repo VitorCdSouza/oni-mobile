@@ -13,11 +13,6 @@ void UpdateExposedToSunPropertyTexture(const SimData &sim, GameData &game);
 
 namespace {
 
-template <typename T>
-T &Field(SimBase *self, size_t offset) {
-    return *reinterpret_cast<T *>(reinterpret_cast<char *>(self) + offset);
-}
-
 // Splits the game rows over the tasks (the first `rows % count` tasks take one extra row) and
 // runs them. The original queues them on its worker pool and waits; with one worker they run in
 // this order, and they write disjoint rows anyway.
@@ -82,9 +77,9 @@ int gAccumulatedFlowFrames = 0;
 
 void SimBase::CopySimDataToGame(SimData &sim, GameData &game, const GameData &previous, int frames) {
     // Cell grids: flow, cells and backwalls, without the border.
-    auto &flow_tasks = Field<std::vector<UpdateCellTask<Vector4<float>> *>>(this, 0x110);
-    auto &cell_tasks = Field<std::vector<UpdateCellSOATask *>>(this, 0x128);
-    auto &backwall_tasks = Field<std::vector<UpdateBackwallTask *>>(this, 0x140);
+    auto &flow_tasks = reinterpret_cast<std::vector<UpdateCellTask<Vector4<float>> *> &>(flowTasks);
+    auto &cell_tasks = cellTasks;
+    auto &backwall_tasks = backwallTasks;
     int task_count = static_cast<int>(flow_tasks.size());
     int per_task = game.height / task_count;
     int extra = game.height % task_count;

@@ -41,12 +41,6 @@ void SimBase::CopyUpdatedCellsToCells(SimData &sim) {
 
 namespace {
 
-// SimBase fields used by UpdateData (offsets until SimBase is mapped in layout.txt).
-template <typename T>
-T &Field(SimBase *self, size_t offset) {
-    return *reinterpret_cast<T *>(reinterpret_cast<char *>(self) + offset);
-}
-
 // Radiation emitted by a cell spreads over this 5x5 kernel: {dx, dy, weight}.
 struct KernelEntry {
     int dx, dy;
@@ -252,9 +246,9 @@ void SimBase::UpdateData(SimData &sim) {
     }
     sim.flowDirection = -sim.flowDirection;
     CopyUpdatedCellsToCells(sim);
-    std::vector<SimUpdateTemperatureTask *> &tasks = Field<std::vector<SimUpdateTemperatureTask *>>(this, 0xe0);
-    std::vector<SimEvents *> &task_events = Field<std::vector<SimEvents *>>(this, 0xf8);
-    char *queue = Field<char *>(this, 0xd8);
+    std::vector<SimUpdateTemperatureTask *> &tasks = updateTasks;
+    std::vector<SimEvents *> &task_events = taskEvents;
+    char *queue = static_cast<char *>(taskQueue);
     for (size_t ri = 0; ri < sim.activeRegions.size(); ri++) {
         const ActiveRegion r = sim.activeRegions[ri];
         const int rw = r.maxX - r.minX;
@@ -465,12 +459,8 @@ void SimData::UpdateComponentsDataListOnly() {
 }
 
 // Runs every frame the game queued since the last call. A frame with a positive dt advances the
-// simulation in fixed 0.2 s ticks (at least one), carrying the leftover time in the remainder at
-// 0x158; a paused frame only applies its messages and refreshes what the components report.
+// simulation in fixed 0.2 s ticks (at least one), carrying the leftover time in `remainder`; a paused frame only applies its messages and refreshes what the components report.
 void SimBase::Step(SimData &sim, GameData &game, const GameData &previous) {
-    char *self = reinterpret_cast<char *>(this);
-    SimFrameManager &frames = *reinterpret_cast<SimFrameManager *>(self + 8);
-    float &remainder = *reinterpret_cast<float *>(self + 0x158);
     int frame_count = frames.BeginFrameProcessing();
     std::memset(sim.unk_0x60, 0, static_cast<long>(sim.width) * static_cast<long>(sim.height) * sizeof(Vector4f));
     if (frame_count <= 0) {
@@ -516,7 +506,7 @@ void AppendAll(std::vector<T> &dst, const std::vector<T> &src) {
 // buildingNoLongerOverheated events end up in buildingOverheat, and digInfo is only cleared.
 void SimBase::ConsolidateEvents(SimData &sim) {
     SimEvents &out = *sim.events;
-    for (SimEvents *task : Field<std::vector<SimEvents *>>(this, 0xf8)) {
+    for (SimEvents *task : taskEvents) {
         SimEvents &in = *task;
         AppendAll(out.substanceChanges, in.substanceChanges);
         AppendAll(out.spawnOre, in.spawnOre);

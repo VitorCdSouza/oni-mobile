@@ -200,6 +200,9 @@ struct Vec_RemoveElementConsumerMessage { struct RemoveElementConsumerMessage *b
 struct Vec_RemoveElementEmitterMessage { struct RemoveElementEmitterMessage *begin; struct RemoveElementEmitterMessage *end; struct RemoveElementEmitterMessage *cap; };
 struct Vec_RemoveRadiationEmitterMessage { struct RemoveRadiationEmitterMessage *begin; struct RemoveRadiationEmitterMessage *end; struct RemoveRadiationEmitterMessage *cap; };
 struct Vec_SetCellFloatValue { struct SetCellFloatValue *begin; struct SetCellFloatValue *end; struct SetCellFloatValue *cap; };
+struct Vec_SimEvents_ptr { struct SimEvents * *begin; struct SimEvents * *end; struct SimEvents * *cap; };
+struct Vec_SimFrameInfo_ptr { struct SimFrameInfo * *begin; struct SimFrameInfo * *end; struct SimFrameInfo * *cap; };
+struct Vec_SimUpdateTemperatureTask_ptr { struct SimUpdateTemperatureTask * *begin; struct SimUpdateTemperatureTask * *end; struct SimUpdateTemperatureTask * *cap; };
 struct Vec_SolidInfo { struct SolidInfo *begin; struct SolidInfo *end; struct SolidInfo *cap; };
 struct Vec_SolidSubstanceChangeInfo { struct SolidSubstanceChangeInfo *begin; struct SolidSubstanceChangeInfo *end; struct SolidSubstanceChangeInfo *cap; };
 struct Vec_SpawnFXInfo { struct SpawnFXInfo *begin; struct SpawnFXInfo *end; struct SpawnFXInfo *cap; };
@@ -207,6 +210,8 @@ struct Vec_SpawnFallingLiquidInfo { struct SpawnFallingLiquidInfo *begin; struct
 struct Vec_SpawnOreInfo { struct SpawnOreInfo *begin; struct SpawnOreInfo *end; struct SpawnOreInfo *cap; };
 struct Vec_SubstanceChangeInfo { struct SubstanceChangeInfo *begin; struct SubstanceChangeInfo *end; struct SubstanceChangeInfo *cap; };
 struct Vec_UnstableCellInfo { struct UnstableCellInfo *begin; struct UnstableCellInfo *end; struct UnstableCellInfo *cap; };
+struct Vec_UpdateBackwallTask_ptr { struct UpdateBackwallTask * *begin; struct UpdateBackwallTask * *end; struct UpdateBackwallTask * *cap; };
+struct Vec_UpdateCellSOATask_ptr { struct UpdateCellSOATask * *begin; struct UpdateCellSOATask * *end; struct UpdateCellSOATask * *cap; };
 struct Vec_WorldDamageInfo { struct WorldDamageInfo *begin; struct WorldDamageInfo *end; struct WorldDamageInfo *cap; };
 struct Vec_WorldRect { struct WorldRect *begin; struct WorldRect *end; struct WorldRect *cap; };
 struct Vec_f32 { float *begin; float *end; float *cap; };
@@ -1333,10 +1338,10 @@ struct SimFrameInfo {
 struct SimFrameManager {
     uint8_t mutex[40];
     struct SimFrameInfo * current;
-    struct Vec_ptr freeFrames;
-    struct Vec_ptr queuedFrames;
-    struct Vec_ptr processingFrames;
-    struct Vec_ptr processedFrames;
+    struct Vec_SimFrameInfo_ptr freeFrames;
+    struct Vec_SimFrameInfo_ptr queuedFrames;
+    struct Vec_SimFrameInfo_ptr processingFrames;
+    struct Vec_SimFrameInfo_ptr processedFrames;
     uint8_t pad_0x90[32];
     struct Vec_ActiveRegion activeRegions;
     int32_t nextFrame;
@@ -1347,11 +1352,11 @@ struct SimBase {
     void * vtable;
     struct SimFrameManager frames;
     void * taskQueue;
-    struct Vec_ptr updateTasks;
-    struct Vec_ptr taskEvents;
+    struct Vec_SimUpdateTemperatureTask_ptr updateTasks;
+    struct Vec_SimEvents_ptr taskEvents;
     struct Vec_ptr flowTasks;
-    struct Vec_ptr cellTasks;
-    struct Vec_ptr backwallTasks;
+    struct Vec_UpdateCellSOATask_ptr cellTasks;
+    struct Vec_UpdateBackwallTask_ptr backwallTasks;
     float remainder;
     uint8_t pad_0x15c[4];
 };

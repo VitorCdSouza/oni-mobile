@@ -481,7 +481,7 @@ struct ConduitTemperatureManager 0x148
   0x0ec i32 pendingIndex           # which pendingRemovals list Remove fills
   0x0f0 vec<u32> pendingRemovals0  # handles freed by ReleaseQueuedHandles one step later
   0x108 vec<u32> pendingRemovals1
-  0x120 u8[40] mutex                 # std::mutex (pthread_mutex_t)
+  0x120 mutex mutex                 # std::mutex (pthread_mutex_t)
   method float CalculateEnergyFlow(bool insulated, float contents_temperature, float contents_conductivity, float conduit_temperature, float conduit_conductivity, float scale);
   method float ClampEnergyTransfer(float dt, float src_temperature, float src_capacity, float dst_temperature, float dst_capacity, float energy);
   method float ModifyTemperature(float temperature, float capacity, float other_temperature, float other_capacity, float energy);
@@ -1086,12 +1086,12 @@ struct SimFrameInfo 0x450
 
 # Queues frames between the game thread (HandleMessage) and the sim (Begin/ProcessNext/End).
 struct SimFrameManager 0xd0
-  0x00 u8[40] mutex                # std::mutex
+  0x00 mutex mutex                # std::mutex
   0x28 SimFrameInfo* current       # receives the messages
-  0x30 vec<ptr> freeFrames         # SimFrameInfo*, reused by NewFrame
-  0x48 vec<ptr> queuedFrames       # closed by NewGameFrame, waiting for the sim
-  0x60 vec<ptr> processingFrames   # taken by BeginFrameProcessing
-  0x78 vec<ptr> processedFrames    # handed back by EndFrameProcessing
+  0x30 vec<SimFrameInfo*> freeFrames  # reused by NewFrame
+  0x48 vec<SimFrameInfo*> queuedFrames  # closed by NewGameFrame, waiting for the sim
+  0x60 vec<SimFrameInfo*> processingFrames  # taken by BeginFrameProcessing
+  0x78 vec<SimFrameInfo*> processedFrames  # handed back by EndFrameProcessing
   0xb0 vec<ActiveRegion> activeRegions  # from the last NewGameFrame, sim coordinates
   0xc8 i32 nextFrame               # index into processingFrames
   method bool HandleMessage(int msg_id, int length, void *data, void *&out);
@@ -1106,11 +1106,11 @@ struct SimBase 0x160
   0x000 ptr vtable
   0x008 SimFrameManager frames
   0x0d8 ptr taskQueue              # ParallelTaskQueue; its worker threads vector is at +0xe0
-  0x0e0 vec<ptr> updateTasks       # SimUpdateTemperatureTask*, one per worker
-  0x0f8 vec<ptr> taskEvents        # SimEvents*, one per worker
+  0x0e0 vec<SimUpdateTemperatureTask*> updateTasks  # one per worker
+  0x0f8 vec<SimEvents*> taskEvents  # one per worker
   0x110 vec<ptr> flowTasks         # UpdateCellTask<Vector4<float>>*
-  0x128 vec<ptr> cellTasks         # UpdateCellSOATask*
-  0x140 vec<ptr> backwallTasks     # UpdateBackwallTask*
+  0x128 vec<UpdateCellSOATask*> cellTasks
+  0x140 vec<UpdateBackwallTask*> backwallTasks
   0x158 f32 remainder              # dt not yet simulated (ticks are 0.2 s)
   method void UpdatedCellsToCells(SimData &sim, Vector2<int> min, Vector2<int> max);
   method void CopyUpdatedCellsToCells(SimData &sim);

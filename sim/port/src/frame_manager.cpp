@@ -82,7 +82,7 @@ void SimFrameManager::NewFrame() {
         current->debugProperties.buildingTemperatureScale = 0.001f;
         current->debugProperties.buildingToBuildingTemperatureScale = 0.001f;
     } else {
-        current = static_cast<SimFrameInfo *>(freeFrames.back());
+        current = freeFrames.back();
         freeFrames.pop_back();
     }
 }
@@ -102,7 +102,7 @@ int SimFrameManager::BeginFrameProcessing() {
 
 // Applies the next frame's messages and makes its active regions current; returns its dt.
 float SimFrameManager::ProcessNextFrame(SimData &sim) {
-    SimFrameInfo *frame = static_cast<SimFrameInfo *>(processingFrames[nextFrame]);
+    SimFrameInfo *frame = processingFrames[nextFrame];
     ProcessFrame(*frame, sim);
     if (&activeRegions != &sim.activeRegions) {
         sim.activeRegions = activeRegions;

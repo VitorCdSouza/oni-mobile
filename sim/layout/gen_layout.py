@@ -14,7 +14,8 @@ import sys
 
 PRIM = {'u8': ('uint8_t', 1), 'bool': ('uint8_t', 1), 'u16': ('uint16_t', 2), 'i16': ('int16_t', 2),
         'u32': ('uint32_t', 4), 'i32': ('int32_t', 4), 'f32': ('float', 4), 'u64': ('uint64_t', 8),
-        'i64': ('int64_t', 8), 'f64': ('double', 8), 'ptr': ('void *', 8)}
+        'i64': ('int64_t', 8), 'f64': ('double', 8), 'ptr': ('void *', 8),
+        'mutex': ('uint8_t', 40)}  # a pthread_mutex_t: 40 bytes in the original (glibc x86_64)
 
 
 def parse(path):
@@ -121,6 +122,10 @@ def ghidra_header(structs, order):
                 out.append(f'    uint8_t pad_{pos:#x}[{off - pos}];')
             m = re.fullmatch(r'(.+)\[(\d+)\]', typ)
             base, count = (m.group(1), m.group(2)) if m else (typ, None)
+            if base == 'mutex':
+                out.append(f'    uint8_t {fname}[40];')
+                pos = off + size_of(typ, structs)
+                continue
             if base.startswith('queue<'):
                 out.append(f'    uint8_t {fname}[80];')
                 pos = off + size_of(typ, structs)
@@ -165,7 +170,13 @@ def cpp_header(structs, order):
     order = embedded_first(structs, order)
     out = ['// Generated from sim/layout/layout.txt. Do not edit.',
            '// The original SimDLL structures, laid out exactly like the original.',
-           '#pragma once', '#include <cstdint>', '#include <queue>', '#include <vector>', '',
+           '#pragma once', '#include <pthread.h>', '#include <cstddef>', '#include <cstdint>', '#include <mutex>',
+           '#include <queue>', '#include <vector>', '',
+           '// Room for a std::mutex / pthread_mutex_t: 40 bytes in the original (glibc x86_64), more',
+           '// on other platforms (48 on glibc aarch64). Only x86_64 builds keep the original layout.',
+           'constexpr size_t kMutexBytes = sizeof(pthread_mutex_t) > sizeof(std::mutex) ? sizeof(pthread_mutex_t)',
+           '                                                                               : sizeof(std::mutex);',
+           '',
            '// Enums used in member function signatures (they shape the mangled names).',
            'namespace SpawnFXHashes { enum Type : int32_t {}; }', '',
            '// The original\'s small vector templates (their names appear in mangled signatures).',
@@ -193,6 +204,10 @@ def cpp_header(structs, order):
                 out.append(f'    uint8_t pad_{pos:#x}[{off - pos}];')
             m = re.fullmatch(r'(.+)\[(\d+)\]', typ)
             base, count = (m.group(1), m.group(2)) if m else (typ, None)
+            if base == 'mutex':
+                out.append(f'    alignas(8) uint8_t {fname}[kMutexBytes];')
+                pos = off + size_of(typ, structs)
+                continue
             out.append(f'    {cpp_type(base)} {fname}' + (f'[{count}]' if count else '') + ';')
             pos = off + size_of(typ, structs)
         if pos < s['size']:
@@ -212,8 +227,9 @@ def cpp_header(structs, order):
 
 def checks_header(structs, order):
     out = ['// Generated from sim/layout/layout.txt. Do not edit.',
-           '// Included by the port in hybrid builds, after its own struct definitions.',
-           '#pragma once', '#include <cstddef>', '']
+           '// Included after the port\'s struct definitions. The layout only has to match the original',
+           '// where the hybrid build runs against it (x86_64 with libstdc++).',
+           '#pragma once', '#include <cstddef>', '', '#if defined(__x86_64__) && defined(__GLIBCXX__)', '']
     for name in order:
         s = structs[name]
         out.append(f'static_assert(sizeof({name}) == {s["size"]:#x}, "{name} size");')
@@ -221,6 +237,7 @@ def checks_header(structs, order):
             if not fname.startswith('unk_'):
                 out.append(f'static_assert(offsetof({name}, {fname}) == {off:#x}, "{name}::{fname}");')
         out.append('')
+    out.append('#endif')
     return '\n'.join(out)
 
 
