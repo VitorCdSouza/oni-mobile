@@ -138,3 +138,11 @@ void Disease::UpdateCells(float dt, SimData &sim, SimEvents &events, int a, int 
         AddDiseaseToCell(sim.updatedCells, b, idx_b, to_b);
     }
 }
+
+// Empties a backwall cell: back to the "no backwall" element, no mass, no temperature.
+void SimData::ClearBackwall(int cell) {
+    BackwallSOA &bw = *backwall;
+    bw.elementIdx[cell] = bw.noneElementIdx;
+    bw.mass[cell] = 0.0f;
+    bw.temperature[cell] = 0.0f;
+}

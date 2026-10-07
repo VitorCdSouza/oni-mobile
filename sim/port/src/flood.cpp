@@ -56,6 +56,65 @@ void GetReachableCells(SimData &sim, int x, int y, int radius, std::vector<int> 
 // Takes up to `amount` kg of `element` from the cells reachable from (x, y), nearest first,
 // mixing what it takes into `info`. A solid consumer only crosses solid and vacuum cells; the
 // others cross anything but solids.
+// Takes up to `amount` of `element` from one cell into `info` (mass, mixed temperature, germs);
+// an emptied cell becomes vacuum.
+static void ConsumeCell(SimData &sim, float &amount, unsigned short element, ConsumedMassInfo &info, int cell) {
+    CellSOA *upd = sim.updatedCells;
+    if (element == upd->elementIdx[cell]) {
+        float want = amount;
+        float have = upd->mass[cell];
+        float ratio, left, taken;
+        if (want > have) {
+            ratio = 1.0f;
+            left = 0.0f;
+            taken = have;
+        } else {
+            ratio = want / have;
+            left = have - want;
+            taken = want;
+        }
+        uint8_t cell_disease = upd->diseaseIdx[cell];
+        int disease = upd->diseaseCount[cell];
+        upd->mass[cell] = left;
+        int moved_disease = static_cast<int>(static_cast<float>(disease) * ratio);
+        amount = amount - taken;
+        upd->diseaseCount[cell] = disease - moved_disease;
+        if (!(upd->diseaseCount[cell] > 0)) {
+            ClearDisease(*upd, cell);
+        }
+        float info_temperature = info.temperature;
+        float cell_temperature = upd->temperature[cell];
+        float hi, lo;
+        if (cell_temperature > info_temperature) {
+            hi = cell_temperature;
+            lo = info_temperature;
+        } else {
+            hi = info_temperature;
+            lo = cell_temperature;
+        }
+        float info_mass = info.mass;
+        float total = info_mass + taken;
+        info.mass = total;
+        info.temperature =
+            MaxSS(MinSS((info_temperature * info_mass + taken * cell_temperature) / total, hi), lo);
+        if (cell_disease != kNoDisease) {
+            DiseaseCount result = CombineDisease(*gDisease, info.diseaseIdx, info.diseaseCount, cell_disease,
+                                                 moved_disease);
+            info.diseaseIdx = result.idx;
+            info.diseaseCount = result.count;
+        }
+        if (!(0x1p-126f < upd->mass[cell])) {
+            CellAccessor accessor = Accessor(upd, cell);
+            sim.ClearCell(accessor);
+            int game_cell = ToGameCell(sim, cell);
+            if (IsValidGameCell(sim, game_cell)) {
+                PushSubstanceChange(*sim.events, game_cell);
+            }
+            sim.unk_0x68[cell] |= 0x1f;
+        }
+    }
+}
+
 void FloodRemoved(SimData &sim, float &amount, unsigned short element, ConsumedMassInfo &info, int x, int y, int radius,
                   std::vector<int> &visited, std::queue<FloodFillInfo> &queue) {
     uint8_t consumed_state = gElementPostProcessData[element].state;
@@ -80,60 +139,7 @@ void FloodRemoved(SimData &sim, float &amount, unsigned short element, ConsumedM
             continue;
         }
         visited.push_back(cell);
-        upd = sim.updatedCells;
-        if (element == upd->elementIdx[cell]) {
-            float want = amount;
-            float have = upd->mass[cell];
-            float ratio, left, taken;
-            if (want > have) {
-                ratio = 1.0f;
-                left = 0.0f;
-                taken = have;
-            } else {
-                ratio = want / have;
-                left = have - want;
-                taken = want;
-            }
-            uint8_t cell_disease = upd->diseaseIdx[cell];
-            int disease = upd->diseaseCount[cell];
-            upd->mass[cell] = left;
-            int moved_disease = static_cast<int>(static_cast<float>(disease) * ratio);
-            amount = amount - taken;
-            upd->diseaseCount[cell] = disease - moved_disease;
-            if (!(upd->diseaseCount[cell] > 0)) {
-                ClearDisease(*upd, cell);
-            }
-            float info_temperature = info.temperature;
-            float cell_temperature = upd->temperature[cell];
-            float hi, lo;
-            if (cell_temperature > info_temperature) {
-                hi = cell_temperature;
-                lo = info_temperature;
-            } else {
-                hi = info_temperature;
-                lo = cell_temperature;
-            }
-            float info_mass = info.mass;
-            float total = info_mass + taken;
-            info.mass = total;
-            info.temperature =
-                MaxSS(MinSS((info_temperature * info_mass + taken * cell_temperature) / total, hi), lo);
-            if (cell_disease != kNoDisease) {
-                DiseaseCount result = CombineDisease(*gDisease, info.diseaseIdx, info.diseaseCount, cell_disease,
-                                                     moved_disease);
-                info.diseaseIdx = result.idx;
-                info.diseaseCount = result.count;
-            }
-            if (!(0x1p-126f < upd->mass[cell])) {
-                CellAccessor accessor = Accessor(upd, cell);
-                sim.ClearCell(accessor);
-                int game_cell = ToGameCell(sim, cell);
-                if (IsValidGameCell(sim, game_cell)) {
-                    PushSubstanceChange(*sim.events, game_cell);
-                }
-                sim.unk_0x68[cell] |= 0x1f;
-            }
-        }
+        ConsumeCell(sim, amount, element, info, cell);
         if (amount <= 0.0f) {
             return;
         }
@@ -184,5 +190,19 @@ void ElementConsumer::Update(float dt, SimData &sim, const Region &region) {
         }
         ClearQueue(queue);
         d.roundRobin = static_cast<uint8_t>(d.roundRobin + 1);
+    }
+}
+
+// The consumer variant with a rectangle (radius columns by height rows from x, y) instead of a
+// flood fill.
+void RectangularRemoved(SimData &sim, float &amount, unsigned short element, ConsumedMassInfo &info, int x, int y,
+                        int radius, int height) {
+    for (int row = y; row < y + height; row++) {
+        for (int col = x; col < x + radius; col++) {
+            ConsumeCell(sim, amount, element, info, sim.width * row + col);
+            if (amount <= 0.0f) {
+                return;
+            }
+        }
     }
 }
