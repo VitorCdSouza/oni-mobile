@@ -29,6 +29,8 @@ static_assert(offsetof(SimData, backwall) == 0x30, "SimData::backwall");
 static_assert(offsetof(SimData, displacementDirection) == 0x90, "SimData::displacementDirection");
 static_assert(offsetof(SimData, events) == 0x98, "SimData::events");
 static_assert(offsetof(SimData, components) == 0xb0, "SimData::components");
+static_assert(offsetof(SimData, buildingHeatExchange) == 0x430, "SimData::buildingHeatExchange");
+static_assert(offsetof(SimData, buildingToBuildingHeatExchange) == 0x4d0, "SimData::buildingToBuildingHeatExchange");
 static_assert(offsetof(SimData, headless) == 0x719, "SimData::headless");
 static_assert(offsetof(SimData, radiationEnabled) == 0x71a, "SimData::radiationEnabled");
 
@@ -311,4 +313,20 @@ static_assert(offsetof(BuildingHeatExchange, handleToDense) == 0x50, "BuildingHe
 static_assert(offsetof(BuildingHeatExchange, versions) == 0x68, "BuildingHeatExchange::versions");
 static_assert(offsetof(BuildingHeatExchange, componentVtable) == 0x80, "BuildingHeatExchange::componentVtable");
 static_assert(offsetof(BuildingHeatExchange, temperatures) == 0x88, "BuildingHeatExchange::temperatures");
+
+static_assert(sizeof(BuildingContact) == 0x8, "BuildingContact size");
+static_assert(offsetof(BuildingContact, handle) == 0x0, "BuildingContact::handle");
+
+static_assert(sizeof(BuildingToBuildingHeatExchangeData) == 0x20, "BuildingToBuildingHeatExchangeData size");
+static_assert(offsetof(BuildingToBuildingHeatExchangeData, handle) == 0x0, "BuildingToBuildingHeatExchangeData::handle");
+static_assert(offsetof(BuildingToBuildingHeatExchangeData, contacts) == 0x8, "BuildingToBuildingHeatExchangeData::contacts");
+
+static_assert(sizeof(BuildingToBuildingHeatExchange) == 0x88, "BuildingToBuildingHeatExchange size");
+static_assert(offsetof(BuildingToBuildingHeatExchange, vtable) == 0x0, "BuildingToBuildingHeatExchange::vtable");
+static_assert(offsetof(BuildingToBuildingHeatExchange, data) == 0x8, "BuildingToBuildingHeatExchange::data");
+static_assert(offsetof(BuildingToBuildingHeatExchange, denseToHandle) == 0x20, "BuildingToBuildingHeatExchange::denseToHandle");
+static_assert(offsetof(BuildingToBuildingHeatExchange, freeHandles) == 0x38, "BuildingToBuildingHeatExchange::freeHandles");
+static_assert(offsetof(BuildingToBuildingHeatExchange, handleToDense) == 0x50, "BuildingToBuildingHeatExchange::handleToDense");
+static_assert(offsetof(BuildingToBuildingHeatExchange, versions) == 0x68, "BuildingToBuildingHeatExchange::versions");
+static_assert(offsetof(BuildingToBuildingHeatExchange, componentVtable) == 0x80, "BuildingToBuildingHeatExchange::componentVtable");
 

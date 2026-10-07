@@ -8,6 +8,8 @@ typedef unsigned long long uint64_t;
 typedef long long int64_t;
 
 struct CellSOA;
+struct BuildingHeatExchange;
+struct BuildingToBuildingHeatExchange;
 struct SimData;
 struct Vector4f;
 struct CellAccessor;
@@ -44,12 +46,15 @@ struct UpdateCellSOATask;
 struct UpdateBackwallTask;
 struct BuildingHeatExchangeData;
 struct BuildingTemperatureInfo;
-struct BuildingHeatExchange;
+struct BuildingContact;
+struct BuildingToBuildingHeatExchangeData;
 
 struct Vec_BackwallElementChangedInfo { struct BackwallElementChangedInfo *begin; struct BackwallElementChangedInfo *end; struct BackwallElementChangedInfo *cap; };
 struct Vec_BackwallShouldTransitionInfo { struct BackwallShouldTransitionInfo *begin; struct BackwallShouldTransitionInfo *end; struct BackwallShouldTransitionInfo *cap; };
+struct Vec_BuildingContact { struct BuildingContact *begin; struct BuildingContact *end; struct BuildingContact *cap; };
 struct Vec_BuildingHeatExchangeData { struct BuildingHeatExchangeData *begin; struct BuildingHeatExchangeData *end; struct BuildingHeatExchangeData *cap; };
 struct Vec_BuildingTemperatureInfo { struct BuildingTemperatureInfo *begin; struct BuildingTemperatureInfo *end; struct BuildingTemperatureInfo *cap; };
+struct Vec_BuildingToBuildingHeatExchangeData { struct BuildingToBuildingHeatExchangeData *begin; struct BuildingToBuildingHeatExchangeData *end; struct BuildingToBuildingHeatExchangeData *cap; };
 struct Vec_CallbackInfo { struct CallbackInfo *begin; struct CallbackInfo *end; struct CallbackInfo *cap; };
 struct Vec_CellMeltedInfo { struct CellMeltedInfo *begin; struct CellMeltedInfo *end; struct CellMeltedInfo *cap; };
 struct Vec_ComponentStateChangedMessage { struct ComponentStateChangedMessage *begin; struct ComponentStateChangedMessage *end; struct ComponentStateChangedMessage *cap; };
@@ -94,6 +99,27 @@ struct CellSOA {
     struct Vec_f32 unk_0xf0;
 };
 
+struct BuildingHeatExchange {
+    void * vtable;
+    struct Vec_BuildingHeatExchangeData data;
+    struct Vec_u32 denseToHandle;
+    struct Vec_u32 freeHandles;
+    struct Vec_i32 handleToDense;
+    struct Vec_u8 versions;
+    void * componentVtable;
+    struct Vec_BuildingTemperatureInfo temperatures;
+};
+
+struct BuildingToBuildingHeatExchange {
+    void * vtable;
+    struct Vec_BuildingToBuildingHeatExchangeData data;
+    struct Vec_u32 denseToHandle;
+    struct Vec_u32 freeHandles;
+    struct Vec_i32 handleToDense;
+    struct Vec_u8 versions;
+    void * componentVtable;
+};
+
 struct SimData {
     int32_t width;
     int32_t height;
@@ -123,7 +149,10 @@ struct SimData {
     uint8_t unk_0xa8;
     uint8_t pad_0xa9[7];
     struct Vec_ptr components;
-    uint8_t pad_0xc8[1616];
+    uint8_t pad_0xc8[872];
+    struct BuildingHeatExchange buildingHeatExchange;
+    struct BuildingToBuildingHeatExchange buildingToBuildingHeatExchange;
+    uint8_t pad_0x558[448];
     uint8_t unk_0x718;
     uint8_t headless;
     uint8_t radiationEnabled;
@@ -459,15 +488,15 @@ struct BuildingTemperatureInfo {
     float temperature;
 };
 
-struct BuildingHeatExchange {
-    void * vtable;
-    struct Vec_BuildingHeatExchangeData data;
-    struct Vec_u32 denseToHandle;
-    struct Vec_u32 freeHandles;
-    struct Vec_i32 handleToDense;
-    struct Vec_u8 versions;
-    void * componentVtable;
-    struct Vec_BuildingTemperatureInfo temperatures;
+struct BuildingContact {
+    uint32_t handle;
+    float unk_0x4;
+};
+
+struct BuildingToBuildingHeatExchangeData {
+    uint32_t handle;
+    uint8_t pad_0x4[4];
+    struct Vec_BuildingContact contacts;
 };
 
 //@global gElements Vec_Element 0

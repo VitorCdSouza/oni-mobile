@@ -48,6 +48,8 @@ struct SimData 0x748
   0xa4 f32 unk_0xa4              # 0.001
   0xa8 u8 unk_0xa8               # when set, ignores unk_0x88
   0xb0 vec<ptr> components       # std::vector<SimComponent*>
+  0x430 BuildingHeatExchange buildingHeatExchange
+  0x4d0 BuildingToBuildingHeatExchange buildingToBuildingHeatExchange
   0x718 bool unk_0x718
   0x719 bool headless
   0x71a bool radiationEnabled
@@ -371,4 +373,22 @@ struct BuildingHeatExchange 0xa0
   0x68 vec<u8> versions
   0x80 ptr componentVtable
   0x88 vec<BuildingTemperatureInfo> temperatures
+  method void Update(float dt, SimData &sim, const Region &region);
+
+struct BuildingContact 0x8
+  0x0 u32 handle                   # BuildingHeatExchange handle of the building in contact
+  0x4 f32 unk_0x4
+
+struct BuildingToBuildingHeatExchangeData 0x20
+  0x00 u32 handle                  # BuildingHeatExchange handle of this building
+  0x08 vec<BuildingContact> contacts
+
+struct BuildingToBuildingHeatExchange 0x88
+  0x00 ptr vtable
+  0x08 vec<BuildingToBuildingHeatExchangeData> data
+  0x20 vec<u32> denseToHandle
+  0x38 vec<u32> freeHandles
+  0x50 vec<i32> handleToDense
+  0x68 vec<u8> versions
+  0x80 ptr componentVtable
   method void Update(float dt, SimData &sim, const Region &region);

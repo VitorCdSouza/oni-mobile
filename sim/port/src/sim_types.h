@@ -8,6 +8,8 @@
 namespace SpawnFXHashes { enum Type : int32_t {}; }
 
 struct CellSOA;
+struct BuildingHeatExchange;
+struct BuildingToBuildingHeatExchange;
 struct SimData;
 struct Vector4f;
 struct CellAccessor;
@@ -44,7 +46,8 @@ struct UpdateCellSOATask;
 struct UpdateBackwallTask;
 struct BuildingHeatExchangeData;
 struct BuildingTemperatureInfo;
-struct BuildingHeatExchange;
+struct BuildingContact;
+struct BuildingToBuildingHeatExchangeData;
 
 struct CellSOA {
     std::vector<uint16_t> elementIdx;
@@ -58,6 +61,29 @@ struct CellSOA {
     std::vector<uint8_t> diseaseInfestationTickCount;
     std::vector<float> diseaseAccumulatedError;
     std::vector<float> unk_0xf0;
+};
+
+struct BuildingHeatExchange {
+    void * vtable;
+    std::vector<BuildingHeatExchangeData> data;
+    std::vector<uint32_t> denseToHandle;
+    std::vector<uint32_t> freeHandles;
+    std::vector<int32_t> handleToDense;
+    std::vector<uint8_t> versions;
+    void * componentVtable;
+    std::vector<BuildingTemperatureInfo> temperatures;
+    void Update(float dt, SimData &sim, const Region &region);
+};
+
+struct BuildingToBuildingHeatExchange {
+    void * vtable;
+    std::vector<BuildingToBuildingHeatExchangeData> data;
+    std::vector<uint32_t> denseToHandle;
+    std::vector<uint32_t> freeHandles;
+    std::vector<int32_t> handleToDense;
+    std::vector<uint8_t> versions;
+    void * componentVtable;
+    void Update(float dt, SimData &sim, const Region &region);
 };
 
 struct SimData {
@@ -89,7 +115,10 @@ struct SimData {
     uint8_t unk_0xa8;
     uint8_t pad_0xa9[7];
     std::vector<void *> components;
-    uint8_t pad_0xc8[1616];
+    uint8_t pad_0xc8[872];
+    BuildingHeatExchange buildingHeatExchange;
+    BuildingToBuildingHeatExchange buildingToBuildingHeatExchange;
+    uint8_t pad_0x558[448];
     bool unk_0x718;
     bool headless;
     bool radiationEnabled;
@@ -432,16 +461,15 @@ struct BuildingTemperatureInfo {
     float temperature;
 };
 
-struct BuildingHeatExchange {
-    void * vtable;
-    std::vector<BuildingHeatExchangeData> data;
-    std::vector<uint32_t> denseToHandle;
-    std::vector<uint32_t> freeHandles;
-    std::vector<int32_t> handleToDense;
-    std::vector<uint8_t> versions;
-    void * componentVtable;
-    std::vector<BuildingTemperatureInfo> temperatures;
-    void Update(float dt, SimData &sim, const Region &region);
+struct BuildingContact {
+    uint32_t handle;
+    float unk_0x4;
+};
+
+struct BuildingToBuildingHeatExchangeData {
+    uint32_t handle;
+    uint8_t pad_0x4[4];
+    std::vector<BuildingContact> contacts;
 };
 
 extern std::vector<Element> gElements;
