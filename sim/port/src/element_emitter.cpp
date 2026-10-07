@@ -185,3 +185,18 @@ extern "C" __attribute__((visibility("default"))) void ElementEmitterUpdateThunk
 void ElementEmitterUpdateThunk(char *component, float dt, SimData &sim, const Region &region) {
     reinterpret_cast<ElementEmitter *>(component - 0x80)->Update(dt, sim, region);
 }
+
+// Resets what the game reads back for every emitter, without emitting.
+void ElementEmitter::UpdateDataListOnly(SimData &) {
+    emitted.resize(handleToDense.size());
+    size_t count = data.size();
+    for (size_t i = 0; i < count; ++i) {
+        EmittedMassInfo &slot = emitted[denseToHandle[i] & 0xffffff];
+        slot.elemIdx = 0xffff;
+        slot.diseaseIdx = 0xff;
+        slot.pad0 = 0;
+        slot.mass = 0.0f;
+        slot.temperature = 0.0f;
+        slot.diseaseCount = 0;
+    }
+}

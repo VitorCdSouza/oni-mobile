@@ -123,3 +123,25 @@ void ElementChunk::Update(float dt, SimData &sim, const Region &region) {
         }
     }
 }
+
+// Copies each item's temperature into what the game reads back and clears the energy delta,
+// without exchanging heat.
+void ElementChunk::UpdateDataListOnly(SimData &) {
+    info.resize(handleToDense.size());
+    for (size_t i = 0; i < data.size(); ++i) {
+        const ElementChunkData &d = data[i];
+        uint32_t index = denseToHandle[i] & 0xffffff;
+        float temperature = d.temperature;
+        info[index].deltaKJ = 0.0f;
+        info[index].temperature = temperature;
+        if (!(temperature > 0.0f) && !(temperature == 0.0f && d.heatCapacity == 0.0f) && !gAssertsDisabled) {
+            AssertFunc("BREAKPT:", 0xd2, "Components/ElementChunk.cpp");
+        }
+        if (!(temperature <= 10000.0f) && !gAssertsDisabled) {
+            AssertFunc("BREAKPT:", 0xd3, "Components/ElementChunk.cpp");
+        }
+        if (index >= info.size() && !gAssertsDisabled) {
+            AssertFunc("BREAKPT:", 0xd4, "Components/ElementChunk.cpp");
+        }
+    }
+}

@@ -451,3 +451,49 @@ void SimBase::UpdateData(SimData &sim) {
     }
     sim.displacementDirection = static_cast<uint16_t>(sim.displacementDirection + 1);
 }
+
+void SimData::UpdateComponents(float dt, const Region &region) {
+    for (void *component : components) {
+        static_cast<SimComponent *>(component)->Update(dt, *this, region);
+    }
+}
+
+void SimData::UpdateComponentsDataListOnly() {
+    for (void *component : components) {
+        static_cast<SimComponent *>(component)->UpdateDataListOnly(*this);
+    }
+}
+
+// Runs every frame the game queued since the last call. A frame with a positive dt advances the
+// simulation in fixed 0.2 s ticks (at least one), carrying the leftover time in the remainder at
+// 0x158; a paused frame only applies its messages and refreshes what the components report.
+void SimBase::Step(SimData &sim, GameData &game, const GameData &previous) {
+    char *self = reinterpret_cast<char *>(this);
+    SimFrameManager &frames = *reinterpret_cast<SimFrameManager *>(self + 8);
+    float &remainder = *reinterpret_cast<float *>(self + 0x158);
+    int frame_count = frames.BeginFrameProcessing();
+    std::memset(sim.unk_0x60, 0, static_cast<long>(sim.width) * static_cast<long>(sim.height) * sizeof(Vector4f));
+    if (frame_count <= 0) {
+        sim.UpdateComponentsDataListOnly();
+    } else {
+        for (long frame = 0; frame < frame_count; ++frame) {
+            float dt = frames.ProcessNextFrame(sim);
+            if (dt > 0.0f) {
+                float total = dt + remainder;
+                int ticks = static_cast<int>(total * 5.0f);
+                if (ticks <= 0) {
+                    ticks = 1;
+                }
+                remainder = MaxSS(total - static_cast<float>(ticks) * 0.2f, 0.0f);
+                for (int tick = 0; tick < ticks; ++tick) {
+                    UpdateData(sim);
+                }
+            } else {
+                CopyUpdatedCellsToCells(sim);
+                sim.UpdateComponentsDataListOnly();
+            }
+        }
+    }
+    frames.EndFrameProcessing();
+    CopySimDataToGame(sim, game, previous, frame_count);
+}

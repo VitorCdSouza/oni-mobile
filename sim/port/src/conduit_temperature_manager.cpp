@@ -26,9 +26,6 @@ struct ModifyBuildingEnergyMessage {
 
 // SimFrameManager::HandleMessage queues a message for the next frame; the frame manager lives at
 // offset 0x40 of the object gSim points to.
-struct SimFrameManager {
-    void *HandleMessage(int msg_id, int length, void *data, void *&out);
-};
 extern char *gSim;
 
 // Energy flowing between the contents and the conduit in one step.

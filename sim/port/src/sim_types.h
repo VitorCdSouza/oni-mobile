@@ -111,6 +111,7 @@ struct ElementEmitter {
     std::vector<int32_t> reachable;
     std::queue<FloodFillInfo> queue;
     void Update(float dt, SimData &sim, const Region &region);
+    void UpdateDataListOnly(SimData &sim);
 };
 
 struct RadiationEmitter {
@@ -134,6 +135,7 @@ struct ElementChunk {
     void * componentVtable;
     std::vector<ElementChunkInfo> info;
     void Update(float dt, SimData &sim, const Region &region);
+    void UpdateDataListOnly(SimData &sim);
 };
 
 struct BuildingHeatExchange {
@@ -146,6 +148,7 @@ struct BuildingHeatExchange {
     void * componentVtable;
     std::vector<BuildingTemperatureInfo> temperatures;
     void Update(float dt, SimData &sim, const Region &region);
+    void UpdateDataListOnly(SimData &sim);
 };
 
 struct BuildingToBuildingHeatExchange {
@@ -172,6 +175,7 @@ struct DiseaseEmitter {
     std::vector<int32_t> visited;
     std::vector<int32_t> reachable;
     void Update(float dt, SimData &sim, const Region &region);
+    void UpdateDataListOnly(SimData &sim);
 };
 
 struct SimData {
@@ -225,6 +229,7 @@ struct SimData {
     void ClearCell(CellAccessor &cell);
     uint8_t GetStableTicksRemaining(unsigned long cell);
     void UpdateComponents(float dt, const Region &region);
+    void UpdateComponentsDataListOnly();
 };
 
 struct Vector4f {

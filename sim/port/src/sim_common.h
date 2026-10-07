@@ -56,11 +56,28 @@ struct Vector4 {
 
 // SimBase drives the frame: only the member functions the port defines are declared; its data
 // is reached through offsets until its layout is mapped.
+struct GameData;
 struct SimBase {
     void UpdatedCellsToCells(SimData &sim, Vector2<int> min, Vector2<int> max);
     void CopyUpdatedCellsToCells(SimData &sim);
     void ConsolidateEvents(SimData &sim);
     void UpdateData(SimData &sim);
+    void Step(SimData &sim, GameData &game, const GameData &previous);
+    void CopySimDataToGame(SimData &sim, GameData &game, const GameData &previous, int frames);
+};
+
+// Queues the messages the game sends and replays them frame by frame (still the original's code).
+struct SimFrameManager {
+    void *HandleMessage(int msg_id, int length, void *data, void *&out);
+    int BeginFrameProcessing();
+    float ProcessNextFrame(SimData &sim);
+    void EndFrameProcessing();
+};
+
+// The interface every component exposes at offset 0x80; SimData::components points there.
+struct SimComponent {
+    virtual void Update(float dt, SimData &sim, const Region &region) = 0;
+    virtual void UpdateDataListOnly(SimData &sim) = 0;
 };
 
 constexpr uint16_t kInvalidElement = 0xffff;

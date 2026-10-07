@@ -226,3 +226,23 @@ void BuildingToBuildingHeatExchange::Update(float dt, SimData &sim, const Region
         }
     }
 }
+
+// Refreshes only the per-handle temperatures the game reads back, without simulating.
+void BuildingHeatExchange::UpdateDataListOnly(SimData &) {
+    temperatures.resize(handleToDense.size());
+    size_t count = data.size();
+    for (size_t i = 0; i < count; ++i) {
+        uint32_t handle = denseToHandle[i];
+        BuildingTemperatureInfo &slot = temperatures[handle & 0xffffff];
+        slot.handle = handle;
+        slot.temperature = data[i].temperature;
+    }
+}
+
+// The original carries a full copy of the function at the SimComponent entry point instead of a
+// jump, so the patched copy has to be replaced too.
+extern "C" __attribute__((visibility("default"))) void BuildingHeatExchangeUpdateDataListOnlyThunk(
+    char *component, SimData &sim) __asm__("_ZThn128_N20BuildingHeatExchange18UpdateDataListOnlyER7SimData");
+void BuildingHeatExchangeUpdateDataListOnlyThunk(char *component, SimData &sim) {
+    reinterpret_cast<BuildingHeatExchange *>(component - 0x80)->UpdateDataListOnly(sim);
+}
