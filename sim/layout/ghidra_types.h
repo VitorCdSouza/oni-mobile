@@ -48,6 +48,9 @@ struct BuildingHeatExchangeData;
 struct BuildingTemperatureInfo;
 struct BuildingContact;
 struct BuildingToBuildingHeatExchangeData;
+struct ConduitTemperatureData;
+struct ConduitTemperatureUpdateData;
+struct ConduitTemperatureManager;
 
 struct Vec_BackwallElementChangedInfo { struct BackwallElementChangedInfo *begin; struct BackwallElementChangedInfo *end; struct BackwallElementChangedInfo *cap; };
 struct Vec_BackwallShouldTransitionInfo { struct BackwallShouldTransitionInfo *begin; struct BackwallShouldTransitionInfo *end; struct BackwallShouldTransitionInfo *cap; };
@@ -58,6 +61,7 @@ struct Vec_BuildingToBuildingHeatExchangeData { struct BuildingToBuildingHeatExc
 struct Vec_CallbackInfo { struct CallbackInfo *begin; struct CallbackInfo *end; struct CallbackInfo *cap; };
 struct Vec_CellMeltedInfo { struct CellMeltedInfo *begin; struct CellMeltedInfo *end; struct CellMeltedInfo *cap; };
 struct Vec_ComponentStateChangedMessage { struct ComponentStateChangedMessage *begin; struct ComponentStateChangedMessage *end; struct ComponentStateChangedMessage *cap; };
+struct Vec_ConduitTemperatureData { struct ConduitTemperatureData *begin; struct ConduitTemperatureData *end; struct ConduitTemperatureData *cap; };
 struct Vec_ConsumedRadiationCallback { struct ConsumedRadiationCallback *begin; struct ConsumedRadiationCallback *end; struct ConsumedRadiationCallback *cap; };
 struct Vec_DiseaseConsumptionCallback { struct DiseaseConsumptionCallback *begin; struct DiseaseConsumptionCallback *end; struct DiseaseConsumptionCallback *cap; };
 struct Vec_Element { struct Element *begin; struct Element *end; struct Element *cap; };
@@ -499,6 +503,45 @@ struct BuildingToBuildingHeatExchangeData {
     struct Vec_BuildingContact contacts;
 };
 
+struct ConduitTemperatureData {
+    float temperature;
+    float contentsConductivity;
+    float contentsHeatCapacity;
+    uint32_t structureHandle;
+    float conduitHeatCapacity;
+    float conduitConductivity;
+    uint8_t insulated;
+    uint8_t pad_0x19[3];
+    float lowTemp;
+    float highTemp;
+};
+
+#pragma pack(push, 4)
+struct ConduitTemperatureUpdateData {
+    int32_t numEntries;
+    float * temperatures;
+    int32_t numFrozenHandles;
+    int32_t * frozenHandles;
+    int32_t numMeltedHandles;
+    int32_t * meltedHandles;
+};
+#pragma pack(pop)
+
+struct ConduitTemperatureManager {
+    void * vtable;
+    struct Vec_ConduitTemperatureData data;
+    struct Vec_u32 denseToHandle;
+    struct Vec_u32 freeHandles;
+    struct Vec_i32 handleToDense;
+    struct Vec_u8 versions;
+    struct Vec_i32 melted;
+    struct Vec_i32 frozen;
+    struct Vec_f32 temperatures;
+    struct ConduitTemperatureUpdateData result;
+    uint8_t pad_0xec[52];
+    uint8_t mutex[40];
+};
+
 //@global gElements Vec_Element 0
 //@global gElementTemperatureData Vec_ElementTemperatureData 0
 //@global gElementPostProcessData Vec_ElementPostProcessData 0
@@ -510,3 +553,4 @@ struct BuildingToBuildingHeatExchangeData {
 //@global gElementRadiationData Vec_ElementRadiationData 0
 //@global gElementStateData Vec_u8 0
 //@global gSimData SimData 1
+//@global gConduitTemperatureManager ConduitTemperatureManager 1

@@ -48,6 +48,9 @@ struct BuildingHeatExchangeData;
 struct BuildingTemperatureInfo;
 struct BuildingContact;
 struct BuildingToBuildingHeatExchangeData;
+struct ConduitTemperatureData;
+struct ConduitTemperatureUpdateData;
+struct ConduitTemperatureManager;
 
 struct CellSOA {
     std::vector<uint16_t> elementIdx;
@@ -472,6 +475,49 @@ struct BuildingToBuildingHeatExchangeData {
     std::vector<BuildingContact> contacts;
 };
 
+struct ConduitTemperatureData {
+    float temperature;
+    float contentsConductivity;
+    float contentsHeatCapacity;
+    uint32_t structureHandle;
+    float conduitHeatCapacity;
+    float conduitConductivity;
+    bool insulated;
+    uint8_t pad_0x19[3];
+    float lowTemp;
+    float highTemp;
+};
+
+#pragma pack(push, 4)
+struct ConduitTemperatureUpdateData {
+    int32_t numEntries;
+    float * temperatures;
+    int32_t numFrozenHandles;
+    int32_t * frozenHandles;
+    int32_t numMeltedHandles;
+    int32_t * meltedHandles;
+};
+#pragma pack(pop)
+
+struct ConduitTemperatureManager {
+    void * vtable;
+    std::vector<ConduitTemperatureData> data;
+    std::vector<uint32_t> denseToHandle;
+    std::vector<uint32_t> freeHandles;
+    std::vector<int32_t> handleToDense;
+    std::vector<uint8_t> versions;
+    std::vector<int32_t> melted;
+    std::vector<int32_t> frozen;
+    std::vector<float> temperatures;
+    ConduitTemperatureUpdateData result;
+    uint8_t pad_0xec[52];
+    uint8_t mutex[40];
+    float CalculateEnergyFlow(bool insulated, float contents_temperature, float contents_conductivity, float conduit_temperature, float conduit_conductivity, float scale);
+    float ClampEnergyTransfer(float dt, float src_temperature, float src_capacity, float dst_temperature, float dst_capacity, float energy);
+    float ModifyTemperature(float temperature, float capacity, float other_temperature, float other_capacity, float energy);
+    ConduitTemperatureUpdateData *Update(float dt, const BuildingTemperatureInfo *buildings);
+};
+
 extern std::vector<Element> gElements;
 extern std::vector<ElementTemperatureData> gElementTemperatureData;
 extern std::vector<ElementPostProcessData> gElementPostProcessData;
@@ -483,5 +529,6 @@ extern std::vector<ElementLightAbsorptionData> gElementLightAbsorptionData;
 extern std::vector<ElementRadiationData> gElementRadiationData;
 extern std::vector<uint8_t> gElementStateData;
 extern SimData * gSimData;
+extern ConduitTemperatureManager * gConduitTemperatureManager;
 
 #include "layout_checks.h"

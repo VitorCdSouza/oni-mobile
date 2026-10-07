@@ -392,3 +392,43 @@ struct BuildingToBuildingHeatExchange 0x88
   0x68 vec<u8> versions
   0x80 ptr componentVtable
   method void Update(float dt, SimData &sim, const Region &region);
+
+# Pipe contents exchanging heat with the pipe building (ConduitTemperatureManager_*).
+struct ConduitTemperatureData 0x24
+  0x00 f32 temperature
+  0x04 f32 contentsConductivity
+  0x08 f32 contentsHeatCapacity
+  0x0c u32 structureHandle         # BuildingHeatExchange handle of the pipe
+  0x10 f32 conduitHeatCapacity
+  0x14 f32 conduitConductivity
+  0x18 bool insulated
+  0x1c f32 lowTemp
+  0x20 f32 highTemp
+
+# What ConduitTemperatureManager_Update returns to the game (C# ConduitTemperatureUpdateData).
+struct ConduitTemperatureUpdateData 0x24 pack=4
+  0x00 i32 numEntries
+  0x04 f32* temperatures
+  0x0c i32 numFrozenHandles
+  0x10 i32* frozenHandles
+  0x18 i32 numMeltedHandles
+  0x1c i32* meltedHandles
+
+struct ConduitTemperatureManager 0x148
+  0x000 ptr vtable
+  0x008 vec<ConduitTemperatureData> data
+  0x020 vec<u32> denseToHandle
+  0x038 vec<u32> freeHandles
+  0x050 vec<i32> handleToDense
+  0x068 vec<u8> versions
+  0x080 vec<i32> melted
+  0x098 vec<i32> frozen
+  0x0b0 vec<f32> temperatures
+  0x0c8 ConduitTemperatureUpdateData result
+  0x120 u8[40] mutex                 # std::mutex (pthread_mutex_t)
+  method float CalculateEnergyFlow(bool insulated, float contents_temperature, float contents_conductivity, float conduit_temperature, float conduit_conductivity, float scale);
+  method float ClampEnergyTransfer(float dt, float src_temperature, float src_capacity, float dst_temperature, float dst_capacity, float energy);
+  method float ModifyTemperature(float temperature, float capacity, float other_temperature, float other_capacity, float energy);
+  method ConduitTemperatureUpdateData *Update(float dt, const BuildingTemperatureInfo *buildings);
+
+global gConduitTemperatureManager ConduitTemperatureManager*

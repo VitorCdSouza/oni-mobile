@@ -330,3 +330,35 @@ static_assert(offsetof(BuildingToBuildingHeatExchange, handleToDense) == 0x50, "
 static_assert(offsetof(BuildingToBuildingHeatExchange, versions) == 0x68, "BuildingToBuildingHeatExchange::versions");
 static_assert(offsetof(BuildingToBuildingHeatExchange, componentVtable) == 0x80, "BuildingToBuildingHeatExchange::componentVtable");
 
+static_assert(sizeof(ConduitTemperatureData) == 0x24, "ConduitTemperatureData size");
+static_assert(offsetof(ConduitTemperatureData, temperature) == 0x0, "ConduitTemperatureData::temperature");
+static_assert(offsetof(ConduitTemperatureData, contentsConductivity) == 0x4, "ConduitTemperatureData::contentsConductivity");
+static_assert(offsetof(ConduitTemperatureData, contentsHeatCapacity) == 0x8, "ConduitTemperatureData::contentsHeatCapacity");
+static_assert(offsetof(ConduitTemperatureData, structureHandle) == 0xc, "ConduitTemperatureData::structureHandle");
+static_assert(offsetof(ConduitTemperatureData, conduitHeatCapacity) == 0x10, "ConduitTemperatureData::conduitHeatCapacity");
+static_assert(offsetof(ConduitTemperatureData, conduitConductivity) == 0x14, "ConduitTemperatureData::conduitConductivity");
+static_assert(offsetof(ConduitTemperatureData, insulated) == 0x18, "ConduitTemperatureData::insulated");
+static_assert(offsetof(ConduitTemperatureData, lowTemp) == 0x1c, "ConduitTemperatureData::lowTemp");
+static_assert(offsetof(ConduitTemperatureData, highTemp) == 0x20, "ConduitTemperatureData::highTemp");
+
+static_assert(sizeof(ConduitTemperatureUpdateData) == 0x24, "ConduitTemperatureUpdateData size");
+static_assert(offsetof(ConduitTemperatureUpdateData, numEntries) == 0x0, "ConduitTemperatureUpdateData::numEntries");
+static_assert(offsetof(ConduitTemperatureUpdateData, temperatures) == 0x4, "ConduitTemperatureUpdateData::temperatures");
+static_assert(offsetof(ConduitTemperatureUpdateData, numFrozenHandles) == 0xc, "ConduitTemperatureUpdateData::numFrozenHandles");
+static_assert(offsetof(ConduitTemperatureUpdateData, frozenHandles) == 0x10, "ConduitTemperatureUpdateData::frozenHandles");
+static_assert(offsetof(ConduitTemperatureUpdateData, numMeltedHandles) == 0x18, "ConduitTemperatureUpdateData::numMeltedHandles");
+static_assert(offsetof(ConduitTemperatureUpdateData, meltedHandles) == 0x1c, "ConduitTemperatureUpdateData::meltedHandles");
+
+static_assert(sizeof(ConduitTemperatureManager) == 0x148, "ConduitTemperatureManager size");
+static_assert(offsetof(ConduitTemperatureManager, vtable) == 0x0, "ConduitTemperatureManager::vtable");
+static_assert(offsetof(ConduitTemperatureManager, data) == 0x8, "ConduitTemperatureManager::data");
+static_assert(offsetof(ConduitTemperatureManager, denseToHandle) == 0x20, "ConduitTemperatureManager::denseToHandle");
+static_assert(offsetof(ConduitTemperatureManager, freeHandles) == 0x38, "ConduitTemperatureManager::freeHandles");
+static_assert(offsetof(ConduitTemperatureManager, handleToDense) == 0x50, "ConduitTemperatureManager::handleToDense");
+static_assert(offsetof(ConduitTemperatureManager, versions) == 0x68, "ConduitTemperatureManager::versions");
+static_assert(offsetof(ConduitTemperatureManager, melted) == 0x80, "ConduitTemperatureManager::melted");
+static_assert(offsetof(ConduitTemperatureManager, frozen) == 0x98, "ConduitTemperatureManager::frozen");
+static_assert(offsetof(ConduitTemperatureManager, temperatures) == 0xb0, "ConduitTemperatureManager::temperatures");
+static_assert(offsetof(ConduitTemperatureManager, result) == 0xc8, "ConduitTemperatureManager::result");
+static_assert(offsetof(ConduitTemperatureManager, mutex) == 0x120, "ConduitTemperatureManager::mutex");
+
