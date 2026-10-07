@@ -42,6 +42,9 @@ struct Region;
 struct SimUpdateTemperatureTask;
 struct UpdateCellSOATask;
 struct UpdateBackwallTask;
+struct BuildingHeatExchangeData;
+struct BuildingTemperatureInfo;
+struct BuildingHeatExchange;
 
 struct CellSOA {
     std::vector<uint16_t> elementIdx;
@@ -120,9 +123,9 @@ struct SimEvents {
     std::vector<SpawnOreInfo> spawnOre;
     std::vector<UnstableCellInfo> unstableCells;
     std::vector<MeltedInfo> unk_melted_0x60;
-    std::vector<MeltedInfo> unk_melted_0x78;
-    std::vector<MeltedInfo> unk_melted_0x90;
-    std::vector<int32_t> unk_0xa8;
+    std::vector<MeltedInfo> buildingMelted;
+    std::vector<MeltedInfo> buildingOverheat;
+    std::vector<MeltedInfo> buildingNoLongerOverheated;
     std::vector<CellMeltedInfo> cellMelted;
     std::vector<CallbackInfo> callbacks;
     std::vector<WorldDamageInfo> worldDamage;
@@ -411,6 +414,34 @@ struct UpdateBackwallTask {
     int32_t rowLength;
     uint8_t pad_0x2c[4];
     void InternalDoTask();
+};
+
+struct BuildingHeatExchangeData {
+    float temperature;
+    float overheatTemperature;
+    float operatingKilowatts;
+    float heatCapacity;
+    float heatCapacityPerCell;
+    float conductivity;
+    float meltTemperature;
+    Region area;
+};
+
+struct BuildingTemperatureInfo {
+    uint32_t handle;
+    float temperature;
+};
+
+struct BuildingHeatExchange {
+    void * vtable;
+    std::vector<BuildingHeatExchangeData> data;
+    std::vector<uint32_t> denseToHandle;
+    std::vector<uint32_t> freeHandles;
+    std::vector<int32_t> handleToDense;
+    std::vector<uint8_t> versions;
+    void * componentVtable;
+    std::vector<BuildingTemperatureInfo> temperatures;
+    void Update(float dt, SimData &sim, const Region &region);
 };
 
 extern std::vector<Element> gElements;

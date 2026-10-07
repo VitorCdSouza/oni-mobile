@@ -78,9 +78,9 @@ struct SimEvents 0x1e0
   0x030 vec<SpawnOreInfo> spawnOre
   0x048 vec<UnstableCellInfo> unstableCells
   0x060 vec<MeltedInfo> unk_melted_0x60
-  0x078 vec<MeltedInfo> unk_melted_0x78
-  0x090 vec<MeltedInfo> unk_melted_0x90
-  0x0a8 vec<i32> unk_0xa8
+  0x078 vec<MeltedInfo> buildingMelted              # building reached its element's highTemp
+  0x090 vec<MeltedInfo> buildingOverheat            # building reached its overheat temperature
+  0x0a8 vec<MeltedInfo> buildingNoLongerOverheated
   0x0c0 vec<CellMeltedInfo> cellMelted
   0x0d8 vec<CallbackInfo> callbacks
   0x0f0 vec<WorldDamageInfo> worldDamage
@@ -344,3 +344,31 @@ struct UpdateBackwallTask 0x30
   0x24 i32 dstFirstRow
   0x28 i32 rowLength
   method void InternalDoTask();
+
+# Heat exchange between buildings and the cells they cover.
+struct BuildingHeatExchangeData 0x2c
+  0x00 f32 temperature
+  0x04 f32 overheatTemperature
+  0x08 f32 operatingKilowatts
+  0x0c f32 heatCapacity              # mass * specific heat capacity
+  0x10 f32 heatCapacityPerCell       # heatCapacity / covered cells
+  0x14 f32 conductivity              # message conductivity * element conductivity
+  0x18 f32 meltTemperature           # element highTemp
+  0x1c Region area                   # sim cells (game coordinates + 1)
+
+struct BuildingTemperatureInfo 0x8
+  0x0 u32 handle
+  0x4 f32 temperature
+
+# CompactedVector<BuildingHeatExchangeData> (handles: low 24 bits index, top 8 bits version)
+# followed by the SimComponent interface.
+struct BuildingHeatExchange 0xa0
+  0x00 ptr vtable
+  0x08 vec<BuildingHeatExchangeData> data
+  0x20 vec<u32> denseToHandle
+  0x38 vec<u32> freeHandles
+  0x50 vec<i32> handleToDense
+  0x68 vec<u8> versions
+  0x80 ptr componentVtable
+  0x88 vec<BuildingTemperatureInfo> temperatures
+  method void Update(float dt, SimData &sim, const Region &region);

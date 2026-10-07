@@ -47,6 +47,9 @@ static_assert(offsetof(SimEvents, substanceChanges) == 0x0, "SimEvents::substanc
 static_assert(offsetof(SimEvents, spawnFallingLiquid) == 0x18, "SimEvents::spawnFallingLiquid");
 static_assert(offsetof(SimEvents, spawnOre) == 0x30, "SimEvents::spawnOre");
 static_assert(offsetof(SimEvents, unstableCells) == 0x48, "SimEvents::unstableCells");
+static_assert(offsetof(SimEvents, buildingMelted) == 0x78, "SimEvents::buildingMelted");
+static_assert(offsetof(SimEvents, buildingOverheat) == 0x90, "SimEvents::buildingOverheat");
+static_assert(offsetof(SimEvents, buildingNoLongerOverheated) == 0xa8, "SimEvents::buildingNoLongerOverheated");
 static_assert(offsetof(SimEvents, cellMelted) == 0xc0, "SimEvents::cellMelted");
 static_assert(offsetof(SimEvents, callbacks) == 0xd8, "SimEvents::callbacks");
 static_assert(offsetof(SimEvents, worldDamage) == 0xf0, "SimEvents::worldDamage");
@@ -284,4 +287,28 @@ static_assert(offsetof(UpdateBackwallTask, firstRow) == 0x1c, "UpdateBackwallTas
 static_assert(offsetof(UpdateBackwallTask, srcStride) == 0x20, "UpdateBackwallTask::srcStride");
 static_assert(offsetof(UpdateBackwallTask, dstFirstRow) == 0x24, "UpdateBackwallTask::dstFirstRow");
 static_assert(offsetof(UpdateBackwallTask, rowLength) == 0x28, "UpdateBackwallTask::rowLength");
+
+static_assert(sizeof(BuildingHeatExchangeData) == 0x2c, "BuildingHeatExchangeData size");
+static_assert(offsetof(BuildingHeatExchangeData, temperature) == 0x0, "BuildingHeatExchangeData::temperature");
+static_assert(offsetof(BuildingHeatExchangeData, overheatTemperature) == 0x4, "BuildingHeatExchangeData::overheatTemperature");
+static_assert(offsetof(BuildingHeatExchangeData, operatingKilowatts) == 0x8, "BuildingHeatExchangeData::operatingKilowatts");
+static_assert(offsetof(BuildingHeatExchangeData, heatCapacity) == 0xc, "BuildingHeatExchangeData::heatCapacity");
+static_assert(offsetof(BuildingHeatExchangeData, heatCapacityPerCell) == 0x10, "BuildingHeatExchangeData::heatCapacityPerCell");
+static_assert(offsetof(BuildingHeatExchangeData, conductivity) == 0x14, "BuildingHeatExchangeData::conductivity");
+static_assert(offsetof(BuildingHeatExchangeData, meltTemperature) == 0x18, "BuildingHeatExchangeData::meltTemperature");
+static_assert(offsetof(BuildingHeatExchangeData, area) == 0x1c, "BuildingHeatExchangeData::area");
+
+static_assert(sizeof(BuildingTemperatureInfo) == 0x8, "BuildingTemperatureInfo size");
+static_assert(offsetof(BuildingTemperatureInfo, handle) == 0x0, "BuildingTemperatureInfo::handle");
+static_assert(offsetof(BuildingTemperatureInfo, temperature) == 0x4, "BuildingTemperatureInfo::temperature");
+
+static_assert(sizeof(BuildingHeatExchange) == 0xa0, "BuildingHeatExchange size");
+static_assert(offsetof(BuildingHeatExchange, vtable) == 0x0, "BuildingHeatExchange::vtable");
+static_assert(offsetof(BuildingHeatExchange, data) == 0x8, "BuildingHeatExchange::data");
+static_assert(offsetof(BuildingHeatExchange, denseToHandle) == 0x20, "BuildingHeatExchange::denseToHandle");
+static_assert(offsetof(BuildingHeatExchange, freeHandles) == 0x38, "BuildingHeatExchange::freeHandles");
+static_assert(offsetof(BuildingHeatExchange, handleToDense) == 0x50, "BuildingHeatExchange::handleToDense");
+static_assert(offsetof(BuildingHeatExchange, versions) == 0x68, "BuildingHeatExchange::versions");
+static_assert(offsetof(BuildingHeatExchange, componentVtable) == 0x80, "BuildingHeatExchange::componentVtable");
+static_assert(offsetof(BuildingHeatExchange, temperatures) == 0x88, "BuildingHeatExchange::temperatures");
 

@@ -42,9 +42,14 @@ struct Region;
 struct SimUpdateTemperatureTask;
 struct UpdateCellSOATask;
 struct UpdateBackwallTask;
+struct BuildingHeatExchangeData;
+struct BuildingTemperatureInfo;
+struct BuildingHeatExchange;
 
 struct Vec_BackwallElementChangedInfo { struct BackwallElementChangedInfo *begin; struct BackwallElementChangedInfo *end; struct BackwallElementChangedInfo *cap; };
 struct Vec_BackwallShouldTransitionInfo { struct BackwallShouldTransitionInfo *begin; struct BackwallShouldTransitionInfo *end; struct BackwallShouldTransitionInfo *cap; };
+struct Vec_BuildingHeatExchangeData { struct BuildingHeatExchangeData *begin; struct BuildingHeatExchangeData *end; struct BuildingHeatExchangeData *cap; };
+struct Vec_BuildingTemperatureInfo { struct BuildingTemperatureInfo *begin; struct BuildingTemperatureInfo *end; struct BuildingTemperatureInfo *cap; };
 struct Vec_CallbackInfo { struct CallbackInfo *begin; struct CallbackInfo *end; struct CallbackInfo *cap; };
 struct Vec_CellMeltedInfo { struct CellMeltedInfo *begin; struct CellMeltedInfo *end; struct CellMeltedInfo *cap; };
 struct Vec_ComponentStateChangedMessage { struct ComponentStateChangedMessage *begin; struct ComponentStateChangedMessage *end; struct ComponentStateChangedMessage *cap; };
@@ -72,6 +77,7 @@ struct Vec_f32 { float *begin; float *end; float *cap; };
 struct Vec_i32 { int32_t *begin; int32_t *end; int32_t *cap; };
 struct Vec_ptr { void * *begin; void * *end; void * *cap; };
 struct Vec_u16 { uint16_t *begin; uint16_t *end; uint16_t *cap; };
+struct Vec_u32 { uint32_t *begin; uint32_t *end; uint32_t *cap; };
 struct Vec_u8 { uint8_t *begin; uint8_t *end; uint8_t *cap; };
 
 struct CellSOA {
@@ -149,9 +155,9 @@ struct SimEvents {
     struct Vec_SpawnOreInfo spawnOre;
     struct Vec_UnstableCellInfo unstableCells;
     struct Vec_MeltedInfo unk_melted_0x60;
-    struct Vec_MeltedInfo unk_melted_0x78;
-    struct Vec_MeltedInfo unk_melted_0x90;
-    struct Vec_i32 unk_0xa8;
+    struct Vec_MeltedInfo buildingMelted;
+    struct Vec_MeltedInfo buildingOverheat;
+    struct Vec_MeltedInfo buildingNoLongerOverheated;
     struct Vec_CellMeltedInfo cellMelted;
     struct Vec_CallbackInfo callbacks;
     struct Vec_WorldDamageInfo worldDamage;
@@ -435,6 +441,33 @@ struct UpdateBackwallTask {
     int32_t dstFirstRow;
     int32_t rowLength;
     uint8_t pad_0x2c[4];
+};
+
+struct BuildingHeatExchangeData {
+    float temperature;
+    float overheatTemperature;
+    float operatingKilowatts;
+    float heatCapacity;
+    float heatCapacityPerCell;
+    float conductivity;
+    float meltTemperature;
+    struct Region area;
+};
+
+struct BuildingTemperatureInfo {
+    uint32_t handle;
+    float temperature;
+};
+
+struct BuildingHeatExchange {
+    void * vtable;
+    struct Vec_BuildingHeatExchangeData data;
+    struct Vec_u32 denseToHandle;
+    struct Vec_u32 freeHandles;
+    struct Vec_i32 handleToDense;
+    struct Vec_u8 versions;
+    void * componentVtable;
+    struct Vec_BuildingTemperatureInfo temperatures;
 };
 
 //@global gElements Vec_Element 0
