@@ -34,6 +34,7 @@ static_assert(offsetof(SimData, events) == 0x98, "SimData::events");
 static_assert(offsetof(SimData, components) == 0xb0, "SimData::components");
 static_assert(offsetof(SimData, elementConsumer) == 0xc8, "SimData::elementConsumer");
 static_assert(offsetof(SimData, elementEmitter) == 0x1e8, "SimData::elementEmitter");
+static_assert(offsetof(SimData, elementChunk) == 0x390, "SimData::elementChunk");
 static_assert(offsetof(SimData, buildingHeatExchange) == 0x430, "SimData::buildingHeatExchange");
 static_assert(offsetof(SimData, buildingToBuildingHeatExchange) == 0x4d0, "SimData::buildingToBuildingHeatExchange");
 static_assert(offsetof(SimData, diseaseEmitter) == 0x558, "SimData::diseaseEmitter");
@@ -55,6 +56,7 @@ static_assert(offsetof(SimEvents, substanceChanges) == 0x0, "SimEvents::substanc
 static_assert(offsetof(SimEvents, spawnFallingLiquid) == 0x18, "SimEvents::spawnFallingLiquid");
 static_assert(offsetof(SimEvents, spawnOre) == 0x30, "SimEvents::spawnOre");
 static_assert(offsetof(SimEvents, unstableCells) == 0x48, "SimEvents::unstableCells");
+static_assert(offsetof(SimEvents, elementChunkMelted) == 0x60, "SimEvents::elementChunkMelted");
 static_assert(offsetof(SimEvents, buildingMelted) == 0x78, "SimEvents::buildingMelted");
 static_assert(offsetof(SimEvents, buildingOverheat) == 0x90, "SimEvents::buildingOverheat");
 static_assert(offsetof(SimEvents, buildingNoLongerOverheated) == 0xa8, "SimEvents::buildingNoLongerOverheated");
@@ -474,4 +476,31 @@ static_assert(offsetof(DiseaseEmitter, emitted) == 0x88, "DiseaseEmitter::emitte
 static_assert(offsetof(DiseaseEmitter, queue) == 0xa0, "DiseaseEmitter::queue");
 static_assert(offsetof(DiseaseEmitter, visited) == 0xf0, "DiseaseEmitter::visited");
 static_assert(offsetof(DiseaseEmitter, reachable) == 0x108, "DiseaseEmitter::reachable");
+
+static_assert(sizeof(ElementChunkData) == 0x2c, "ElementChunkData size");
+static_assert(offsetof(ElementChunkData, cell) == 0x0, "ElementChunkData::cell");
+static_assert(offsetof(ElementChunkData, temperature) == 0x4, "ElementChunkData::temperature");
+static_assert(offsetof(ElementChunkData, heatCapacity) == 0x8, "ElementChunkData::heatCapacity");
+static_assert(offsetof(ElementChunkData, thermalConductivity) == 0xc, "ElementChunkData::thermalConductivity");
+static_assert(offsetof(ElementChunkData, areaOverThickness) == 0x10, "ElementChunkData::areaOverThickness");
+static_assert(offsetof(ElementChunkData, groundTransferScale) == 0x14, "ElementChunkData::groundTransferScale");
+static_assert(offsetof(ElementChunkData, highTemp) == 0x18, "ElementChunkData::highTemp");
+static_assert(offsetof(ElementChunkData, lowTemp) == 0x1c, "ElementChunkData::lowTemp");
+static_assert(offsetof(ElementChunkData, adjusterTemperature) == 0x20, "ElementChunkData::adjusterTemperature");
+static_assert(offsetof(ElementChunkData, adjusterHeatCapacity) == 0x24, "ElementChunkData::adjusterHeatCapacity");
+static_assert(offsetof(ElementChunkData, adjusterRate) == 0x28, "ElementChunkData::adjusterRate");
+
+static_assert(sizeof(ElementChunkInfo) == 0x8, "ElementChunkInfo size");
+static_assert(offsetof(ElementChunkInfo, temperature) == 0x0, "ElementChunkInfo::temperature");
+static_assert(offsetof(ElementChunkInfo, deltaKJ) == 0x4, "ElementChunkInfo::deltaKJ");
+
+static_assert(sizeof(ElementChunk) == 0xa0, "ElementChunk size");
+static_assert(offsetof(ElementChunk, vtable) == 0x0, "ElementChunk::vtable");
+static_assert(offsetof(ElementChunk, data) == 0x8, "ElementChunk::data");
+static_assert(offsetof(ElementChunk, denseToHandle) == 0x20, "ElementChunk::denseToHandle");
+static_assert(offsetof(ElementChunk, freeHandles) == 0x38, "ElementChunk::freeHandles");
+static_assert(offsetof(ElementChunk, handleToDense) == 0x50, "ElementChunk::handleToDense");
+static_assert(offsetof(ElementChunk, versions) == 0x68, "ElementChunk::versions");
+static_assert(offsetof(ElementChunk, componentVtable) == 0x80, "ElementChunk::componentVtable");
+static_assert(offsetof(ElementChunk, info) == 0x88, "ElementChunk::info");
 

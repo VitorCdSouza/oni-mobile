@@ -54,6 +54,7 @@ struct SimData 0x748
   0xb0 vec<ptr> components       # std::vector<SimComponent*>
   0xc8 ElementConsumer elementConsumer
   0x1e8 ElementEmitter elementEmitter
+  0x390 ElementChunk elementChunk
   0x430 BuildingHeatExchange buildingHeatExchange
   0x4d0 BuildingToBuildingHeatExchange buildingToBuildingHeatExchange
   0x558 DiseaseEmitter diseaseEmitter
@@ -87,7 +88,7 @@ struct SimEvents 0x1e0
   0x018 vec<SpawnFallingLiquidInfo> spawnFallingLiquid
   0x030 vec<SpawnOreInfo> spawnOre
   0x048 vec<UnstableCellInfo> unstableCells
-  0x060 vec<MeltedInfo> unk_melted_0x60
+  0x060 vec<MeltedInfo> elementChunkMelted
   0x078 vec<MeltedInfo> buildingMelted              # building reached its element's highTemp
   0x090 vec<MeltedInfo> buildingOverheat            # building reached its overheat temperature
   0x0a8 vec<MeltedInfo> buildingNoLongerOverheated
@@ -550,4 +551,33 @@ struct DiseaseEmitter 0x120
   0x0a0 queue<FloodFillInfo> queue
   0x0f0 vec<i32> visited
   0x108 vec<i32> reachable
+  method void Update(float dt, SimData &sim, const Region &region);
+
+# Debris items lying in the world, exchanging heat with their cell (and a solid floor).
+struct ElementChunkData 0x2c
+  0x00 i32 cell
+  0x04 f32 temperature
+  0x08 f32 heatCapacity
+  0x0c f32 thermalConductivity
+  0x10 f32 areaOverThickness
+  0x14 f32 groundTransferScale
+  0x18 f32 highTemp
+  0x1c f32 lowTemp
+  0x20 f32 adjusterTemperature
+  0x24 f32 adjusterHeatCapacity    # > 0: exchange with the adjuster only
+  0x28 f32 adjusterRate
+
+struct ElementChunkInfo 0x8
+  0x0 f32 temperature
+  0x4 f32 deltaKJ
+
+struct ElementChunk 0xa0
+  0x00 ptr vtable
+  0x08 vec<ElementChunkData> data
+  0x20 vec<u32> denseToHandle
+  0x38 vec<u32> freeHandles
+  0x50 vec<i32> handleToDense
+  0x68 vec<u8> versions
+  0x80 ptr componentVtable
+  0x88 vec<ElementChunkInfo> info
   method void Update(float dt, SimData &sim, const Region &region);

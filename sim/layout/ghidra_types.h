@@ -10,6 +10,7 @@ typedef long long int64_t;
 struct CellSOA;
 struct ElementConsumer;
 struct ElementEmitter;
+struct ElementChunk;
 struct BuildingHeatExchange;
 struct BuildingToBuildingHeatExchange;
 struct DiseaseEmitter;
@@ -62,6 +63,8 @@ struct ElementEmitterData;
 struct EmittedMassInfo;
 struct DiseaseEmitterData;
 struct DiseaseEmittedInfo;
+struct ElementChunkData;
+struct ElementChunkInfo;
 
 struct Vec_ActiveRegion { struct ActiveRegion *begin; struct ActiveRegion *end; struct ActiveRegion *cap; };
 struct Vec_BackwallElementChangedInfo { struct BackwallElementChangedInfo *begin; struct BackwallElementChangedInfo *end; struct BackwallElementChangedInfo *cap; };
@@ -80,6 +83,8 @@ struct Vec_DiseaseConsumptionCallback { struct DiseaseConsumptionCallback *begin
 struct Vec_DiseaseEmittedInfo { struct DiseaseEmittedInfo *begin; struct DiseaseEmittedInfo *end; struct DiseaseEmittedInfo *cap; };
 struct Vec_DiseaseEmitterData { struct DiseaseEmitterData *begin; struct DiseaseEmitterData *end; struct DiseaseEmitterData *cap; };
 struct Vec_Element { struct Element *begin; struct Element *end; struct Element *cap; };
+struct Vec_ElementChunkData { struct ElementChunkData *begin; struct ElementChunkData *end; struct ElementChunkData *cap; };
+struct Vec_ElementChunkInfo { struct ElementChunkInfo *begin; struct ElementChunkInfo *end; struct ElementChunkInfo *cap; };
 struct Vec_ElementConsumerData { struct ElementConsumerData *begin; struct ElementConsumerData *end; struct ElementConsumerData *cap; };
 struct Vec_ElementEmitterData { struct ElementEmitterData *begin; struct ElementEmitterData *end; struct ElementEmitterData *cap; };
 struct Vec_ElementLightAbsorptionData { struct ElementLightAbsorptionData *begin; struct ElementLightAbsorptionData *end; struct ElementLightAbsorptionData *cap; };
@@ -149,6 +154,17 @@ struct ElementEmitter {
     uint8_t queue[80];
 };
 
+struct ElementChunk {
+    void * vtable;
+    struct Vec_ElementChunkData data;
+    struct Vec_u32 denseToHandle;
+    struct Vec_u32 freeHandles;
+    struct Vec_i32 handleToDense;
+    struct Vec_u8 versions;
+    void * componentVtable;
+    struct Vec_ElementChunkInfo info;
+};
+
 struct BuildingHeatExchange {
     void * vtable;
     struct Vec_BuildingHeatExchangeData data;
@@ -216,7 +232,8 @@ struct SimData {
     struct Vec_ptr components;
     struct ElementConsumer elementConsumer;
     struct ElementEmitter elementEmitter;
-    uint8_t pad_0x308[296];
+    uint8_t pad_0x308[136];
+    struct ElementChunk elementChunk;
     struct BuildingHeatExchange buildingHeatExchange;
     struct BuildingToBuildingHeatExchange buildingToBuildingHeatExchange;
     struct DiseaseEmitter diseaseEmitter;
@@ -251,7 +268,7 @@ struct SimEvents {
     struct Vec_SpawnFallingLiquidInfo spawnFallingLiquid;
     struct Vec_SpawnOreInfo spawnOre;
     struct Vec_UnstableCellInfo unstableCells;
-    struct Vec_MeltedInfo unk_melted_0x60;
+    struct Vec_MeltedInfo elementChunkMelted;
     struct Vec_MeltedInfo buildingMelted;
     struct Vec_MeltedInfo buildingOverheat;
     struct Vec_MeltedInfo buildingNoLongerOverheated;
@@ -686,6 +703,25 @@ struct DiseaseEmittedInfo {
     uint8_t diseaseIdx;
     uint8_t pad_0x1[3];
     int32_t count;
+};
+
+struct ElementChunkData {
+    int32_t cell;
+    float temperature;
+    float heatCapacity;
+    float thermalConductivity;
+    float areaOverThickness;
+    float groundTransferScale;
+    float highTemp;
+    float lowTemp;
+    float adjusterTemperature;
+    float adjusterHeatCapacity;
+    float adjusterRate;
+};
+
+struct ElementChunkInfo {
+    float temperature;
+    float deltaKJ;
 };
 
 //@global gElements Vec_Element 0

@@ -11,6 +11,7 @@ namespace SpawnFXHashes { enum Type : int32_t {}; }
 struct CellSOA;
 struct ElementConsumer;
 struct ElementEmitter;
+struct ElementChunk;
 struct BuildingHeatExchange;
 struct BuildingToBuildingHeatExchange;
 struct DiseaseEmitter;
@@ -63,6 +64,8 @@ struct ElementEmitterData;
 struct EmittedMassInfo;
 struct DiseaseEmitterData;
 struct DiseaseEmittedInfo;
+struct ElementChunkData;
+struct ElementChunkInfo;
 
 struct CellSOA {
     std::vector<uint16_t> elementIdx;
@@ -105,6 +108,18 @@ struct ElementEmitter {
     std::vector<int32_t> visited;
     std::vector<int32_t> reachable;
     std::queue<FloodFillInfo> queue;
+    void Update(float dt, SimData &sim, const Region &region);
+};
+
+struct ElementChunk {
+    void * vtable;
+    std::vector<ElementChunkData> data;
+    std::vector<uint32_t> denseToHandle;
+    std::vector<uint32_t> freeHandles;
+    std::vector<int32_t> handleToDense;
+    std::vector<uint8_t> versions;
+    void * componentVtable;
+    std::vector<ElementChunkInfo> info;
     void Update(float dt, SimData &sim, const Region &region);
 };
 
@@ -178,7 +193,8 @@ struct SimData {
     std::vector<void *> components;
     ElementConsumer elementConsumer;
     ElementEmitter elementEmitter;
-    uint8_t pad_0x308[296];
+    uint8_t pad_0x308[136];
+    ElementChunk elementChunk;
     BuildingHeatExchange buildingHeatExchange;
     BuildingToBuildingHeatExchange buildingToBuildingHeatExchange;
     DiseaseEmitter diseaseEmitter;
@@ -216,7 +232,7 @@ struct SimEvents {
     std::vector<SpawnFallingLiquidInfo> spawnFallingLiquid;
     std::vector<SpawnOreInfo> spawnOre;
     std::vector<UnstableCellInfo> unstableCells;
-    std::vector<MeltedInfo> unk_melted_0x60;
+    std::vector<MeltedInfo> elementChunkMelted;
     std::vector<MeltedInfo> buildingMelted;
     std::vector<MeltedInfo> buildingOverheat;
     std::vector<MeltedInfo> buildingNoLongerOverheated;
@@ -660,6 +676,25 @@ struct DiseaseEmittedInfo {
     uint8_t diseaseIdx;
     uint8_t pad_0x1[3];
     int32_t count;
+};
+
+struct ElementChunkData {
+    int32_t cell;
+    float temperature;
+    float heatCapacity;
+    float thermalConductivity;
+    float areaOverThickness;
+    float groundTransferScale;
+    float highTemp;
+    float lowTemp;
+    float adjusterTemperature;
+    float adjusterHeatCapacity;
+    float adjusterRate;
+};
+
+struct ElementChunkInfo {
+    float temperature;
+    float deltaKJ;
 };
 
 extern std::vector<Element> gElements;
