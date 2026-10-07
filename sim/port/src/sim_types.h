@@ -59,7 +59,7 @@ struct SimData {
     uint32_t rngState;
     uint8_t pad_0x10[4];
     int32_t gasDirection;
-    uint8_t unk_0x18;
+    uint8_t savedOptions;
     uint8_t pad_0x19[1];
     uint16_t unk_0x1a;
     uint16_t vacuumElementIdx;

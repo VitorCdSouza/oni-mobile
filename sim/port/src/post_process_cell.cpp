@@ -327,7 +327,7 @@ void PostProcessCell(SimData &sim, SimEvents &events, int cell) {
         if ((elem.state & 0xb) != 0xb) {
             return;  // not an unstable solid
         }
-        if (sim.unk_0x18 & 1) {
+        if (sim.savedOptions & 1) {
             DoUnstableCheckWithDiagonals(sim, events, self);
         } else {
             DoUnstableCheckBasic(sim, events, self);

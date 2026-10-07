@@ -21,6 +21,7 @@ static_assert(offsetof(SimData, height) == 0x4, "SimData::height");
 static_assert(offsetof(SimData, numGameCells) == 0x8, "SimData::numGameCells");
 static_assert(offsetof(SimData, rngState) == 0xc, "SimData::rngState");
 static_assert(offsetof(SimData, gasDirection) == 0x14, "SimData::gasDirection");
+static_assert(offsetof(SimData, savedOptions) == 0x18, "SimData::savedOptions");
 static_assert(offsetof(SimData, vacuumElementIdx) == 0x1c, "SimData::vacuumElementIdx");
 static_assert(offsetof(SimData, cells) == 0x20, "SimData::cells");
 static_assert(offsetof(SimData, updatedCells) == 0x28, "SimData::updatedCells");

@@ -74,6 +74,8 @@ Ferramentas do ciclo:
 | `AddMassAndUpdateTemperature`, `DoDisplacement`, `DisplaceGas`, `DisplaceLiquid`, `DisplaceLiquidSimple`, `Evaporate` | replay idêntico, 88% das linhas (o resto é caminho de assert) |
 | `DoDensityDisplacement`, `DoPressureBreak` (as duas sobrecargas) | replay idêntico, 98% das linhas |
 | `DoPartialMelt` (as duas sobrecargas), `DoUnstableCheckBasic` | replay idêntico, 48% das linhas |
+| `SimData::ClearCell`, `SimData::GetStableTicksRemaining`, `Disease::AddDiseaseToCell` | replay idêntico, 90% das linhas |
+| `DoUnstableCheckWithDiagonals`, `HeadlessUnstableFallSimpleSwap` | replay idêntico, **0% das linhas** (opção desligada no save gravado) |
 
 Ferramenta extra: `python3 sim/gen/rodata.py sim/libSimDLL.x86_64.so --symbol <nome mangled>` lista
 as constantes que uma função lê da memória com o valor exato. O Ghidra arredonda os literais
@@ -91,7 +93,9 @@ modo sandbox, montado para exercitar mecânicas específicas. Lista até agora:
 - fervura parcial de líquido virando vapor ao lado de algo muito quente (ex.: água sobre magma);
 - sólido que some todo por sublimação (`Evaporate`);
 - gás muito quente encostado num tile sólido, derretendo 5 kg por vez (`DoPartialMelt`; a gravação
-  atual nunca passa das verificações iniciais).
+  atual nunca passa das verificações iniciais);
+- um save com a opção "areia caindo na diagonal" (`ENABLE_DIAGONAL_FALLING_SAND`) ligada e areia,
+  terra ou regolito sem apoio (`DoUnstableCheckWithDiagonals`, hoje sem nenhuma cobertura).
 
 ## Fase 2 — Build Android
 
