@@ -1,0 +1,7 @@
+tools/ghidra_*/
+sim/ghidra-proj/
+sim/*.so
+decomp-cs/
+tools/jdk-*/
+sim/decomp/
+sim/ghidra.log
