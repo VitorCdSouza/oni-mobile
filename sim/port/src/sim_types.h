@@ -8,6 +8,17 @@
 // Enums used in member function signatures (they shape the mangled names).
 namespace SpawnFXHashes { enum Type : int32_t {}; }
 
+// Component handle: low 24 bits index, top 8 bits version; 0xf00000 set means invalid.
+// Its copy constructor is user-provided, as in the original: that makes it non-trivial for
+// the ABI, so it is returned through a hidden pointer and passed by invisible reference.
+struct Handle {
+    uint32_t value;
+    Handle() = default;
+    explicit Handle(uint32_t v) : value(v) {}
+    Handle(const Handle &other) : value(other.value) {}
+    Handle &operator=(const Handle &other) { value = other.value; return *this; }
+};
+
 struct CellSOA;
 struct ElementConsumer;
 struct ElementEmitter;
@@ -148,6 +159,9 @@ struct ElementConsumer {
     std::vector<int32_t> reachable;
     std::vector<ConsumedMassInfo> consumed;
     void Update(float dt, SimData &sim, const Region &region);
+    Handle Register(const SimData &sim, const AddElementConsumerMessage &msg);
+    void Modify(const SimData &sim, const ModifyElementConsumerMessage &msg);
+    void Unregister(Handle handle);
 };
 
 struct ElementEmitter {
@@ -164,6 +178,9 @@ struct ElementEmitter {
     std::queue<FloodFillInfo> queue;
     void Update(float dt, SimData &sim, const Region &region);
     void UpdateDataListOnly(SimData &sim);
+    Handle Register(const SimData &sim, const AddElementEmitterMessage &msg);
+    void Modify(const SimData &sim, const ModifyElementEmitterMessage &msg);
+    void Unregister(Handle handle);
 };
 
 struct RadiationEmitter {
@@ -175,6 +192,9 @@ struct RadiationEmitter {
     std::vector<uint8_t> versions;
     void * componentVtable;
     void Update(float dt, SimData &sim, const Region &region);
+    Handle Register(const SimData &sim, const AddRadiationEmitterMessage &msg);
+    void Modify(const SimData &sim, const ModifyRadiationEmitterMessage &msg);
+    void Unregister(Handle handle);
 };
 
 struct ElementChunk {
@@ -188,6 +208,11 @@ struct ElementChunk {
     std::vector<ElementChunkInfo> info;
     void Update(float dt, SimData &sim, const Region &region);
     void UpdateDataListOnly(SimData &sim);
+    Handle Register(const SimData &sim, const AddElementChunkMessage &msg);
+    void Modify(const SimData &sim, const ModifyElementChunkMessage &msg);
+    void ModifyEnergy(const SimData &sim, const ModifyElementChunkEnergyMessage &msg);
+    void ModifyAdjuster(const SimData &sim, const ModifyElementChunkAdjusterMessage &msg);
+    void Unregister(Handle handle);
 };
 
 struct BuildingHeatExchange {
@@ -201,6 +226,9 @@ struct BuildingHeatExchange {
     std::vector<BuildingTemperatureInfo> temperatures;
     void Update(float dt, SimData &sim, const Region &region);
     void UpdateDataListOnly(SimData &sim);
+    Handle Register(const SimData &sim, const AddBuildingHeatExchangeMessage &msg);
+    void Modify(const SimData &sim, const ModifyBuildingHeatExchangeMessage &msg);
+    void Unregister(Handle handle);
 };
 
 struct BuildingToBuildingHeatExchange {
@@ -212,6 +240,10 @@ struct BuildingToBuildingHeatExchange {
     std::vector<uint8_t> versions;
     void * componentVtable;
     void Update(float dt, SimData &sim, const Region &region);
+    Handle Register(const SimData &sim, const RegisterBuildingToBuildingHeatExchangeMessage &msg);
+    void Add(const SimData &sim, const AddInContactBuildingToBuildingToBuildingHeatExchangeMessage &msg);
+    void Remove(const SimData &sim, const RemoveBuildingInContactFromBuildingToBuildingHeatExchangeMessage &msg);
+    void Unregister(Handle handle);
 };
 
 struct DiseaseEmitter {
@@ -228,6 +260,9 @@ struct DiseaseEmitter {
     std::vector<int32_t> reachable;
     void Update(float dt, SimData &sim, const Region &region);
     void UpdateDataListOnly(SimData &sim);
+    Handle Register(const SimData &sim, const AddDiseaseEmitterMessage &msg);
+    void Modify(const SimData &sim, const ModifyDiseaseEmitterMessage &msg);
+    void Unregister(Handle handle);
 };
 
 struct DiseaseConsumer {
@@ -239,6 +274,9 @@ struct DiseaseConsumer {
     std::vector<uint8_t> versions;
     void * componentVtable;
     std::vector<DiseaseEmittedInfo> consumed;
+    Handle Register(const SimData &sim, const AddDiseaseConsumerMessage &msg);
+    void Modify(const SimData &sim, const ModifyDiseaseConsumerMessage &msg);
+    void Unregister(Handle handle);
 };
 
 struct SimData {
@@ -293,6 +331,7 @@ struct SimData {
     uint8_t GetStableTicksRemaining(unsigned long cell);
     void UpdateComponents(float dt, const Region &region);
     void UpdateComponentsDataListOnly();
+    void ClearBackwall(int cell);
 };
 
 struct Vector4f {

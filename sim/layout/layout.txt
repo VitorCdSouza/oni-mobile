@@ -74,6 +74,7 @@ struct SimData 0x748
   method uint8_t GetStableTicksRemaining(unsigned long cell);
   method void UpdateComponents(float dt, const Region &region);
   method void UpdateComponentsDataListOnly();
+  method void ClearBackwall(int cell);
 
 struct Vector4f 0x10
   0x0 f32 x
@@ -416,6 +417,9 @@ struct BuildingHeatExchange 0xa0
   0x88 vec<BuildingTemperatureInfo> temperatures
   method void Update(float dt, SimData &sim, const Region &region);
   method void UpdateDataListOnly(SimData &sim);
+  method Handle Register(const SimData &sim, const AddBuildingHeatExchangeMessage &msg);
+  method void Modify(const SimData &sim, const ModifyBuildingHeatExchangeMessage &msg);
+  method void Unregister(Handle handle);
 
 struct BuildingContact 0x8
   0x0 u32 handle                   # BuildingHeatExchange handle of the building in contact
@@ -434,6 +438,10 @@ struct BuildingToBuildingHeatExchange 0x88
   0x68 vec<u8> versions
   0x80 ptr componentVtable
   method void Update(float dt, SimData &sim, const Region &region);
+  method Handle Register(const SimData &sim, const RegisterBuildingToBuildingHeatExchangeMessage &msg);
+  method void Add(const SimData &sim, const AddInContactBuildingToBuildingToBuildingHeatExchangeMessage &msg);
+  method void Remove(const SimData &sim, const RemoveBuildingInContactFromBuildingToBuildingHeatExchangeMessage &msg);
+  method void Unregister(Handle handle);
 
 # Pipe contents exchanging heat with the pipe building (ConduitTemperatureManager_*).
 struct ConduitTemperatureData 0x24
@@ -511,6 +519,9 @@ struct ElementConsumer 0x120
   0x0f0 vec<i32> reachable
   0x108 vec<ConsumedMassInfo> consumed
   method void Update(float dt, SimData &sim, const Region &region);
+  method Handle Register(const SimData &sim, const AddElementConsumerMessage &msg);
+  method void Modify(const SimData &sim, const ModifyElementConsumerMessage &msg);
+  method void Unregister(Handle handle);
 
 struct ElementEmitterData 0x2c
   0x00 f32 timer
@@ -551,6 +562,9 @@ struct ElementEmitter 0x120
   0x0d0 queue<FloodFillInfo> queue
   method void Update(float dt, SimData &sim, const Region &region);
   method void UpdateDataListOnly(SimData &sim);
+  method Handle Register(const SimData &sim, const AddElementEmitterMessage &msg);
+  method void Modify(const SimData &sim, const ModifyElementEmitterMessage &msg);
+  method void Unregister(Handle handle);
 
 struct DiseaseEmitterData 0x14
   0x00 i32 cell
@@ -578,6 +592,9 @@ struct DiseaseEmitter 0x120
   0x108 vec<i32> reachable
   method void Update(float dt, SimData &sim, const Region &region);
   method void UpdateDataListOnly(SimData &sim);
+  method Handle Register(const SimData &sim, const AddDiseaseEmitterMessage &msg);
+  method void Modify(const SimData &sim, const ModifyDiseaseEmitterMessage &msg);
+  method void Unregister(Handle handle);
 
 # Only the vector the game reads back is mapped.
 struct DiseaseConsumer 0xa0
@@ -589,6 +606,9 @@ struct DiseaseConsumer 0xa0
   0x68 vec<u8> versions
   0x80 ptr componentVtable
   0x88 vec<DiseaseEmittedInfo> consumed
+  method Handle Register(const SimData &sim, const AddDiseaseConsumerMessage &msg);
+  method void Modify(const SimData &sim, const ModifyDiseaseConsumerMessage &msg);
+  method void Unregister(Handle handle);
 
 # Debris items lying in the world, exchanging heat with their cell (and a solid floor).
 struct ElementChunkData 0x2c
@@ -619,6 +639,11 @@ struct ElementChunk 0xa0
   0x88 vec<ElementChunkInfo> info
   method void Update(float dt, SimData &sim, const Region &region);
   method void UpdateDataListOnly(SimData &sim);
+  method Handle Register(const SimData &sim, const AddElementChunkMessage &msg);
+  method void Modify(const SimData &sim, const ModifyElementChunkMessage &msg);
+  method void ModifyEnergy(const SimData &sim, const ModifyElementChunkEnergyMessage &msg);
+  method void ModifyAdjuster(const SimData &sim, const ModifyElementChunkAdjusterMessage &msg);
+  method void Unregister(Handle handle);
 
 # Radiation sources (buildings, critters). type: 0 continuous ellipse with line of sight,
 # 1/2 expanding ring with line of sight (2 spreads the intensity over the ring), 3 expanding
@@ -646,6 +671,9 @@ struct RadiationEmitter 0x88
   0x68 vec<u8> versions
   0x80 ptr componentVtable
   method void Update(float dt, SimData &sim, const Region &region);
+  method Handle Register(const SimData &sim, const AddRadiationEmitterMessage &msg);
+  method void Modify(const SimData &sim, const ModifyRadiationEmitterMessage &msg);
+  method void Unregister(Handle handle);
 
 # What the sim hands to the game each frame; PrepareGameDataUpdate turns it into the C#
 # GameDataUpdate (pointer + count per vector). Grids are game-sized (no border).

@@ -167,7 +167,17 @@ def cpp_header(structs, order):
            '// The original SimDLL structures, laid out exactly like the original.',
            '#pragma once', '#include <cstdint>', '#include <queue>', '#include <vector>', '',
            '// Enums used in member function signatures (they shape the mangled names).',
-           'namespace SpawnFXHashes { enum Type : int32_t {}; }', '']
+           'namespace SpawnFXHashes { enum Type : int32_t {}; }', '',
+           '// Component handle: low 24 bits index, top 8 bits version; 0xf00000 set means invalid.',
+           '// Its copy constructor is user-provided, as in the original: that makes it non-trivial for',
+           '// the ABI, so it is returned through a hidden pointer and passed by invisible reference.',
+           'struct Handle {',
+           '    uint32_t value;',
+           '    Handle() = default;',
+           '    explicit Handle(uint32_t v) : value(v) {}',
+           '    Handle(const Handle &other) : value(other.value) {}',
+           '    Handle &operator=(const Handle &other) { value = other.value; return *this; }',
+           '};', '']
     out += [f'struct {n};' for n in order] + ['']
     for name in order:
         s = structs[name]
