@@ -91,6 +91,7 @@ struct SimData {
     float unk_0x72c;
     uint8_t pad_0x730[24];
     void ClearCell(CellAccessor &cell);
+    uint8_t GetStableTicksRemaining(unsigned long cell);
 };
 
 struct Vector4f {

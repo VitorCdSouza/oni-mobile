@@ -71,6 +71,9 @@ Ferramentas do ciclo:
 | `DoPartialHeatTransition` (as duas sobrecargas) | replay idêntico, 64% das linhas |
 | `PostProcessCell` (com a lambda `FUN_0016f980`) | replay idêntico, 91% das linhas |
 | `SimEvents::ChangeSubstance`, `SimEvents::SpawnFX` | replay idêntico, 100% das linhas |
+| `AddMassAndUpdateTemperature`, `DoDisplacement`, `DisplaceGas`, `DisplaceLiquid`, `DisplaceLiquidSimple`, `Evaporate` | replay idêntico, 88% das linhas (o resto é caminho de assert) |
+| `DoDensityDisplacement`, `DoPressureBreak` (as duas sobrecargas) | replay idêntico, 98% das linhas |
+| `DoPartialMelt` (as duas sobrecargas), `DoUnstableCheckBasic` | replay idêntico, 48% das linhas |
 
 Ferramenta extra: `python3 sim/gen/rodata.py sim/libSimDLL.x86_64.so --symbol <nome mangled>` lista
 as constantes que uma função lê da memória com o valor exato. O Ghidra arredonda os literais
@@ -86,7 +89,9 @@ modo sandbox, montado para exercitar mecânicas específicas. Lista até agora:
 - congelamento de massa grande que vira tile em vez de detrito;
 - tile inteiro sublimando (pouca massa sobrando, ex.: alvejante quase no fim);
 - fervura parcial de líquido virando vapor ao lado de algo muito quente (ex.: água sobre magma);
-- sólido que some todo por sublimação (`Evaporate`).
+- sólido que some todo por sublimação (`Evaporate`);
+- gás muito quente encostado num tile sólido, derretendo 5 kg por vez (`DoPartialMelt`; a gravação
+  atual nunca passa das verificações iniciais).
 
 ## Fase 2 — Build Android
 

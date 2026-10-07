@@ -267,7 +267,7 @@ void PostProcessGas(SimData &sim, SimEvents &events, CellAccessor &self, const E
     if (DoDensityDisplacement(sim, events, cell, elem, 0.99f)) {
         return;
     }
-    if ((self.soa->properties[cell] & 2) == 0 && DoPartialMelt(sim, events, cell)) {
+    if ((self.soa->properties[cell] & 2) == 0 && static_cast<char>(DoPartialMelt(sim, events, cell))) {
         return;
     }
     if (!(29490.298828125f < NextRoll(sim))) {

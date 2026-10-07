@@ -54,6 +54,7 @@ struct SimData 0x748
   0x728 f32 unk_0x728            # 0.7
   0x72c f32 unk_0x72c            # 0.8
   method void ClearCell(CellAccessor &cell);
+  method uint8_t GetStableTicksRemaining(unsigned long cell);
 
 struct Vector4f 0x10
   0x0 f32 x

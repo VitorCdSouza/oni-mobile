@@ -97,8 +97,11 @@ inline float MinSS(float a, float b) { return a < b ? a : b; }
 bool DoDensityDisplacement(SimData &sim, SimEvents &events, int cell, const ElementPostProcessData &elem,
                            float factor);
 bool DoPressureBreak(SimData &sim, SimEvents &events, int cell, float pressure_ratio);
-bool DoPartialMelt(SimData &sim, SimEvents &events, int cell);
+uint64_t DoPartialMelt(SimData &sim, SimEvents &events, int cell);
 void DoUnstableCheckBasic(SimData &sim, SimEvents &events, CellAccessor &cell);
 void DoUnstableCheckWithDiagonals(SimData &sim, SimEvents &events, CellAccessor &cell);
 char DoSublimation(SimData &sim, SimEvents &events, int cell, const ElementPostProcessData &self);
 uint64_t DoPartialHeatTransition(SimData &sim, SimEvents &events, int cell);
+void HeadlessUnstableFallSimpleSwap(SimData &sim, SimEvents &events, CellAccessor &cell);
+
+constexpr int32_t kSimHashVoid = -1456075980;  // SimHashes.Void
