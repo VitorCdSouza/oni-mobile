@@ -12,6 +12,7 @@ struct ElementConsumer;
 struct ElementEmitter;
 struct BuildingHeatExchange;
 struct BuildingToBuildingHeatExchange;
+struct DiseaseEmitter;
 struct SimData;
 struct Vector4f;
 struct CellAccessor;
@@ -59,6 +60,8 @@ struct ConsumedMassInfo;
 struct ElementConsumerData;
 struct ElementEmitterData;
 struct EmittedMassInfo;
+struct DiseaseEmitterData;
+struct DiseaseEmittedInfo;
 
 struct Vec_ActiveRegion { struct ActiveRegion *begin; struct ActiveRegion *end; struct ActiveRegion *cap; };
 struct Vec_BackwallElementChangedInfo { struct BackwallElementChangedInfo *begin; struct BackwallElementChangedInfo *end; struct BackwallElementChangedInfo *cap; };
@@ -74,6 +77,8 @@ struct Vec_ConduitTemperatureData { struct ConduitTemperatureData *begin; struct
 struct Vec_ConsumedMassInfo { struct ConsumedMassInfo *begin; struct ConsumedMassInfo *end; struct ConsumedMassInfo *cap; };
 struct Vec_ConsumedRadiationCallback { struct ConsumedRadiationCallback *begin; struct ConsumedRadiationCallback *end; struct ConsumedRadiationCallback *cap; };
 struct Vec_DiseaseConsumptionCallback { struct DiseaseConsumptionCallback *begin; struct DiseaseConsumptionCallback *end; struct DiseaseConsumptionCallback *cap; };
+struct Vec_DiseaseEmittedInfo { struct DiseaseEmittedInfo *begin; struct DiseaseEmittedInfo *end; struct DiseaseEmittedInfo *cap; };
+struct Vec_DiseaseEmitterData { struct DiseaseEmitterData *begin; struct DiseaseEmitterData *end; struct DiseaseEmitterData *cap; };
 struct Vec_Element { struct Element *begin; struct Element *end; struct Element *cap; };
 struct Vec_ElementConsumerData { struct ElementConsumerData *begin; struct ElementConsumerData *end; struct ElementConsumerData *cap; };
 struct Vec_ElementEmitterData { struct ElementEmitterData *begin; struct ElementEmitterData *end; struct ElementEmitterData *cap; };
@@ -165,6 +170,20 @@ struct BuildingToBuildingHeatExchange {
     void * componentVtable;
 };
 
+struct DiseaseEmitter {
+    void * vtable;
+    struct Vec_DiseaseEmitterData data;
+    struct Vec_u32 denseToHandle;
+    struct Vec_u32 freeHandles;
+    struct Vec_i32 handleToDense;
+    struct Vec_u8 versions;
+    void * componentVtable;
+    struct Vec_DiseaseEmittedInfo emitted;
+    uint8_t queue[80];
+    struct Vec_i32 visited;
+    struct Vec_i32 reachable;
+};
+
 struct SimData {
     int32_t width;
     int32_t height;
@@ -200,7 +219,8 @@ struct SimData {
     uint8_t pad_0x308[296];
     struct BuildingHeatExchange buildingHeatExchange;
     struct BuildingToBuildingHeatExchange buildingToBuildingHeatExchange;
-    uint8_t pad_0x558[448];
+    struct DiseaseEmitter diseaseEmitter;
+    uint8_t pad_0x678[160];
     uint8_t unk_0x718;
     uint8_t headless;
     uint8_t radiationEnabled;
@@ -650,6 +670,22 @@ struct EmittedMassInfo {
     float mass;
     float temperature;
     int32_t diseaseCount;
+};
+
+struct DiseaseEmitterData {
+    int32_t cell;
+    uint8_t diseaseIdx;
+    uint8_t range;
+    uint8_t pad_0x6[2];
+    int32_t count;
+    float emitInterval;
+    float timer;
+};
+
+struct DiseaseEmittedInfo {
+    uint8_t diseaseIdx;
+    uint8_t pad_0x1[3];
+    int32_t count;
 };
 
 //@global gElements Vec_Element 0

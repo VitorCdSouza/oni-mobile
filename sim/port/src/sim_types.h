@@ -13,6 +13,7 @@ struct ElementConsumer;
 struct ElementEmitter;
 struct BuildingHeatExchange;
 struct BuildingToBuildingHeatExchange;
+struct DiseaseEmitter;
 struct SimData;
 struct Vector4f;
 struct CellAccessor;
@@ -60,6 +61,8 @@ struct ConsumedMassInfo;
 struct ElementConsumerData;
 struct ElementEmitterData;
 struct EmittedMassInfo;
+struct DiseaseEmitterData;
+struct DiseaseEmittedInfo;
 
 struct CellSOA {
     std::vector<uint16_t> elementIdx;
@@ -128,6 +131,21 @@ struct BuildingToBuildingHeatExchange {
     void Update(float dt, SimData &sim, const Region &region);
 };
 
+struct DiseaseEmitter {
+    void * vtable;
+    std::vector<DiseaseEmitterData> data;
+    std::vector<uint32_t> denseToHandle;
+    std::vector<uint32_t> freeHandles;
+    std::vector<int32_t> handleToDense;
+    std::vector<uint8_t> versions;
+    void * componentVtable;
+    std::vector<DiseaseEmittedInfo> emitted;
+    std::queue<FloodFillInfo> queue;
+    std::vector<int32_t> visited;
+    std::vector<int32_t> reachable;
+    void Update(float dt, SimData &sim, const Region &region);
+};
+
 struct SimData {
     int32_t width;
     int32_t height;
@@ -163,7 +181,8 @@ struct SimData {
     uint8_t pad_0x308[296];
     BuildingHeatExchange buildingHeatExchange;
     BuildingToBuildingHeatExchange buildingToBuildingHeatExchange;
-    uint8_t pad_0x558[448];
+    DiseaseEmitter diseaseEmitter;
+    uint8_t pad_0x678[160];
     bool unk_0x718;
     bool headless;
     bool radiationEnabled;
@@ -625,6 +644,22 @@ struct EmittedMassInfo {
     float mass;
     float temperature;
     int32_t diseaseCount;
+};
+
+struct DiseaseEmitterData {
+    int32_t cell;
+    uint8_t diseaseIdx;
+    uint8_t range;
+    uint8_t pad_0x6[2];
+    int32_t count;
+    float emitInterval;
+    float timer;
+};
+
+struct DiseaseEmittedInfo {
+    uint8_t diseaseIdx;
+    uint8_t pad_0x1[3];
+    int32_t count;
 };
 
 extern std::vector<Element> gElements;

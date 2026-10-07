@@ -36,6 +36,7 @@ static_assert(offsetof(SimData, elementConsumer) == 0xc8, "SimData::elementConsu
 static_assert(offsetof(SimData, elementEmitter) == 0x1e8, "SimData::elementEmitter");
 static_assert(offsetof(SimData, buildingHeatExchange) == 0x430, "SimData::buildingHeatExchange");
 static_assert(offsetof(SimData, buildingToBuildingHeatExchange) == 0x4d0, "SimData::buildingToBuildingHeatExchange");
+static_assert(offsetof(SimData, diseaseEmitter) == 0x558, "SimData::diseaseEmitter");
 static_assert(offsetof(SimData, headless) == 0x719, "SimData::headless");
 static_assert(offsetof(SimData, radiationEnabled) == 0x71a, "SimData::radiationEnabled");
 
@@ -448,4 +449,29 @@ static_assert(offsetof(ElementEmitter, emitted) == 0x88, "ElementEmitter::emitte
 static_assert(offsetof(ElementEmitter, visited) == 0xa0, "ElementEmitter::visited");
 static_assert(offsetof(ElementEmitter, reachable) == 0xb8, "ElementEmitter::reachable");
 static_assert(offsetof(ElementEmitter, queue) == 0xd0, "ElementEmitter::queue");
+
+static_assert(sizeof(DiseaseEmitterData) == 0x14, "DiseaseEmitterData size");
+static_assert(offsetof(DiseaseEmitterData, cell) == 0x0, "DiseaseEmitterData::cell");
+static_assert(offsetof(DiseaseEmitterData, diseaseIdx) == 0x4, "DiseaseEmitterData::diseaseIdx");
+static_assert(offsetof(DiseaseEmitterData, range) == 0x5, "DiseaseEmitterData::range");
+static_assert(offsetof(DiseaseEmitterData, count) == 0x8, "DiseaseEmitterData::count");
+static_assert(offsetof(DiseaseEmitterData, emitInterval) == 0xc, "DiseaseEmitterData::emitInterval");
+static_assert(offsetof(DiseaseEmitterData, timer) == 0x10, "DiseaseEmitterData::timer");
+
+static_assert(sizeof(DiseaseEmittedInfo) == 0x8, "DiseaseEmittedInfo size");
+static_assert(offsetof(DiseaseEmittedInfo, diseaseIdx) == 0x0, "DiseaseEmittedInfo::diseaseIdx");
+static_assert(offsetof(DiseaseEmittedInfo, count) == 0x4, "DiseaseEmittedInfo::count");
+
+static_assert(sizeof(DiseaseEmitter) == 0x120, "DiseaseEmitter size");
+static_assert(offsetof(DiseaseEmitter, vtable) == 0x0, "DiseaseEmitter::vtable");
+static_assert(offsetof(DiseaseEmitter, data) == 0x8, "DiseaseEmitter::data");
+static_assert(offsetof(DiseaseEmitter, denseToHandle) == 0x20, "DiseaseEmitter::denseToHandle");
+static_assert(offsetof(DiseaseEmitter, freeHandles) == 0x38, "DiseaseEmitter::freeHandles");
+static_assert(offsetof(DiseaseEmitter, handleToDense) == 0x50, "DiseaseEmitter::handleToDense");
+static_assert(offsetof(DiseaseEmitter, versions) == 0x68, "DiseaseEmitter::versions");
+static_assert(offsetof(DiseaseEmitter, componentVtable) == 0x80, "DiseaseEmitter::componentVtable");
+static_assert(offsetof(DiseaseEmitter, emitted) == 0x88, "DiseaseEmitter::emitted");
+static_assert(offsetof(DiseaseEmitter, queue) == 0xa0, "DiseaseEmitter::queue");
+static_assert(offsetof(DiseaseEmitter, visited) == 0xf0, "DiseaseEmitter::visited");
+static_assert(offsetof(DiseaseEmitter, reachable) == 0x108, "DiseaseEmitter::reachable");
 
