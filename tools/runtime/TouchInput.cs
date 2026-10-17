@@ -33,9 +33,11 @@ namespace OniMobile
 
         // KCanvasScaler's scale when the player has not picked one. The game sizes its UI
         // for a 1080p monitor; on a phone the same pixels are about a third as big.
+        // At the 720 line render height (Display.RenderHeight) the game's own screen
+        // factor is 0.86, so 1.75 gives about 1.5 times the size 1.5 had at 1080.
         public static float DefaultUIScale()
         {
-            return IsAndroid ? 1.5f : 1f;
+            return IsAndroid ? 1.75f : 1f;
         }
     }
 
@@ -201,6 +203,7 @@ namespace OniMobile
             if (frame == Time.frameCount)
                 return;
             frame = Time.frameCount;
+            FrameStats.Tick();
             Array.Clear(pressed, 0, 3);
             Array.Clear(released, 0, 3);
             scroll = 0;

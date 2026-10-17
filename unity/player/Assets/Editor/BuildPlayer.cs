@@ -72,7 +72,11 @@ public static class BuildPlayer
         PlayerSettings.SetApiCompatibilityLevel(named, ApiCompatibilityLevel.NET_Standard);
         // IL2CPP cannot run with stripping disabled; link.xml keeps every type.
         PlayerSettings.SetManagedStrippingLevel(named, ManagedStrippingLevel.Minimal);
-        PlayerSettings.SetIl2CppCodeGeneration(named, Il2CppCodeGeneration.OptimizeSize);
+        // OptimizeSize shares one generic body across value types too, so every List<T>,
+        // Dictionary<K, V> or KCompactedVector<T> of a struct copies its elements with memmove
+        // and calls through RuntimeInvoker. A late game save spent 10-15% of the main thread
+        // there. OptimizeSpeed generates a body per value type instantiation.
+        PlayerSettings.SetIl2CppCodeGeneration(named, Il2CppCodeGeneration.OptimizeSpeed);
         // The game scenes are not in this build, so module usage cannot be inferred from them.
         PlayerSettings.stripEngineCode = false;
 

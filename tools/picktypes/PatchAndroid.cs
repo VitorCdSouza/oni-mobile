@@ -36,6 +36,9 @@
 // is null (it only fails if the delegate is called); IL2CPP throws on creation.
 // ManagementMenu does this with the Spaced Out cluster map screen in a base game
 // save, which aborts its setup. Such creations now give a null delegate instead.
+//
+// 7. Render resolution. Calls to Screen.SetResolution go to OniMobile.Display
+// (tools/runtime/Display.cs), which caps the height on Android.
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -55,11 +58,13 @@ static class PatchAndroid
         var ignored = IgnoreErrors(module);
         var callbacks = MarkCallbacks(module);
         var runtime = ModuleDefinition.ReadModule(args[3]);
-        var inputs = RedirectInput(module, runtime);
+        var inputs = Redirect(module, runtime, "UnityEngine.Input", "OniMobile.TouchInput");
+        var resolutions = Redirect(module, runtime, "UnityEngine.Screen", "OniMobile.Display");
         var scale = DefaultUIScale(module, runtime);
         var nullSafe = NullSafeDelegates(module);
         Console.WriteLine($"{module.Assembly.Name.Name}: {quiet} Steam errors made warnings, {ignored} crash screen messages ignored, "
-            + $"{callbacks} native callbacks marked, {inputs} Input calls redirected, {scale} UI scale defaults replaced, "
+            + $"{callbacks} native callbacks marked, {inputs} Input calls redirected, {resolutions} Screen calls redirected, "
+            + $"{scale} UI scale defaults replaced, "
             + $"{nullSafe} delegate creations made null-safe");
         var getter = module.GetMemberReferences().OfType<MethodReference>()
             .FirstOrDefault(m => m.Name == "get_streamingAssetsPath" && m.DeclaringType.FullName == "UnityEngine.Application");
@@ -118,9 +123,11 @@ static class PatchAndroid
         return dropped;
     }
 
-    static int RedirectInput(ModuleDefinition module, ModuleDefinition runtime)
+    // Points every call to a static method of `from` (a UnityEngine type) at the method of
+    // the same name and signature in the runtime type `to`, when it has one.
+    static int Redirect(ModuleDefinition module, ModuleDefinition runtime, string from, string to)
     {
-        var touch = runtime.GetType("OniMobile.TouchInput");
+        var replacement = runtime.GetType(to);
         int redirected = 0;
         foreach (var type in module.GetTypes())
         {
@@ -129,9 +136,9 @@ static class PatchAndroid
                 foreach (var ins in method.Body.Instructions)
                 {
                     if ((ins.OpCode != OpCodes.Call && ins.OpCode != OpCodes.Callvirt) || !(ins.Operand is MethodReference mr)
-                        || mr.DeclaringType.FullName != "UnityEngine.Input" || mr.HasThis)
+                        || mr.DeclaringType.FullName != from || mr.HasThis)
                         continue;
-                    var target = touch.Methods.FirstOrDefault(m => m.IsPublic && m.IsStatic && m.Name == mr.Name
+                    var target = replacement.Methods.FirstOrDefault(m => m.IsPublic && m.IsStatic && m.Name == mr.Name
                         && m.Parameters.Count == mr.Parameters.Count
                         && m.Parameters.Select(p => p.ParameterType.FullName).SequenceEqual(mr.Parameters.Select(p => p.ParameterType.FullName)));
                     if (target == null)

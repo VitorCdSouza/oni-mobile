@@ -361,7 +361,8 @@ ajustes de desempenho (resolução, limite de fps, mundo pequeno).
     sobre a UI ou quando há ferramenta ativa diferente do Select;
   - dois dedos: pan e pinça (passos da roda).
 - Fora do Android tudo passa direto para o `Input`.
-- Escala de UI padrão de 150% no Android (`KCanvasScaler`); o slider de Options continua valendo.
+- Escala de UI padrão de 175% no Android (`KCanvasScaler`); o slider de Options continua valendo.
+  Com 150% a 1080 linhas a UI ficou pequena demais para tocar.
 - Testado no aparelho: pan, zoom, cavar arrastando e menu de construção funcionam.
 - Animação dos prédios: a Printing Pod e os outros prédios apareciam como estilhaços esticados em
   diagonal, com os duplicantes normais. Os shaders KAnim leem as texturas de dados `RGBAFloat`
@@ -369,12 +370,47 @@ ajustes de desempenho (resolução, limite de fps, mundo pequeno).
   centro do texel, e o Adreno filtra float de 32 bits com precisão reduzida. O `shader_gles.py`
   troca essas leituras por `texelFetch`. Corrigido no aparelho.
 
+### Desempenho
+
+Perfil no PC: player IL2CPP Linux (`linux_swap.sh`, `XDG_CONFIG_HOME` à parte) com o save
+"Sustentaveis" (ciclo 2924), 600 amostras da thread principal com `eu-stack` e os símbolos de
+`GameAssembly.debug`. Não há `perf` instalado.
+
+- Threads: a principal fica em ~94%; o `AsyncPathProbeWorker` (pathfinding dos duplicantes) em
+  ~99%; a da sim e a de render bem abaixo. A sim já roda em thread própria.
+- Thread principal, inclusivo: `BucketGroup` (Sim200ms/1000ms dos componentes) 29%, cérebros dos
+  duplicantes e escolha de tarefa 14%, `JobManager` 12% (parte esperando os workers, ~5%),
+  animações (`KAnimBatch`, `KBatchedAnimUpdater`) ~12%, raycast da UI do `EventSystem` 5%,
+  render do motor ~8%.
+- Uns 13% das amostras caem em código de genérico totalmente compartilhado (`memmove` de
+  elementos, `RuntimeInvoker`, `Il2CppFullySharedGenericAny`): é o custo do
+  `Il2CppCodeGeneration.OptimizeSize`. O `BuildPlayer` passa a usar `OptimizeSpeed`.
+- Outros 5% são a barreira de escrita do GC incremental (`GC_end_stubborn_change`). Desligar o GC
+  incremental tira isso, mas troca por pausas longas de coleta com o heap grande do fim de jogo;
+  ainda não feito.
+
+Conclusão: o custo é a lógica C# do próprio jogo, que o IL2CPP já compila para nativo.
+Reescrever em Rust ou C++ seria reimplementar o jogo inteiro; o que vale é ajustar o build e
+cortar trabalho pontual.
+
+Mudanças:
+
+- `OptimizeSpeed` no IL2CPP (acima).
+- Resolução de render: `OniMobile.Display.SetResolution` (`tools/runtime/Display.cs`) recebe as
+  chamadas de `Screen.SetResolution` do `GraphicsOptionsScreen` e limita a altura a 720 linhas no
+  Android (1600x720 no Poco, menos da metade dos pixels de 2400x1080).
+- `OniMobile.FrameStats` escreve no logcat, a cada 10 s, fps médio, tempo médio e pior quadro:
+  `adb logcat -s Unity | grep OniMobile`.
+
 ## Estado atual e próximos passos
 
 Em aberto:
 
 - Vídeo do menu principal sem shader de Android (`Hidden/VideoDecodeAndroid`).
-- Desempenho não medido no aparelho.
+- Desempenho ainda não medido no aparelho; medir com o `FrameStats` antes e depois de cada mudança.
+- Candidatos a seguir, por ordem: `Il2CppCompilerConfiguration.Master` (mais tempo e memória de
+  build); GC não incremental (ver acima); pular o raycast da UI quando não há toque; sim compilada
+  com `-O3 -mcpu=cortex-a78`.
 
 ### Como montar e instalar
 

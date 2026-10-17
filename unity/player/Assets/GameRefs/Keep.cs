@@ -20,7 +20,7 @@ namespace OniMobile
             typeof(global::Ionic.FileSelector), // Ionic.Zip
             typeof(global::LibNoiseDotNet.Graphics.Tools.Noise.CombinerModule), // LibNoiseDotNet
             typeof(global::Newtonsoft.Json.JsonReader), // Newtonsoft.Json
-            typeof(global::OniMobile.Platform), // OniMobile.Runtime
+            typeof(global::OniMobile.Display), // OniMobile.Runtime
             typeof(global::System.IO.Hashing.Crc32), // System.IO.Hashing
             // no public type: System.Memory
             typeof(global::Unity.Burst.OptimizeFor), // Unity.Burst
