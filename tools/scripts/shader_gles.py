@@ -39,6 +39,17 @@ _EXTENSION = re.compile(r"^#extension GL_ARB_\w+ : \w+\n", re.M)
 # HLSLcc declares `precise` scratch variables in the 4.20 programs; ES 3.1 has no
 # `precise` (it needs gpu_shader5). Dropping it only loses bit-exact invariance.
 _PRECISE = re.compile(r"\bprecise\s+")
+# The KAnim shaders read their RGBAFloat data textures (frame tables, symbol
+# instances) with a bilinear textureLod at texel centres. Adreno filters 32-bit
+# float textures at reduced precision, so indices and positions come back off and
+# the buildings turn into stretched shards. texelFetch reads the texel exactly.
+_DATA_LOOKUP = re.compile(
+    r"textureLod\((buildAndAnimTex|symbolInstanceTex|symbolOverrideInfoTex), ([^,()]+), 0\.0\)")
+
+
+def _texel_fetch(m):
+    sampler, uv = m.groups()
+    return f"texelFetch({sampler}, ivec2({uv} * vec2(textureSize({sampler}, 0))), 0)"
 
 
 def convert_glsl(text):
@@ -51,6 +62,7 @@ def convert_glsl(text):
     text = _EXTENSION_BLOCK.sub("", text)
     text = _EXTENSION.sub("", text)
     text = _PRECISE.sub("", text)
+    text = _DATA_LOOKUP.sub(_texel_fetch, text)
     return _VERSION.sub(version, text)
 
 

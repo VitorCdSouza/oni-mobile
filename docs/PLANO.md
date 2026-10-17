@@ -363,22 +363,16 @@ ajustes de desempenho (resolução, limite de fps, mundo pequeno).
 - Fora do Android tudo passa direto para o `Input`.
 - Escala de UI padrão de 150% no Android (`KCanvasScaler`); o slider de Options continua valendo.
 - Testado no aparelho: pan, zoom, cavar arrastando e menu de construção funcionam.
+- Animação dos prédios: a Printing Pod e os outros prédios apareciam como estilhaços esticados em
+  diagonal, com os duplicantes normais. Os shaders KAnim leem as texturas de dados `RGBAFloat`
+  (`buildAndAnimTex`, `symbolInstanceTex`, `symbolOverrideInfoTex`) com `textureLod` bilinear no
+  centro do texel, e o Adreno filtra float de 32 bits com precisão reduzida. O `shader_gles.py`
+  troca essas leituras por `texelFetch`. Corrigido no aparelho.
 
 ## Estado atual e próximos passos
 
 Em aberto:
 
-- **Animação dos prédios quebrada no aparelho.** A Printing Pod e os outros prédios aparecem como
-  estilhaços esticados em diagonal. Os duplicantes estão normais. O que já foi descartado:
-  - A textura ASTC (`printing_pod_0` decodificada é igual à DXT original).
-  - O GLSL convertido: `Klei/BatchedAnimation`, dos prédios, e `Klei/BatchedAnimationHuman`, dos
-    duplicantes, são quase iguais, com os mesmos 20 samplers nas unidades 0–19.
-  - Precisão: todos os stages usam `highp`.
-
-  Os dados das animações ficam em texturas `RGBAFloat` (`KAnimBatchGroup`,
-  `KAnimBatchTextureCache`) lidas no vertex shader. Próximo teste: rodar o mesmo save no PC com o
-  player IL2CPP Linux e os dados `build/data-linux`. Se quebrar lá também, o problema é do IL2CPP;
-  se não, é do GLES. Esse teste não pode rodar junto com um build do Unity (ver abaixo).
 - Vídeo do menu principal sem shader de Android (`Hidden/VideoDecodeAndroid`).
 - Desempenho não medido no aparelho.
 
