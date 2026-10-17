@@ -1,6 +1,6 @@
 // Patches a game assembly for the Android player.
 //
-// Usage: PatchAndroid.exe <in.dll> <out.dll> <game Managed dir>
+// Usage: PatchAndroid.exe <in.dll> <out.dll> <game Managed dir> <OniMobile.Runtime.dll>
 //
 // 1. StreamingAssets.
 // On Android Application.streamingAssetsPath points inside the APK, which
@@ -26,11 +26,22 @@
 // SIM_Initialize, fails worldgen). Every static method that becomes a delegate of
 // a type passed to a P/Invoke, or marked [UnmanagedFunctionPointer], gets an
 // injected OniMobile.MonoPInvokeCallbackAttribute.
+//
+// 5. Touch. Calls to UnityEngine.Input go to OniMobile.TouchInput (the method of
+// the same name and signature, tools/runtime/TouchInput.cs), which turns touch
+// gestures into a mouse on Android. KCanvasScaler's default UI scale comes from
+// OniMobile.Platform.DefaultUIScale.
+//
+// 6. Null delegate targets. Mono lets `new Func<T>(obj.Method)` through when obj
+// is null (it only fails if the delegate is called); IL2CPP throws on creation.
+// ManagementMenu does this with the Spaced Out cluster map screen in a base game
+// save, which aborts its setup. Such creations now give a null delegate instead.
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
+using Mono.Cecil.Rocks;
 
 static class PatchAndroid
 {
@@ -43,7 +54,13 @@ static class PatchAndroid
         var quiet = QuietSteamError(module);
         var ignored = IgnoreErrors(module);
         var callbacks = MarkCallbacks(module);
-        Console.WriteLine($"{module.Assembly.Name.Name}: {quiet} Steam errors made warnings, {ignored} crash screen messages ignored, {callbacks} native callbacks marked");
+        var runtime = ModuleDefinition.ReadModule(args[3]);
+        var inputs = RedirectInput(module, runtime);
+        var scale = DefaultUIScale(module, runtime);
+        var nullSafe = NullSafeDelegates(module);
+        Console.WriteLine($"{module.Assembly.Name.Name}: {quiet} Steam errors made warnings, {ignored} crash screen messages ignored, "
+            + $"{callbacks} native callbacks marked, {inputs} Input calls redirected, {scale} UI scale defaults replaced, "
+            + $"{nullSafe} delegate creations made null-safe");
         var getter = module.GetMemberReferences().OfType<MethodReference>()
             .FirstOrDefault(m => m.Name == "get_streamingAssetsPath" && m.DeclaringType.FullName == "UnityEngine.Application");
         if (getter == null)
@@ -99,6 +116,103 @@ static class PatchAndroid
             }
         }
         return dropped;
+    }
+
+    static int RedirectInput(ModuleDefinition module, ModuleDefinition runtime)
+    {
+        var touch = runtime.GetType("OniMobile.TouchInput");
+        int redirected = 0;
+        foreach (var type in module.GetTypes())
+        {
+            foreach (var method in type.Methods.Where(m => m.HasBody))
+            {
+                foreach (var ins in method.Body.Instructions)
+                {
+                    if ((ins.OpCode != OpCodes.Call && ins.OpCode != OpCodes.Callvirt) || !(ins.Operand is MethodReference mr)
+                        || mr.DeclaringType.FullName != "UnityEngine.Input" || mr.HasThis)
+                        continue;
+                    var target = touch.Methods.FirstOrDefault(m => m.IsPublic && m.IsStatic && m.Name == mr.Name
+                        && m.Parameters.Count == mr.Parameters.Count
+                        && m.Parameters.Select(p => p.ParameterType.FullName).SequenceEqual(mr.Parameters.Select(p => p.ParameterType.FullName)));
+                    if (target == null)
+                        continue;
+                    ins.OpCode = OpCodes.Call;
+                    ins.Operand = module.ImportReference(target);
+                    redirected++;
+                }
+            }
+        }
+        return redirected;
+    }
+
+    static int DefaultUIScale(ModuleDefinition module, ModuleDefinition runtime)
+    {
+        var init = module.GetType("KCanvasScaler")?.Methods.FirstOrDefault(m => m.Name == "OnPrefabInit");
+        if (init == null)
+            return 0;
+        var scale = runtime.GetType("OniMobile.Platform").Methods.First(m => m.Name == "DefaultUIScale");
+        int replaced = 0;
+        foreach (var ins in init.Body.Instructions)
+        {
+            if (ins.OpCode == OpCodes.Ldc_R4 && (float)ins.Operand == 1f
+                && ins.Next.Operand is MethodReference set && set.Name == "SetUserScale")
+            {
+                ins.OpCode = OpCodes.Call;
+                ins.Operand = module.ImportReference(scale);
+                replaced++;
+            }
+        }
+        return replaced;
+    }
+
+    // [target] ldftn M; newobj D(object, native int)
+    // becomes
+    // [target] stloc t; ldloc t; brtrue make; ldnull; br end; make: ldloc t; ldftn M; newobj D; end:
+    static int NullSafeDelegates(ModuleDefinition module)
+    {
+        int changed = 0;
+        foreach (var type in module.GetTypes())
+        {
+            foreach (var method in type.Methods.Where(m => m.HasBody))
+            {
+                var sites = method.Body.Instructions.Where(ins => ins.OpCode == OpCodes.Ldftn
+                    && ins.Operand is MethodReference target && target.HasThis
+                    && ins.Next?.OpCode == OpCodes.Newobj
+                    // `this` is never null.
+                    && !(method.HasThis && ins.Previous?.OpCode == OpCodes.Ldarg_0)).ToList();
+                if (sites.Count == 0)
+                    continue;
+                method.Body.SimplifyMacros();
+                var temp = new VariableDefinition(module.TypeSystem.Object);
+                method.Body.Variables.Add(temp);
+                var il = method.Body.GetILProcessor();
+                foreach (var ldftn in sites)
+                {
+                    var end = ldftn.Next.Next;
+                    var make = il.Create(OpCodes.Ldloc, temp);
+                    var store = il.Create(OpCodes.Stloc, temp);
+                    // Jumps that landed on ldftn (target pushed on two paths) land on the store now.
+                    foreach (var ins in method.Body.Instructions)
+                    {
+                        if (ins.Operand == ldftn)
+                            ins.Operand = store;
+                        else if (ins.Operand is Instruction[] targets)
+                            for (int i = 0; i < targets.Length; i++)
+                                if (targets[i] == ldftn)
+                                    targets[i] = store;
+                    }
+                    il.InsertBefore(ldftn, store);
+                    il.InsertBefore(ldftn, il.Create(OpCodes.Ldloc, temp));
+                    il.InsertBefore(ldftn, il.Create(OpCodes.Brtrue, make));
+                    il.InsertBefore(ldftn, il.Create(OpCodes.Ldnull));
+                    il.InsertBefore(ldftn, il.Create(OpCodes.Br, end));
+                    il.InsertBefore(ldftn, make);
+                    changed++;
+                }
+                method.Body.OptimizeMacros();
+            }
+        }
+        return changed;
     }
 
     static int QuietSteamError(ModuleDefinition module)
@@ -177,7 +291,7 @@ static class PatchAndroid
                 foreach (var ins in method.Body.Instructions)
                 {
                     if (ins.OpCode != OpCodes.Ldftn || !(ins.Operand is MethodReference target) || !(ins.Next?.Operand is MethodReference ctor)
-                        || ins.Next.OpCode != OpCodes.Newobj || !delegates.Contains(ctor.DeclaringType.FullName))
+                        || ins.Next.OpCode != OpCodes.Newobj || !IsNativeDelegate(ctor.DeclaringType, delegates))
                         continue;
                     var def = target.Resolve();
                     if (def == null || !def.IsStatic || def.Module != module
@@ -200,6 +314,18 @@ static class PatchAndroid
             def.CustomAttributes.Add(attribute);
         }
         return targets.Count;
+    }
+
+    // Delegate types declared in other assemblies (Steamworks' hooks) are recognized by
+    // their [UnmanagedFunctionPointer].
+    static bool IsNativeDelegate(TypeReference type, HashSet<string> delegates)
+    {
+        if (delegates.Contains(type.FullName))
+            return true;
+        TypeDefinition def;
+        try { def = type.Resolve(); }
+        catch (AssemblyResolutionException) { return false; }
+        return def != null && def.CustomAttributes.Any(a => a.AttributeType.Name == "UnmanagedFunctionPointerAttribute");
     }
 
     // sealed class OniMobile.MonoPInvokeCallbackAttribute : Attribute { ctor(Type) }
