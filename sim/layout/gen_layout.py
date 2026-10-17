@@ -73,7 +73,11 @@ def vec_struct_name(elem):
 
 
 def embedded_first(structs, order):
-    """Orders structs so that a struct embedded by value is defined before its container."""
+    """Orders structs so that a struct embedded by value is defined before its container.
+
+    A queue<T> element counts as embedded: libc++ (Android) instantiates std::deque<T> at the
+    member declaration and needs T complete there; libstdc++ does not.
+    """
     done, result = set(), []
 
     def visit(name):
@@ -82,6 +86,8 @@ def embedded_first(structs, order):
         done.add(name)
         for _, typ, _ in structs[name]['fields']:
             base = re.sub(r'\[\d+\]$', '', typ)
+            if base.startswith('queue<'):
+                base = base[6:-1]
             if base in structs:
                 visit(base)
         result.append(name)

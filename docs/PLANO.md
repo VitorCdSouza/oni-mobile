@@ -87,6 +87,39 @@ O caminho que sobra é a **troca de dados**:
 Riscos que este caminho ainda precisa provar: o player Android aceitar o `globalgamemanagers` de
 outra plataforma, e o IL2CPP resolver os `MonoScript` das cenas pelas assemblies pré-compiladas.
 
+### Troca de dados no PC (IL2CPP Linux)
+
+Provado: o player IL2CPP Linux com os dados originais da build Mono chega ao menu principal, com as
+DLCs detectadas e os saves listados. As cenas, os `MonoScript` e os bundles carregam sem conversão.
+
+Como montar:
+
+    tools/scripts/setup_player_project.sh     # copia e prepara as DLLs do jogo
+    Unity -batchmode -quit -projectPath unity/player -buildTarget Linux64 -executeMethod BuildPlayer.Linux
+    tools/scripts/linux_swap.sh               # build/linux-swap: player novo + dados originais por symlink
+
+O build leva ~2 min (`GameAssembly.so` de 98 MB, `global-metadata.dat` de 25 MB).
+
+Achados:
+
+- Um projeto Unity sem `ProjectVersion.txt` válido é tratado como projeto antigo: a cada abertura a
+  Unity recoloca os pacotes padrão (`ugui`, `timeline`, `ads`...). O arquivo fica fixado em
+  `6000.3.5f2`.
+- O jogo declara tipos no namespace global (`Action`, `DateTime`, `EventSystem`, `Debug`). Se as DLLs
+  forem referenciadas automaticamente, quebram a compilação de qualquer pacote com código-fonte.
+  Por isso elas entram como referência explícita (`isExplicitlyReferenced`, meta com
+  `serializedVersion: 2`; com 3 a Unity ignora o plugin sem avisar).
+- Plugin com referência explícita só vai para o build se alguma assembly o usar de fato (o
+  compilador descarta referência sem uso). O `Assets/GameRefs/Keep.cs`, gerado com Mono.Cecil
+  (`tools/picktypes/PickTypes.cs`), nomeia um tipo de cada DLL.
+- `System.Runtime.CompilerServices.Unsafe` 6.0 e `System.Memory` vêm do jogo: as da Unity não servem.
+- O `Newtonsoft.Json` do jogo é o 7.0.1 e usa `Reflection.Emit`, que não existe em IL2CPP (quebrava
+  `TuningSystem`, o crash reporter e a leitura de saves). `tools/picktypes/PatchAot.cs` faz
+  `JsonTypeReflector.DynamicCodeGeneration` devolver `false`, e ele passa a usar o caminho late-bound.
+- Erros que sobram, todos fora do caminho do jogo: o hook de debug do Steam (callback sem
+  `[MonoPInvokeCallback]`), o `Ionic.Zip` do Workshop (falta a codepage 437 do I18N) e o crash
+  reporter procurando `Managed/Assembly-CSharp.dll` para calcular hash.
+
 ## Fase 1 — SimDLL arm64
 
 Reimplementação em C++ a partir do decompilado, validada pelo replay.

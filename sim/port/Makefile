@@ -4,6 +4,8 @@
 CXX ?= g++
 # -ffp-contract=off: no fused multiply-add, so arm64 builds round exactly like the x86 original.
 CXXFLAGS ?= -O2 -g -std=c++17 -fPIC -ffp-contract=off -Wall -Wextra
+# Android (bionic) has pthreads in libc and no libpthread: build with PTHREAD=.
+PTHREAD ?= -lpthread
 SRCS := $(wildcard src/*.cpp)
 BUILD := ../build
 
@@ -20,7 +22,7 @@ standalone: $(BUILD)/standalone/libSimDLL.so
 
 $(BUILD)/standalone/libSimDLL.so: $(STANDALONE_SRCS) $(wildcard src/*.h)
 	mkdir -p $(BUILD)/standalone
-	$(CXX) $(CXXFLAGS) -shared -Wl,--no-undefined -o $@ $(STANDALONE_SRCS) -lpthread
+	$(CXX) $(CXXFLAGS) -shared -Wl,--no-undefined -o $@ $(STANDALONE_SRCS) $(PTHREAD)
 
 .PHONY: standalone
 

@@ -38,6 +38,7 @@ struct Handle {
 };
 
 struct CellSOA;
+struct FloodFillInfo;
 struct ElementConsumer;
 struct ElementEmitter;
 struct RadiationEmitter;
@@ -92,7 +93,6 @@ struct BuildingToBuildingHeatExchangeData;
 struct ConduitTemperatureData;
 struct ConduitTemperatureUpdateData;
 struct ConduitTemperatureManager;
-struct FloodFillInfo;
 struct ConsumedMassInfo;
 struct ElementConsumerData;
 struct ElementEmitterData;
@@ -164,6 +164,12 @@ struct CellSOA {
     std::vector<uint8_t> diseaseInfestationTickCount;
     std::vector<float> diseaseAccumulatedError;
     std::vector<float> unk_0xf0;
+};
+
+struct FloodFillInfo {
+    uint16_t x;
+    uint16_t y;
+    uint16_t distance;
 };
 
 struct ElementConsumer {
@@ -774,12 +780,6 @@ struct ConduitTemperatureManager {
     void Remove(int handle);
     void Clear();
     void ReleaseQueuedHandles();
-};
-
-struct FloodFillInfo {
-    uint16_t x;
-    uint16_t y;
-    uint16_t distance;
 };
 
 struct ConsumedMassInfo {

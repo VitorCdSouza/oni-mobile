@@ -1,0 +1,33 @@
+{
+    "name": "OniMobile.GameRefs",
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "0Harmony.dll",
+        "ArabicSupport.dll",
+        "Assembly-CSharp-firstpass.dll",
+        "Assembly-CSharp.dll",
+        "FMODUnity.dll",
+        "FMODUnityHaptics.dll",
+        "FMODUnityResonance.dll",
+        "ImGui.NET.dll",
+        "ImGui.dll",
+        "Ionic.Zip.dll",
+        "LibNoiseDotNet.dll",
+        "Newtonsoft.Json.dll",
+        "System.IO.Hashing.dll",
+        "Unity.Burst.Unsafe.dll",
+        "Unity.Burst.dll",
+        "Unity.Collections.LowLevel.ILSupport.dll",
+        "Unity.Collections.dll",
+        "Unity.InternalAPIEngineBridge.004.dll",
+        "Unity.Mathematics.dll",
+        "Unity.Profiling.Core.dll",
+        "Unity.TextMeshPro.dll",
+        "Unity.Timeline.dll",
+        "UnityEngine.UI.dll",
+        "VYaml.Annotations.dll",
+        "VYaml.dll",
+        "com.rlabrecque.steamworks.net.dll"
+    ],
+    "autoReferenced": false
+}

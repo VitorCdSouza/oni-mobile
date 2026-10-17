@@ -8,6 +8,7 @@ typedef unsigned long long uint64_t;
 typedef long long int64_t;
 
 struct CellSOA;
+struct FloodFillInfo;
 struct ElementConsumer;
 struct ElementEmitter;
 struct RadiationEmitter;
@@ -62,7 +63,6 @@ struct BuildingToBuildingHeatExchangeData;
 struct ConduitTemperatureData;
 struct ConduitTemperatureUpdateData;
 struct ConduitTemperatureManager;
-struct FloodFillInfo;
 struct ConsumedMassInfo;
 struct ElementConsumerData;
 struct ElementEmitterData;
@@ -233,6 +233,12 @@ struct CellSOA {
     struct Vec_u8 diseaseInfestationTickCount;
     struct Vec_f32 diseaseAccumulatedError;
     struct Vec_f32 unk_0xf0;
+};
+
+struct FloodFillInfo {
+    uint16_t x;
+    uint16_t y;
+    uint16_t distance;
 };
 
 struct ElementConsumer {
@@ -783,12 +789,6 @@ struct ConduitTemperatureManager {
     struct Vec_u32 pendingRemovals0;
     struct Vec_u32 pendingRemovals1;
     uint8_t mutex[40];
-};
-
-struct FloodFillInfo {
-    uint16_t x;
-    uint16_t y;
-    uint16_t distance;
 };
 
 struct ConsumedMassInfo {

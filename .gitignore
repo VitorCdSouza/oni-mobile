@@ -10,3 +10,11 @@ save-backup/
 sim/recordings/
 tools/venv/
 build/
+vendor/
+unity/player/Assets/Plugins/Managed/
+unity/player/Library/
+unity/player/Temp/
+unity/player/Logs/
+unity/player/Builds/
+unity/player/UserSettings/
+unity/player/obj/

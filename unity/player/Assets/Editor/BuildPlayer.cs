@@ -1,0 +1,76 @@
+using System;
+using System.IO;
+using System.Linq;
+using UnityEditor;
+using UnityEditor.Build;
+using UnityEditor.Build.Reporting;
+using UnityEngine;
+
+// Builds an IL2CPP player whose only content is the game's original managed
+// assemblies (copied into Assets/Plugins/Managed). The data files of this
+// build are thrown away later and replaced with the converted game data;
+// what we keep is the player, libil2cpp.so and global-metadata.dat.
+//
+// Run with: Unity -batchmode -quit -projectPath <this project>
+//   -executeMethod BuildPlayer.Linux   (output: Builds/Linux)
+//   -executeMethod BuildPlayer.Android (output: Builds/Android/oni.apk)
+public static class BuildPlayer
+{
+    const string ScenePath = "Assets/Scenes/Empty.unity";
+
+    public static void Linux()
+    {
+        Build(BuildTarget.StandaloneLinux64, NamedBuildTarget.Standalone, "Builds/Linux/OxygenNotIncluded");
+    }
+
+    public static void Android()
+    {
+        PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
+        PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel26;
+        PlayerSettings.SetGraphicsAPIs(BuildTarget.Android, new[] { UnityEngine.Rendering.GraphicsDeviceType.OpenGLES3 });
+        EditorUserBuildSettings.buildAppBundle = false;
+        Build(BuildTarget.Android, NamedBuildTarget.Android, "Builds/Android/oni.apk");
+    }
+
+    static void Build(BuildTarget target, NamedBuildTarget named, string output)
+    {
+        EnsureEmptyScene();
+        PlayerSettings.companyName = "Klei";
+        PlayerSettings.productName = "Oxygen Not Included";
+        PlayerSettings.SetApplicationIdentifier(named, "local.oni.mobile");
+        PlayerSettings.SetScriptingBackend(named, ScriptingImplementation.IL2CPP);
+        PlayerSettings.SetApiCompatibilityLevel(named, ApiCompatibilityLevel.NET_Standard);
+        // IL2CPP cannot run with stripping disabled; link.xml keeps every type.
+        PlayerSettings.SetManagedStrippingLevel(named, ManagedStrippingLevel.Minimal);
+        PlayerSettings.SetIl2CppCodeGeneration(named, Il2CppCodeGeneration.OptimizeSize);
+        // The game scenes are not in this build, so module usage cannot be inferred from them.
+        PlayerSettings.stripEngineCode = false;
+
+        Directory.CreateDirectory(Path.GetDirectoryName(output));
+        var options = new BuildPlayerOptions
+        {
+            scenes = new[] { ScenePath },
+            locationPathName = output,
+            target = target,
+            options = BuildOptions.None,
+        };
+        BuildReport report = BuildPipeline.BuildPlayer(options);
+        BuildSummary summary = report.summary;
+        Debug.Log($"[BuildPlayer] {target}: {summary.result}, {summary.totalErrors} errors, {summary.totalSize} bytes, {summary.totalTime}");
+        foreach (var step in report.steps)
+            foreach (var message in step.messages.Where(m => m.type == LogType.Error || m.type == LogType.Exception))
+                Debug.Log($"[BuildPlayer] {step.name}: {message.content}");
+        EditorApplication.Exit(summary.result == BuildResult.Succeeded ? 0 : 1);
+    }
+
+    static void EnsureEmptyScene()
+    {
+        if (File.Exists(ScenePath))
+            return;
+        Directory.CreateDirectory(Path.GetDirectoryName(ScenePath));
+        var scene = UnityEditor.SceneManagement.EditorSceneManager.NewScene(
+            UnityEditor.SceneManagement.NewSceneSetup.EmptyScene,
+            UnityEditor.SceneManagement.NewSceneMode.Single);
+        UnityEditor.SceneManagement.EditorSceneManager.SaveScene(scene, ScenePath);
+    }
+}

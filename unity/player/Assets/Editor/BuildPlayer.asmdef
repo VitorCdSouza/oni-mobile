@@ -1,0 +1,7 @@
+{
+    "name": "BuildPlayer",
+    "includePlatforms": ["Editor"],
+    "overrideReferences": true,
+    "precompiledReferences": [],
+    "autoReferenced": false
+}
