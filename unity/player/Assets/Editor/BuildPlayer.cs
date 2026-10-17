@@ -32,6 +32,26 @@ public static class BuildPlayer
         Build(BuildTarget.Android, NamedBuildTarget.Android, "Builds/Android/oni.apk");
     }
 
+    // Builds Assets/ShaderProbe into one bundle per graphics API, to compare how
+    // Unity serializes the same shader for GLES3 and for GLCore.
+    public static void ShaderProbe()
+    {
+        PlayerSettings.SetGraphicsAPIs(BuildTarget.Android, new[] { UnityEngine.Rendering.GraphicsDeviceType.OpenGLES3 });
+        PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.StandaloneLinux64, false);
+        PlayerSettings.SetGraphicsAPIs(BuildTarget.StandaloneLinux64, new[] { UnityEngine.Rendering.GraphicsDeviceType.OpenGLCore });
+        var bundle = new AssetBundleBuild
+        {
+            assetBundleName = "probe",
+            assetNames = new[] { "Assets/ShaderProbe/Probe.shader" },
+        };
+        foreach (var (target, dir) in new[] { (BuildTarget.Android, "Builds/Probe/Android"), (BuildTarget.StandaloneLinux64, "Builds/Probe/Linux") })
+        {
+            Directory.CreateDirectory(dir);
+            BuildPipeline.BuildAssetBundles(dir, new[] { bundle }, BuildAssetBundleOptions.UncompressedAssetBundle, target);
+        }
+        EditorApplication.Exit(0);
+    }
+
     static void Build(BuildTarget target, NamedBuildTarget named, string output)
     {
         EnsureEmptyScene();

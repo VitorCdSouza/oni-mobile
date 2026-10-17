@@ -1,0 +1,3 @@
+/mnt/dados/Projetos/oni-mobile/unity/player/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/src/main/cpp/CMakeLists.txt
+/mnt/dados/Projetos/oni-mobile/unity/player/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/src/main/cpp/FramePacing/CMakeLists.txt
+/mnt/dados/Projetos/oni-mobile/unity/player/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/src/main/cpp/GameActivity/CMakeLists.txt
