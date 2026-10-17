@@ -81,7 +81,7 @@ cp "$CECIL" "$ROOT/build/picktypes/"
 "$MB/bin/mcs" -sdk:4.5 -out:"$ROOT/build/picktypes/PickTypes.exe" -r:"$CECIL" \
     -r:"$MB/lib/mono/4.5/Facades/netstandard.dll" -r:"$MB/lib/mono/4.5/Facades/System.Runtime.dll" \
     "$ROOT/tools/picktypes/PickTypes.cs"
-for tool in PatchAot PatchStreamingAssets; do
+for tool in PatchAot PatchAndroid; do
     "$MB/bin/mcs" -sdk:4.5 -out:"$ROOT/build/picktypes/$tool.exe" -r:"$CECIL" \
         -r:"$MB/lib/mono/4.5/Facades/netstandard.dll" -r:"$MB/lib/mono/4.5/Facades/System.Runtime.dll" \
         "$ROOT/tools/picktypes/$tool.cs" "$ROOT/tools/picktypes/NameResolver.cs"
@@ -90,9 +90,9 @@ done
 # IL2CPP has no Reflection.Emit: make Newtonsoft.Json use its late-bound code paths.
 "$MB/bin/mono" "$ROOT/build/picktypes/PatchAot.exe" "$GAME_DATA/Managed/Newtonsoft.Json.dll" \
     "$DEST/Newtonsoft.Json.dll" "$GAME_DATA/Managed"
-# On Android, StreamingAssets lives in <persistentDataPath>/StreamingAssets (see the tool).
+# StreamingAssets and Steam on Android (see tools/picktypes/PatchAndroid.cs).
 for asm in Assembly-CSharp Assembly-CSharp-firstpass FMODUnity; do
-    "$MB/bin/mono" "$ROOT/build/picktypes/PatchStreamingAssets.exe" "$GAME_DATA/Managed/$asm.dll" \
+    "$MB/bin/mono" "$ROOT/build/picktypes/PatchAndroid.exe" "$GAME_DATA/Managed/$asm.dll" \
         "$DEST/$asm.dll" "$GAME_DATA/Managed"
 done
 {

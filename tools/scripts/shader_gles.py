@@ -43,8 +43,10 @@ _PRECISE = re.compile(r"\bprecise\s+")
 
 def convert_glsl(text):
     """GLSL 1.50/4.20 core (both stages in one text, split by #ifdef) to GLSL ES."""
+    # Storage buffers (std430) need ES 3.1 even in some 1.50 programs.
+    needs_31 = "std430" in text
     def version(m):
-        es = "310 es" if int(m.group(1)) >= 400 else "300 es"
+        es = "310 es" if int(m.group(1)) >= 400 or needs_31 else "300 es"
         return f"#version {es}\n{PRECISION}"
     text = _EXTENSION_BLOCK.sub("", text)
     text = _EXTENSION.sub("", text)

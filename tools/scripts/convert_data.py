@@ -24,6 +24,8 @@ import time
 import astc_encoder
 import texture2ddecoder
 import UnityPy
+from UnityPy.enums import BuildTarget
+from UnityPy.files import BundleFile, SerializedFile
 from UnityPy.streams import EndianBinaryWriter
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -153,8 +155,7 @@ def convert_file(src, dst, data_dir, args, pool):
         obj.save_typetree(tree)
 
     if args.platform != "keep":
-        for f in env.files.values():
-            _set_platform(f, PLATFORMS[args.platform])
+        _set_platform(env.file, PLATFORMS[args.platform])
 
     if is_bundle:
         if jobs:
@@ -179,11 +180,13 @@ def convert_file(src, dst, data_dir, args, pool):
 
 def _set_platform(f, platform):
     """Sets the target platform of a serialized file (also inside bundles)."""
-    if hasattr(f, "_m_target_platform"):
+    if isinstance(f, SerializedFile):
         f._m_target_platform = platform
-        f.target_platform = platform
-    for child in getattr(f, "files", {}).values():
-        _set_platform(child, platform)
+        f.target_platform = BuildTarget(platform)
+        f.mark_changed()
+    elif isinstance(f, BundleFile):
+        for child in f.files.values():
+            _set_platform(child, platform)
 
 
 def main():

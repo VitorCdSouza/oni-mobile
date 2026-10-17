@@ -1,31 +1,38 @@
-// Redirects StreamingAssets to a real directory on Android.
+// Patches a game assembly for the Android player.
 //
-// Usage: PatchStreamingAssets.exe <in.dll> <out.dll> <game Managed dir>
+// Usage: PatchAndroid.exe <in.dll> <out.dll> <game Managed dir>
 //
+// 1. StreamingAssets.
 // On Android Application.streamingAssetsPath points inside the APK, which
 // System.IO cannot read, and the game reads its YAML, codex and bundles with
 // System.IO. The files are pushed to <persistentDataPath>/StreamingAssets
 // instead, and every read of Application.streamingAssetsPath (and FMOD's
 // hardcoded "file:///android_asset") goes through an injected helper that
 // returns that directory on Android and the usual path elsewhere.
+//
+// 2. Steam. SteamManager.Awake quits the game when Steam cannot start, which is
+// always the case on Android (libsteam_api.so is a stub there). The quit calls
+// are dropped, so the game runs with SteamManager.Initialized false.
 using System;
 using System.Linq;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
-static class PatchStreamingAssets
+static class PatchAndroid
 {
     const int RuntimePlatformAndroid = 11;
 
     static int Main(string[] args)
     {
         var module = ModuleDefinition.ReadModule(args[0], new ReaderParameters { AssemblyResolver = new NameResolver(args[2]) });
+        var quits = DropSteamQuit(module);
         var getter = module.GetMemberReferences().OfType<MethodReference>()
             .FirstOrDefault(m => m.Name == "get_streamingAssetsPath" && m.DeclaringType.FullName == "UnityEngine.Application");
         if (getter == null)
         {
-            Console.Error.WriteLine("no Application.streamingAssetsPath reference in " + args[0]);
-            return 1;
+            module.Write(args[1]);
+            Console.WriteLine($"{module.Assembly.Name.Name}: {quits} Steam quit calls dropped");
+            return 0;
         }
         var helper = InjectHelper(module, getter);
 
@@ -53,8 +60,27 @@ static class PatchStreamingAssets
             }
         }
         module.Write(args[1]);
-        Console.WriteLine($"{module.Assembly.Name.Name}: {calls} streamingAssetsPath reads, {literals} android_asset literals redirected");
+        Console.WriteLine($"{module.Assembly.Name.Name}: {calls} streamingAssetsPath reads, {literals} android_asset literals redirected, {quits} Steam quit calls dropped");
         return 0;
+    }
+
+    static int DropSteamQuit(ModuleDefinition module)
+    {
+        var awake = module.GetType("SteamManager")?.Methods.FirstOrDefault(m => m.Name == "Awake");
+        if (awake == null)
+            return 0;
+        int dropped = 0;
+        foreach (var ins in awake.Body.Instructions)
+        {
+            if (ins.OpCode == OpCodes.Call && ins.Operand is MethodReference mr && mr.DeclaringType.Name == "App")
+            {
+                // App.Quit() takes nothing; App.QuitCode(int) takes the exit code off the stack.
+                ins.OpCode = mr.Parameters.Count == 0 ? OpCodes.Nop : OpCodes.Pop;
+                ins.Operand = null;
+                dropped++;
+            }
+        }
+        return dropped;
     }
 
     // static string OniMobile.Paths::StreamingAssets()

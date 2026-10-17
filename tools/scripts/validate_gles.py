@@ -15,6 +15,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import shader_gles  # noqa: E402
 
 FILES = ("resources.assets", "sharedassets0.assets", "sharedassets2.assets", "globalgamemanagers.assets",
+         "Resources/unity_builtin_extra",
          "StreamingAssets/expansion1_bundle")
 _STAGE = re.compile(r"^#ifdef (VERTEX|FRAGMENT|GEOMETRY|HULL|DOMAIN)\n", re.M)
 EXTENSIONS = {"VERTEX": "vert", "FRAGMENT": "frag", "GEOMETRY": "geom", "HULL": "tesc", "DOMAIN": "tese"}
