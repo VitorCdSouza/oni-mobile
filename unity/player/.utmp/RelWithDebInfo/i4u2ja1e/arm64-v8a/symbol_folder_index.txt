@@ -1,1 +1,0 @@
-/mnt/dados/Projetos/oni-mobile/unity/player/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/build/intermediates/cxx/RelWithDebInfo/i4u2ja1e/obj/arm64-v8a

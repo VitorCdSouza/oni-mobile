@@ -36,6 +36,27 @@ DXT1, DXT5 = 10, 12
 ASTC_FORMATS = {"4x4": 48, "5x5": 49, "6x6": 50, "8x8": 51, "10x10": 52, "12x12": 53}
 # UnityEditor.BuildTarget
 PLATFORMS = {"android": 13, "linux": 24}
+# UnityEngine.Rendering.GraphicsDeviceType
+GLES3 = 11
+# The player reads these from the PlayerSettings in globalgamemanagers, which the
+# PC build left at desktop values. Taken from an Android build of unity/player.
+# With playerMinOpenGLESVersion 0 the player refuses to create a GLES device, and
+# applicationEntry must match the GameActivity the APK is built with.
+ANDROID_PLAYER_SETTINGS = {
+    "playerMinOpenGLESVersion": 2,
+    "androidApplicationEntry": 2,
+    "mobileMTRenderingBaked": True,
+    "androidUseSwappy": True,
+    "androidRenderOutsideSafeArea": True,
+    "androidResizeableActivity": True,
+    "androidMaxAspectRatio": 2.4,
+    # UIOrientation.AutoRotation, landscape only.
+    "defaultScreenOrientation": 4,
+    "allowedAutorotateToPortrait": False,
+    "allowedAutorotateToPortraitUpsideDown": False,
+    "allowedAutorotateToLandscapeRight": True,
+    "allowedAutorotateToLandscapeLeft": True,
+}
 MAIN_FILES = ("globalgamemanagers", "globalgamemanagers.assets", "level0", "level1", "level2",
               "resources.assets", "sharedassets0.assets", "sharedassets1.assets", "sharedassets2.assets",
               "Resources/unity_builtin_extra")
@@ -156,6 +177,22 @@ def convert_file(src, dst, data_dir, args, pool):
 
     if args.platform != "keep":
         _set_platform(env.file, PLATFORMS[args.platform])
+    if args.platform == "android":
+        for obj in env.objects:
+            if obj.type.name == "PlayerSettings":
+                # UnityPy's tree for this class stops 4 bytes short of the object
+                # (an unknown trailing field), so carry the unread tail over as is.
+                raw = obj.get_raw_data()
+                tree = obj.read_typetree(check_read=False)
+                tree.update(ANDROID_PLAYER_SETTINGS)
+                data = obj.save_typetree(tree)
+                obj.set_raw_data(data + raw[len(data):])
+            elif obj.type.name == "BuildSettings":
+                # The graphics APIs the player may create a device for: the PC build
+                # lists OpenGLCore (17); Android needs OpenGLES3 (11).
+                tree = obj.read_typetree()
+                tree["m_GraphicsAPIs"] = [GLES3]
+                obj.save_typetree(tree)
 
     if is_bundle:
         if jobs:

@@ -10,16 +10,17 @@ set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/../.." && pwd)
 CONVERTED=$(cd "${1:-$ROOT/build/data-android}" && pwd)
 GAME_DATA=${2:-$HOME/.steam/steam/steamapps/common/OxygenNotIncluded/OxygenNotIncluded_Data}
-STAGE=$ROOT/build/streaming-stage
 REMOTE=/sdcard/Android/data/local.oni.mobile/files/StreamingAssets
 
-# Stage with hard links/symlinks so adb push sends one tree.
-rm -rf "$STAGE"
-mkdir -p "$STAGE"
-cp -rs "$GAME_DATA/StreamingAssets/." "$STAGE/"
-rm -f "$STAGE"/hires_*
-for f in "$CONVERTED"/StreamingAssets/*; do
-    ln -sf "$f" "$STAGE/$(basename "$f")"
+# adb push copies symlinks as symlinks, which the phone's storage rejects, so
+# push each original entry directly and the converted bundles on top. adbd may
+# not create directories there (secure_mkdirs fails), but the shell can.
+# Some directory names have spaces, so send the shell one quoted mkdir per line.
+(cd "$GAME_DATA/StreamingAssets" && find . -type d ! -path './hires_*' -printf "mkdir -p '$REMOTE/%P'\n") | adb shell sh
+for f in "$GAME_DATA"/StreamingAssets/*; do
+    name=$(basename "$f")
+    case "$name" in hires_*) continue ;; esac
+    [ -e "$CONVERTED/StreamingAssets/$name" ] && continue
+    adb push --sync "$f" "$REMOTE/"
 done
-adb shell mkdir -p "$REMOTE"
-adb push --sync "$STAGE/." "$REMOTE/"
+adb push --sync "$CONVERTED"/StreamingAssets/* "$REMOTE/"

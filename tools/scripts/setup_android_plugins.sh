@@ -78,3 +78,8 @@ done
 cp "$FMOD/api/core/lib/fmod.jar" "$DEST/"
 meta "$DEST/fmod.jar" " {}"
 ls -la "$DEST"
+
+# App icon: the PC game's icon, as Steam installs it for the desktop entry.
+ICON=$HOME/.local/share/icons/hicolor/256x256/apps/steam_icon_457140.png
+mkdir -p "$ROOT/unity/player/Assets/Icon"
+cp "$ICON" "$ROOT/unity/player/Assets/Icon/icon.png"

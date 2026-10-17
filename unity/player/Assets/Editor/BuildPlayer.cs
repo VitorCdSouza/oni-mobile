@@ -17,6 +17,7 @@ using UnityEngine;
 public static class BuildPlayer
 {
     const string ScenePath = "Assets/Scenes/Empty.unity";
+    const string IconPath = "Assets/Icon/icon.png";
 
     public static void Linux()
     {
@@ -29,6 +30,15 @@ public static class BuildPlayer
         PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel26;
         PlayerSettings.SetGraphicsAPIs(BuildTarget.Android, new[] { UnityEngine.Rendering.GraphicsDeviceType.OpenGLES3 });
         EditorUserBuildSettings.buildAppBundle = false;
+        PlayerSettings.defaultInterfaceOrientation = UIOrientation.AutoRotation;
+        PlayerSettings.allowedAutorotateToPortrait = false;
+        PlayerSettings.allowedAutorotateToPortraitUpsideDown = false;
+        PlayerSettings.allowedAutorotateToLandscapeLeft = true;
+        PlayerSettings.allowedAutorotateToLandscapeRight = true;
+        // The PC game's icon, copied in by tools/scripts/setup_android_plugins.sh.
+        var icon = AssetDatabase.LoadAssetAtPath<Texture2D>(IconPath);
+        if (icon != null)
+            PlayerSettings.SetIcons(NamedBuildTarget.Unknown, new[] { icon }, IconKind.Application);
         Build(BuildTarget.Android, NamedBuildTarget.Android, "Builds/Android/oni.apk");
     }
 

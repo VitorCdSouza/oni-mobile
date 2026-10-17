@@ -19,3 +19,5 @@ unity/player/Builds/
 unity/player/UserSettings/
 unity/player/obj/
 unity/player/Assets/Plugins/Android/
+unity/player/Assets/Icon/
+unity/player/.utmp/
