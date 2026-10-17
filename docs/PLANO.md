@@ -37,6 +37,56 @@ Nada deste repositório (código decompilado, assets, binários do jogo) é dist
 - A única diferença entre rodadas está no primeiro blob de save: ~478 floats de lixo vindos de
   memória não inicializada. O `compare.py` compara saves só pelo tamanho.
 
+### Auditoria dos assets (provas 2 e 3)
+
+`tools/venv/bin/python -I tools/scripts/asset_audit.py <OxygenNotIncluded_Data> build/audit/assets.json`
+lista texturas e shaders dos arquivos principais e dos AssetBundles de `StreamingAssets` (UnityPy
+1.25.4, 12 s). Os números abaixo são da build U59 instalada.
+
+Texturas: 4326, ~3,4 GB de dados de imagem.
+
+| Formato | Quantidade | MB |
+| --- | --- | --- |
+| DXT5 | 3996 | 3019 |
+| RGBA32 | 122 | 181 |
+| DXT1 | 128 | 114 |
+| Alpha8 | 65 | 108 (inclui 3 atlas CJK de 4096x4096) |
+| RGB24 | 14 | 18 |
+
+- Por origem: 2130 MB nos `sharedassets`/`resources`, 874 MB nos bundles de DLC, 437 MB nos
+  bundles `hires_*` (dá para não levar estes ao celular).
+- Maior textura: 4096x4096. Os atlas de kanim são DXT5 de 2048 a 4096.
+- GPUs Adreno não leem BC/DXT. A Unity descomprime para RGBA na carga, 4x o tamanho: inviável em
+  8 GB. Recomprimir é obrigatório. Estimativa sem os `hires_*`: ASTC 6x6 ~1,4 GB, ASTC 8x8 ~0,8 GB.
+  Falta confirmar no aparelho quais formatos o driver anuncia.
+
+Shaders: 84, todos compilados **só para `OpenGLCore`**, ~60 da Klei. Descomprimindo os blobs
+(LZ4) saem 413 programas GLSL (`build/audit/glsl/`):
+
+- 349 em `#version 150` e 64 em `#version 420`. Os de 420 são só as variantes de instancing
+  procedural dos shaders de partícula (SSBO).
+- Extensões: `GL_ARB_explicit_attrib_location`, `GL_ARB_shader_bit_encoding`,
+  `GL_ARB_shading_language_420pack`, `GL_ARB_shader_storage_buffer_object`. Todas viram recurso
+  nativo do GLES 3.0/3.1.
+- Nenhum uso de `sampler1D`, `double`, `textureQueryLod`, `textureGather`, `gl_ClipDistance`,
+  `noperspective` ou image load/store.
+- A conversão para GLES 3 parece mecânica: trocar o cabeçalho, pôr qualificadores de precisão,
+  tirar as diretivas de extensão e regravar o blob com a plataforma `GLES3Plus` (9).
+
+Consequência para a Fase 2: reconstruir o projeto com AssetRipper perde os shaders. Ele não recupera
+ShaderLab a partir de GLSL compilado, então os ~60 shaders da Klei teriam de ser reescritos à mão.
+O caminho que sobra é a **troca de dados**:
+
+1. Projeto Unity 6000.3.5f2 vazio, com as DLLs originais de `Managed/` como plugins, stripping
+   desligado e build Android IL2CPP. Disso só se aproveitam `libil2cpp.so`, `global-metadata.dat` e
+   o player.
+2. Os arquivos de dados da build Linux, convertidos: `m_TargetPlatform` trocado para Android,
+   texturas recomprimidas em ASTC e blobs de shader GLSL convertidos para GLES 3.
+3. Plugins nativos para arm64 (ver Fase 2).
+
+Riscos que este caminho ainda precisa provar: o player Android aceitar o `globalgamemanagers` de
+outra plataforma, e o IL2CPP resolver os `MonoScript` das cenas pelas assemblies pré-compiladas.
+
 ## Fase 1 — SimDLL arm64
 
 Reimplementação em C++ a partir do decompilado, validada pelo replay.
@@ -234,6 +284,9 @@ Plugins nativos do jogo e o que cada um precisa no Android:
 - `cimgui.so`: Dear ImGui 1.82 em C (menu de debug), código aberto, compila para arm64.
 - `libsteam_api.so`, `libsdkencryptedappticket.so`: substituir por stubs (Steamworks.NET chama via
   DllImport).
+- O C# decompilado também declara `DllImport` de `rail_api64` (4979, WeGame), `EOSSDK-Win64-Shipping.dll`
+  (360, Epic Online Services) e `kernel32` (2). O IL2CPP só resolve a biblioteca na primeira chamada,
+  então basta garantir que esses caminhos não rodem no Android; se rodarem, precisam de stub.
 
 ## Fase 3 — Jogabilidade
 
