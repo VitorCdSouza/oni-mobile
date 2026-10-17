@@ -321,10 +321,100 @@ Plugins nativos do jogo e o que cada um precisa no Android:
   (360, Epic Online Services) e `kernel32` (2). O IL2CPP só resolve a biblioteca na primeira chamada,
   então basta garantir que esses caminhos não rodem no Android; se rodarem, precisam de stub.
 
+### Resultado (2026-10-17)
+
+O APK roda no Poco X5: menu principal, geração de mundo com o `libSimDLL` portado e colônia
+jogando. O que precisou ser corrigido depois dos plugins, além do que já estava nas seções acima:
+
+- `globalgamemanagers` vem do build de PC. O `convert_data.py --platform android` troca no
+  `PlayerSettings` o `playerMinOpenGLESVersion` (0 para 2), o `androidApplicationEntry` (1, Activity,
+  para 2, GameActivity) e a orientação (só paisagem). No `BuildSettings`, troca `m_GraphicsAPIs` de
+  `[17]` (OpenGLCore) para `[11]` (OpenGLES3); com 17 o player para em "Unable to initialize the
+  Unity Engine graphics API". O UnityPy grava o `PlayerSettings` 4 bytes mais curto (há um campo
+  final que ele não conhece), então a cauda original é copiada de volta; sem isso o player acusa
+  "globalgamemanagers is corrupted".
+- Patches de IL (`tools/picktypes/PatchAndroid.cs`, aplicados por `setup_player_project.sh`):
+  - StreamingAssets lido de `persistentDataPath/StreamingAssets`.
+  - O `SteamManager` não fecha mais o jogo, e "Steam not initialized in time" vira aviso.
+  - O `KCrashReporter` abre com qualquer `LogError`. As 3 mensagens do shader de vídeo que falta
+    (`Hidden/VideoDecodeAndroid`) entram na lista de mensagens ignoradas.
+  - Atributo `MonoPInvokeCallback` nos métodos passados como callback para código nativo. O
+    IL2CPP exige o atributo, e o jogo não tem. Sem ele, `Sim.DLL_MessageHandler` derruba a geração
+    de mundo.
+  - Delegate de método de instância criado sobre objeto nulo vira `null` em vez de lançar
+    exceção. O Mono aceita a criação e só falharia na chamada; o IL2CPP lança na criação. Exemplo:
+    o `ManagementMenu` com o mapa do Spaced Out num save do jogo base.
+
 ## Fase 3 — Jogabilidade
 
 Controles de toque (pan, pinch zoom, toque longo como clique direito), escala de UI,
 ajustes de desempenho (resolução, limite de fps, mundo pequeno).
+
+### Feito (2026-10-17)
+
+- `tools/runtime/TouchInput.cs` vira `OniMobile.Runtime.dll`. O `PatchAndroid` redireciona as
+  chamadas a `UnityEngine.Input` do jogo e do `UnityEngine.UI` para ele.
+- Gestos:
+  - toque: clique;
+  - toque longo de 0,5 s: botão direito;
+  - um dedo arrastando: pan com o botão do meio; vira arrasto com o botão esquerdo quando começa
+    sobre a UI ou quando há ferramenta ativa diferente do Select;
+  - dois dedos: pan e pinça (passos da roda).
+- Fora do Android tudo passa direto para o `Input`.
+- Escala de UI padrão de 150% no Android (`KCanvasScaler`); o slider de Options continua valendo.
+- Testado no aparelho: pan, zoom, cavar arrastando e menu de construção funcionam.
+
+## Estado atual e próximos passos
+
+Em aberto:
+
+- **Animação dos prédios quebrada no aparelho.** A Printing Pod e os outros prédios aparecem como
+  estilhaços esticados em diagonal. Os duplicantes estão normais. O que já foi descartado:
+  - A textura ASTC (`printing_pod_0` decodificada é igual à DXT original).
+  - O GLSL convertido: `Klei/BatchedAnimation`, dos prédios, e `Klei/BatchedAnimationHuman`, dos
+    duplicantes, são quase iguais, com os mesmos 20 samplers nas unidades 0–19.
+  - Precisão: todos os stages usam `highp`.
+
+  Os dados das animações ficam em texturas `RGBAFloat` (`KAnimBatchGroup`,
+  `KAnimBatchTextureCache`) lidas no vertex shader. Próximo teste: rodar o mesmo save no PC com o
+  player IL2CPP Linux e os dados `build/data-linux`. Se quebrar lá também, o problema é do IL2CPP;
+  se não, é do GLES. Esse teste não pode rodar junto com um build do Unity (ver abaixo).
+- Vídeo do menu principal sem shader de Android (`Hidden/VideoDecodeAndroid`).
+- Desempenho não medido no aparelho.
+
+### Como montar e instalar
+
+A ordem importa, e os builds IL2CPP do Unity usam quase toda a RAM livre (15 GB). Rodar o build
+junto com o jogo de PC aberto travou a máquina, então build do Unity roda sempre sozinho.
+
+1. `tools/scripts/setup_player_project.sh`: copia e patcheia os DLLs, compila o runtime e gera o
+   `Keep.cs`.
+2. `tools/scripts/setup_android_plugins.sh`: plugins arm64 e ícone.
+3. Build Android, em `unity/player`:
+   `~/Unity/Hub/Editor/6000.3.5f2/Editor/Unity -batchmode -nographics -quit -projectPath .
+   -buildTarget Android -executeMethod BuildPlayer.Android -logFile Logs/build-android.log`.
+   O build do Unity reinicia o servidor do adb, o que corta qualquer `adb push` em andamento.
+4. `tools/venv/bin/python -I tools/scripts/convert_data.py <Game_Data> build/data-android
+   --platform android --shaders gles`. Só precisa ser refeito quando o conversor muda; para
+   regravar só um arquivo, use `--only globalgamemanagers`.
+5. `tools/scripts/make_apk.sh build/data-android` gera `build/oni-mobile.apk`.
+6. Instalar. `adb install` falha com `INSTALL_FAILED_USER_RESTRICTED`, porque a confirmação do
+   HyperOS some em ~10 s. O caminho que funciona:
+   1. `adb push build/oni-mobile.apk /sdcard/Download/oni-mobile.apk`;
+   2. `adb shell content call --uri content://media/external/file --method scan_file --arg
+      /sdcard/Download/oni-mobile.apk`;
+   3. pegar o `_id` com `content query`;
+   4. `adb shell am start -a android.intent.action.VIEW -t application/vnd.android.package-archive
+      -d content://media/external/file/<id> --grant-read-uri-permission`;
+   5. tocar em Atualizar no aparelho.
+7. `tools/scripts/push_streaming_assets.sh` envia o StreamingAssets, ~1 GB. Só é preciso na
+   primeira instalação ou quando os bundles mudam.
+
+Para testar sem tocar no aparelho, a chave `AutoResumeSaveFile` em
+`/sdcard/Android/data/local.oni.mobile/files/kplayerprefs.yaml` faz o menu carregar esse save
+sozinho (a chave é apagada ao carregar). O log sai no `adb logcat` (tags `Unity` e `IL2CPP`), e o
+print sai com `adb exec-out screencap -p`. Injetar toque (`adb shell input`) exige ligar
+"Depuração USB (configurações de segurança)" nas opções do desenvolvedor.
 
 ## Expectativa de desempenho
 
