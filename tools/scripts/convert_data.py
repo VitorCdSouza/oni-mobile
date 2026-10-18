@@ -56,6 +56,9 @@ ANDROID_PLAYER_SETTINGS = {
     "allowedAutorotateToPortraitUpsideDown": False,
     "allowedAutorotateToLandscapeRight": True,
     "allowedAutorotateToLandscapeLeft": True,
+    # FrameTimingManager (CPU main and render thread, GPU time per frame), read by
+    # OniMobile.FrameStats. A release player only records them with this set.
+    "enableFrameTimingStats": True,
 }
 MAIN_FILES = ("globalgamemanagers", "globalgamemanagers.assets", "level0", "level1", "level2",
               "resources.assets", "sharedassets0.assets", "sharedassets1.assets", "sharedassets2.assets",
@@ -192,6 +195,14 @@ def convert_file(src, dst, data_dir, args, pool):
                 # lists OpenGLCore (17); Android needs OpenGLES3 (11).
                 tree = obj.read_typetree()
                 tree["m_GraphicsAPIs"] = [GLES3]
+                obj.save_typetree(tree)
+            elif obj.type.name == "QualitySettings":
+                # The PC levels sync to the display (vSyncCount 1). The frame rate on
+                # Android comes from Application.targetFrameRate instead
+                # (OniMobile.FrameStats), whose default there is 30.
+                tree = obj.read_typetree()
+                for level in tree["m_QualitySettings"]:
+                    level["vSyncCount"] = 0
                 obj.save_typetree(tree)
 
     if is_bundle:

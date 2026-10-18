@@ -51,4 +51,10 @@ if [ ! -e "$KEY" ]; then
 fi
 "$BUILD_TOOLS/apksigner" sign --ks "$KEY" --ks-pass pass:android --out "$OUT" "$WORK/aligned.apk"
 rm -rf "$WORK"
+# Symbols of this APK's libil2cpp.so, for tools/scripts/profile_android.sh, kept
+# per build id so an older APK on the phone still finds its own.
+SYM=$ROOT/unity/player/Library/Bee/artifacts/Android/il2cppOutput/build/arm64-v8a/libil2cpp.sym.so
+ID=$(file -L "$SYM" | grep -o 'BuildID\[sha1\]=[0-9a-f]*' | cut -d= -f2)
+mkdir -p "$ROOT/build/android-symbols/$ID"
+cp "$SYM" "$ROOT/build/android-symbols/$ID/"
 ls -la "$OUT"

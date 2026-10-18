@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using UnityEditor;
+using UnityEditor.Android;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
@@ -106,5 +107,33 @@ public static class BuildPlayer
             UnityEditor.SceneManagement.NewSceneSetup.EmptyScene,
             UnityEditor.SceneManagement.NewSceneMode.Single);
         UnityEditor.SceneManagement.EditorSceneManager.SaveScene(scene, ScenePath);
+    }
+}
+
+// Marks the release APK profileable from the shell (Android 10+), so simpleperf can
+// sample the game on the phone without a debuggable build
+// (tools/scripts/profile_android.sh).
+public class ProfileableManifest : IPostGenerateGradleAndroidProject
+{
+    public int callbackOrder => 0;
+
+    public void OnPostGenerateGradleAndroidProject(string unityLibrary)
+    {
+        string manifest = Path.Combine(unityLibrary, "..", "launcher", "src", "main", "AndroidManifest.xml");
+        string text = File.ReadAllText(manifest);
+        if (text.Contains("<profileable"))
+            return;
+        const string profileable = "<profileable android:shell=\"true\" />";
+        int application = text.IndexOf("<application", StringComparison.Ordinal);
+        if (application < 0)
+            throw new BuildFailedException($"no <application> element in {manifest}");
+        int end = text.IndexOf('>', application);
+        // Unity writes the launcher's element empty: <application ... />.
+        if (text[end - 1] == '/')
+            text = text.Substring(0, end - 1) + ">" + profileable + "</application>" + text.Substring(end + 1);
+        else
+            text = text.Insert(end + 1, profileable);
+        File.WriteAllText(manifest, text);
+        Debug.Log("[BuildPlayer] launcher manifest marked profileable");
     }
 }

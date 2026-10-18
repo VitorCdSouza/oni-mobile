@@ -39,6 +39,10 @@
 //
 // 7. Render resolution. Calls to Screen.SetResolution go to OniMobile.Display
 // (tools/runtime/Display.cs), which caps the height on Android.
+//
+// 8. Idle UI raycast. StandaloneInputModule.ProcessMouseEvent(int) returns right
+// away while OniMobile.TouchInput.PointerIdle() is true (no finger down, see
+// TouchInput.cs), instead of raycasting the whole UI every frame for hover.
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -62,10 +66,11 @@ static class PatchAndroid
         var resolutions = Redirect(module, runtime, "UnityEngine.Screen", "OniMobile.Display");
         var scale = DefaultUIScale(module, runtime);
         var nullSafe = NullSafeDelegates(module);
+        var idle = SkipIdlePointer(module, runtime);
         Console.WriteLine($"{module.Assembly.Name.Name}: {quiet} Steam errors made warnings, {ignored} crash screen messages ignored, "
             + $"{callbacks} native callbacks marked, {inputs} Input calls redirected, {resolutions} Screen calls redirected, "
             + $"{scale} UI scale defaults replaced, "
-            + $"{nullSafe} delegate creations made null-safe");
+            + $"{nullSafe} delegate creations made null-safe, {idle} idle pointer raycasts skipped");
         var getter = module.GetMemberReferences().OfType<MethodReference>()
             .FirstOrDefault(m => m.Name == "get_streamingAssetsPath" && m.DeclaringType.FullName == "UnityEngine.Application");
         if (getter == null)
@@ -150,6 +155,22 @@ static class PatchAndroid
             }
         }
         return redirected;
+    }
+
+    // ProcessMouseEvent(int id) { if (TouchInput.PointerIdle()) return; ... }
+    static int SkipIdlePointer(ModuleDefinition module, ModuleDefinition runtime)
+    {
+        var process = module.GetType("UnityEngine.EventSystems.StandaloneInputModule")?.Methods
+            .FirstOrDefault(m => m.Name == "ProcessMouseEvent" && m.Parameters.Count == 1);
+        if (process == null)
+            return 0;
+        var idle = runtime.GetType("OniMobile.TouchInput").Methods.First(m => m.Name == "PointerIdle");
+        var il = process.Body.GetILProcessor();
+        var first = process.Body.Instructions[0];
+        il.InsertBefore(first, il.Create(OpCodes.Call, module.ImportReference(idle)));
+        il.InsertBefore(first, il.Create(OpCodes.Brfalse, first));
+        il.InsertBefore(first, il.Create(OpCodes.Ret));
+        return 1;
     }
 
     static int DefaultUIScale(ModuleDefinition module, ModuleDefinition runtime)

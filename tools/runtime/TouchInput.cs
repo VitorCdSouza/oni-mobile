@@ -160,6 +160,26 @@ namespace OniMobile
             return Platform.IsAndroid && MouseAxis(axis, out value) ? value : Input.GetAxisRaw(axis);
         }
 
+        // UnityEngine.UI's StandaloneInputModule.ProcessMouseEvent raycasts the UI under
+        // the pointer every frame, for hover. PatchAndroid makes it return early while
+        // this is true: no finger down and no button or wheel change this frame, so the
+        // pointer has not moved. Every IdleRaycastFrames frames it still runs, to follow
+        // UI that opens or closes under the pointer.
+        const int IdleRaycastFrames = 10;
+
+        public static bool PointerIdle()
+        {
+            if (!Platform.IsAndroid)
+                return false;
+            Update();
+            if (gesture != Gesture.None || releaseNextFrame >= 0 || scroll != 0 || delta != Vector3.zero)
+                return false;
+            for (int i = 0; i < 3; i++)
+                if (held[i] || pressed[i] || released[i])
+                    return false;
+            return Time.frameCount % IdleRaycastFrames != 0;
+        }
+
         static bool IsMouse(KeyCode key)
         {
             return key >= KeyCode.Mouse0 && key <= KeyCode.Mouse6;
