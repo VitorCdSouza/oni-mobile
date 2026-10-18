@@ -24,14 +24,15 @@ adb shell pidof "$PACKAGE" >/dev/null || { echo "$PACKAGE is not running on the 
 mkdir -p "$OUT"
 cd "$OUT"
 
-# cpu-clock works without access to the hardware counters. Frame pointer call
-# chains: the NDK keeps frame pointers on arm64.
-adb shell simpleperf record --app "$PACKAGE" -e cpu-clock -f 1000 --call-graph fp \
+# cpu-clock works without access to the hardware counters. Unity compiles
+# libil2cpp with -fomit-frame-pointer, so call chains come from DWARF unwinding
+# (.eh_frame), which copies the stack on each sample: keep the rate low.
+adb shell simpleperf record --app "$PACKAGE" -e cpu-clock -f 400 --call-graph dwarf,16384 \
     --duration "$DURATION" -o "$DEVICE_DATA"
 adb pull "$DEVICE_DATA" perf.data >/dev/null
 adb shell rm -f "$DEVICE_DATA"
 
-python3 -I "$SIMPLEPERF/binary_cache_builder.py" -i perf.data -lib \
+python3 "$SIMPLEPERF/binary_cache_builder.py" -i perf.data -lib \
     "$ROOT/build/android-symbols" \
     "$ANDROID/Variations/il2cpp/Release/Symbols/arm64-v8a" \
     "$ANDROID/Variations/il2cpp/Release_ThinLTO/Symbols/arm64-v8a" \

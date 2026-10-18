@@ -40,6 +40,10 @@ public static class BuildPlayer
         var icon = AssetDatabase.LoadAssetAtPath<Texture2D>(IconPath);
         if (icon != null)
             PlayerSettings.SetIcons(NamedBuildTarget.Unknown, new[] { icon }, IconKind.Application);
+        // ONI_IL2CPP_ARGS goes to il2cpp as is, for experiments to compare on the phone:
+        // "--compiler-flags=-O2" comes after the -Os Unity compiles the game's C++ with
+        // (Release and Master alike), and clang takes the last -O.
+        PlayerSettings.SetAdditionalIl2CppArgs(Environment.GetEnvironmentVariable("ONI_IL2CPP_ARGS") ?? "");
         Build(BuildTarget.Android, NamedBuildTarget.Android, "Builds/Android/oni.apk");
     }
 
@@ -78,6 +82,7 @@ public static class BuildPlayer
         // and calls through RuntimeInvoker. A late game save spent 10-15% of the main thread
         // there. OptimizeSpeed generates a body per value type instantiation.
         PlayerSettings.SetIl2CppCodeGeneration(named, Il2CppCodeGeneration.OptimizeSpeed);
+        PlayerSettings.SetIl2CppCompilerConfiguration(named, Il2CppCompilerConfiguration.Release);
         // The game scenes are not in this build, so module usage cannot be inferred from them.
         PlayerSettings.stripEngineCode = false;
 

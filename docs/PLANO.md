@@ -402,15 +402,46 @@ Mudanças:
 - `OniMobile.FrameStats` escreve no logcat, a cada 10 s, fps médio, tempo médio e pior quadro:
   `adb logcat -s Unity | grep OniMobile`.
 
+Primeira medida no aparelho (2026-10-18, save "Sticky Home", começo de jogo, 1600x720): 25 a 29
+fps, 35 a 40 ms por quadro, picos de 140 a 330 ms e um quadro de 14 s logo depois de um toque
+(causa não identificada). Com `targetFrameRate` em -1 o Unity limita o Android a 30 fps, então
+esse número estava encostado no limite. Mudanças a partir daí:
+
+- `FrameStats` põe `Application.targetFrameRate = 60` no Android, e o `convert_data.py` zera o
+  `vSyncCount` dos níveis de qualidade do PC.
+- `enableFrameTimingStats` no `PlayerSettings`: o `FrameStats` passa a separar o quadro em
+  thread principal, thread de render e GPU, mais a espera da thread principal pelo limite de
+  quadros. Thread principal perto do quadro inteiro: limitado pela CPU; GPU ou espera altas: não.
+- O APK sai `profileable` do shell (`BuildPlayer.ProfileableManifest`).
+  `tools/scripts/profile_android.sh [segundos]` grava o jogo rodando com o `simpleperf` do NDK e
+  escreve em `build/profile/<data>/` o tempo por thread (`threads.txt`), por função
+  (`functions.txt`) e inclusivo (`inclusive.txt`). O `make_apk.sh` guarda os símbolos do
+  `libil2cpp.so` de cada APK em `build/android-symbols/<build id>`.
+- O `StandaloneInputModule.ProcessMouseEvent` não faz mais o raycast da UI a cada quadro quando
+  não há dedo na tela; roda a cada 10 quadros para acompanhar UI que abre ou fecha sob o ponteiro.
+- Testado e descartado: sim com `-O3` (replay no PC em 55,9 s contra 55,6 s com `-O2`).
+- O Unity compila o C++ gerado pelo IL2CPP para Android com `-Os` e `-fomit-frame-pointer`,
+  tanto em Release quanto em Master: o build Master recompilou os 1036 arquivos com as mesmas
+  flags, sem LTO. O `UserBuildSettings.linkTimeOptimization = Thin` também não mudou nada (o
+  `libunity.so` saiu com o mesmo build id). O que funciona: `ONI_IL2CPP_ARGS="--compiler-flags=-O2"`
+  no ambiente do build Android vai para o `SetAdditionalIl2CppArgs`, o `-O2` entra depois do
+  `-Os` e o clang usa o último. `libil2cpp.so` passa de 156 para 162 MB. Variante montada em
+  `build/oni-mobile-o2.apk`, para comparar no aparelho com `build/oni-mobile-release.apk`.
+- Sem frame pointer, o `profile_android.sh` usa call graph `dwarf` (desenrola pelo `.eh_frame`).
+
 ## Estado atual e próximos passos
 
 Em aberto:
 
 - Vídeo do menu principal sem shader de Android (`Hidden/VideoDecodeAndroid`).
-- Desempenho ainda não medido no aparelho; medir com o `FrameStats` antes e depois de cada mudança.
-- Candidatos a seguir, por ordem: `Il2CppCompilerConfiguration.Master` (mais tempo e memória de
-  build); GC não incremental (ver acima); pular o raycast da UI quando não há toque; sim compilada
-  com `-O3 -mcpu=cortex-a78`.
+- Medir no aparelho o build com limite de 60 fps: o `FrameStats` diz se o quadro é limitado
+  pela CPU ou pela GPU, e o `profile_android.sh` diz onde a CPU gasta.
+- Comparar no aparelho `oni-mobile-release.apk` (`-Os`) e `oni-mobile-o2.apk` (`-O2`) com o
+  mesmo save; se o `-O2` ganhar, passar a ser o padrão do `BuildPlayer`.
+- Achar o quadro de 14 s depois de um toque (compilação de shader na primeira vez que algo
+  aparece? abertura de tela?): `profile_android.sh` durante o toque.
+- Candidatos a seguir: GC não incremental (ver acima); a opção "Low Resolution Textures" do
+  próprio jogo (Options > Graphics, nível de qualidade 1, texturas pela metade) se a GPU limitar.
 
 ### Como montar e instalar
 
