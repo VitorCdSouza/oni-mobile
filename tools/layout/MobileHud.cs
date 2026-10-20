@@ -30,6 +30,8 @@ namespace OniMobile
         const float Cell = 72f, Step = 76f, Margin = 8f, Top = 88f;
         // The top row: 64 high, so its buttons match the speed controls.
         const float TopCell = 64f;
+        // The cycle clock, and the speed controls right of it.
+        const float ClockSize = 88f, SpeedX = 56f + ClockSize + 8f;
 
         Pop pop;
         bool buildMenu;
@@ -54,7 +56,7 @@ namespace OniMobile
         readonly List<RectTransform> moreCells = new List<RectTransform>();
         LayoutElement detailsBody;
 
-        HudButton build, mira, help, overlays, management, diagnostics, exit, rotate, more;
+        HudButton build, help, overlays, management, diagnostics, exit, rotate, more;
 
         void Awake()
         {
@@ -147,7 +149,6 @@ namespace OniMobile
             MoveSheets();
 
             build = new HudButton("H5 build", leftHolder, "icon_category_base", null, "Build", ToggleBuild, true);
-            mira = new HudButton("H6 crosshair", leftHolder, "cursorIcon", "+", "Crosshair", () => Crosshair.On = !Crosshair.On, true);
             help = new HudButton("H9 tips", topHolder, null, "?", "Tips", () => HelpMode.On = !HelpMode.On);
             overlays = new HudButton("H8 overlays", topHolder, "overlay_oxygen", "OVL", "Overlays", () => Toggle(Pop.Overlays));
             management = new HudButton("H7 management", topHolder, "OverviewUI_vitals_icon", "MGT", "Menu", () => Toggle(Pop.Management));
@@ -179,7 +180,6 @@ namespace OniMobile
             popMore = Grid(Ui.Panel("Q3 more tools", popHolder).rectTransform, 3, Cell, Cell);
             MovePopovers();
             HelpMode.Build(hud);
-            Crosshair.Build(hud);
         }
 
         static RectTransform Grid(RectTransform panel, int columns, float w, float h)
@@ -515,20 +515,20 @@ namespace OniMobile
             {
                 Ui.PlaceCorner(clock, 56f, 8f);
                 clock.sizeDelta = new Vector2(82f, 82f);
-                Ui.ScaleToHeight(clock, Cell);
+                Ui.ScaleToHeight(clock, ClockSize);
             }
             if (speed != null)
             {
-                Ui.PlaceCorner(speed, 136f, 12f);
-                Ui.ScaleToHeight(speed, TopCell);
+                Ui.PlaceCorner(speed, SpeedX, 16f);
+                Ui.ScaleToHeight(speed, 52f);
             }
-            float x = 136f + (speed != null ? speed.rect.width * speed.localScale.x / Ui.U : 280f) + 8f;
+            float x = SpeedX + (speed != null ? speed.rect.width * speed.localScale.x / Ui.U : 240f) + 8f;
             if (redAlert != null)
             {
-                Ui.PlaceCorner(redAlert, x, 12f);
+                Ui.PlaceCorner(redAlert, x, 16f);
                 redAlert.sizeDelta = new Vector2(30f, 30f);
-                Ui.ScaleToHeight(redAlert, TopCell);
-                x += TopCell + 24f;
+                Ui.ScaleToHeight(redAlert, 52f);
+                x += 52f + 24f;
             }
             if (meters != null)
             {
@@ -548,17 +548,15 @@ namespace OniMobile
 
             // Left column: notifications, crosshair, build. Covered by B1 and M1, so hidden with them.
             Show(left, !buildOpen && !managementOpen);
-            Ui.Place(notifHolder, 56f, Top, 0f, 0f);
+            Ui.Place(notifHolder, 56f, 8f + ClockSize + 8f, 0f, 0f);
             if (notifications != null)
             {
                 notifications.anchorMin = notifications.anchorMax = new Vector2(0f, 1f);
                 notifications.pivot = new Vector2(0f, 1f);
                 notifications.anchoredPosition = Vector2.zero;
-                notifications.localScale = Vector3.one;
+                notifications.localScale = new Vector3(0.8f, 0.8f, 1f);
             }
-            // Labels hang under the tiles, as on the game's buttons.
-            mira.Place(56f, 496f, Cell, Cell);
-            mira.Active = Crosshair.On;
+            // Its label hangs under the tile, as on the game's buttons.
             build.Place(56f, 600f, 88f, 88f);
             build.Active = buildOpen;
 
@@ -708,8 +706,6 @@ namespace OniMobile
                 FitCell(cell);
 
             HelpMode.Layout();
-            Crosshair.Layout(buildOpen && !placing ? 520f : managementOpen ? 656f : 136f,
-                selected ? width - 488f : !buildOpen && !selected && !managementOpen ? width - 88f : width - 8f);
         }
 
         // Moves the toggles a game menu (re)made under source into target, each in a
