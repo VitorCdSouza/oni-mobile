@@ -29,7 +29,7 @@ Posição x, y do canto superior esquerdo, em px de referência.
 | H3 | Alerta vermelho | após H2 | 52x52 | `RedAlertButton` do `TopLeftControlScreen` |
 | — | Sandbox, só o ícone | após H3 | 52x52 | `SandboxToggle` do `TopLeftControlScreen` |
 | — | Medidores (duplicantes, estresse, doença, rações) | 152, 74 | altura 36 | `MeterScreen` |
-| Q2 | Barra de gestão, só ícones (sem Reports e Codex), com o botão de overlays (olho) na frente | direita 8, y 12 | altura 52 | `ManagementMenu`; o de overlays é cópia de um botão dela |
+| Q2 | Barra de gestão, só ícones (sem Reports e Codex) | direita 8, y 12 | altura 52 | `ManagementMenu` |
 | H4 | Notificações, a 80% | 56, 118 | | `NotificationScreen` |
 | H5 | Construir | 56, 600 | 88x88 | novo (abre B1) |
 | H11 | Trilho de ferramentas: 6 + Mais | direita 8, 88 | 72x532 | toggles do `ToolMenu` |
@@ -42,8 +42,8 @@ Posição x, y do canto superior esquerdo, em px de referência.
 | — | Filtro da ferramenta | esquerda do trilho, 88 | | `ToolParameterMenu` |
 | D1 | Painel de detalhes | direita 8, 88 | até 624 de altura | `RootMenu` com o `DetailsScreen` |
 | M1 | Telas de tabela | 56, 88 | largura da tela x 624 | `JobsTableScreen` e afins |
-| O1 | Overlays, 5 colunas | direita 8, 88 | | toggles do `OverlayMenu` |
-| O2 | Legenda do overlay | 136, de baixo para cima | | `OverlayLegend` |
+| O1 | Overlays, uma fileira sempre à vista (some com ferramenta ou prédio ativos) | direita 8, 668 | botões de 44 | toggles do `OverlayMenu` |
+| O2 | Legenda do overlay | 160, de baixo para cima | | `OverlayLegend` |
 | Q1 | Diagnóstico e recursos, painéis dobráveis como no PC | esquerda do trilho, 88 | 300 | `ColonyDiagnosticScreen`, `PinnedResourcesPanel` |
 | Q3 | Mais ferramentas, 3x2 | direita 84, 432 | | toggles do `ToolMenu` |
 
@@ -59,7 +59,7 @@ HUD adota os novos a cada quadro.
   cobrem; o trilho H11 some com construção, seleção ou tela de gestão abertas.
 - Slot A, trabalho, um por vez: construção (B1 a B4), ferramenta ativa (H11, P, H12), seleção (D1).
   Abrir um fecha o anterior.
-- Slot B, consulta, um por vez: O1, Q3. Q1 fica na tela enquanto o lado direito está livre
+- Slot B, consulta: só Q3. Q1 fica na tela enquanto o lado direito está livre
   (sem construção, seleção, tela de gestão ou popover). Fecha com toque no mapa (o toque é consumido por uma
   camada transparente e não chega ao jogo), com toque longo ou ao abrir outro. Com um popover
   aberto, a grade B2 e o painel D1 se recolhem até ele fechar.

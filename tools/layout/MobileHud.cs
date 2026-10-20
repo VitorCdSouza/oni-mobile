@@ -6,11 +6,11 @@
 // The game's own panels are moved, not rebuilt: each one is reparented into a
 // holder of this HUD and its position, size and scale are set again every frame,
 // since the game resets some of them when it refreshes. Only the few new buttons
-// (build, overlays, exit, rotate) are
+// (build, exit, rotate) are
 // made here. Panels belong to slots that decide what may be open together:
 //   slot 0  always on screen: clock, speed, alerts, meters, notifications, rails
 //   slot A  work, one at a time: build menu, an active tool, a selection
-//   slot B  lookups, one at a time, closed by a tap on the map: overlays, more tools
+//   slot B  lookups, one at a time, closed by a tap on the map: more tools
 //   slot C  a management screen, which closes A and B
 using System.Collections.Generic;
 using System.Reflection;
@@ -21,7 +21,7 @@ namespace OniMobile
 {
     public class MobileHud : MonoBehaviour
     {
-        enum Pop { None, Overlays, MoreTools }
+        enum Pop { None, MoreTools }
 
         // The management bar keeps its buttons as icons; of the three small ones at its
         // end only Options stays.
@@ -34,6 +34,7 @@ namespace OniMobile
         // The top row: 64 high, so its buttons match the speed controls.
         const float TopCell = 64f;
         // The cycle clock, and the speed controls right of it.
+        const float OverlayCell = 44f;
         const float ClockSize = 88f, SpeedX = 56f + ClockSize + 8f, MetersY = 74f;
 
         Pop pop;
@@ -50,7 +51,7 @@ namespace OniMobile
         RectTransform b1Holder, b2Holder, b3Holder, d1Holder, pHolder, railHolder, notifHolder, legendHolder;
         RectTransform m1Holder, sheetsSource;
         ScrollRect sheetScroll;
-        RectTransform paramsHolder, topHolder, popOverlays, popMore, colony;
+        RectTransform paramsHolder, topHolder, overlayRow, popMore, colony;
         CanvasGroup colonyGroup;
         GameObject scrim;
 
@@ -62,7 +63,7 @@ namespace OniMobile
 
         RectTransform managementBar, sandbox;
         HudButton build, exit, rotate, more;
-        KToggle overlays;
+        CanvasGroup overlayGroup;
 
         void Awake()
         {
@@ -97,9 +98,7 @@ namespace OniMobile
             States.Apply(name);
             pop = Pop.None;
             buildMenu = name == "build";
-            if (name == "popoverlays")
-                pop = Pop.Overlays;
-            else if (name == "popmore")
+            if (name == "popmore")
                 pop = Pop.MoreTools;
             else if (name == "buildmenu")
                 buildMenu = true;
@@ -110,7 +109,6 @@ namespace OniMobile
         void Build()
         {
             // A new game scene (another save loaded) starts from scratch.
-            overlays = null;
             railCells.Clear();
             moreCells.Clear();
             pop = Pop.None;
@@ -165,7 +163,16 @@ namespace OniMobile
             var popHolder = Ui.Holder("Popovers", hud);
             Ui.Stretch(popHolder);
             popover = popHolder.gameObject.AddComponent<CanvasGroup>();
-            popOverlays = Grid(Ui.Panel("O1 overlays", popHolder).rectTransform, 5, Cell, Cell);
+            // O1: the overlay buttons in a row at the bottom right, always at hand.
+            overlayRow = Ui.Holder("O1 overlays", hud);
+            overlayRow.SetSiblingIndex(scrim.transform.GetSiblingIndex());
+            overlayGroup = overlayRow.gameObject.AddComponent<CanvasGroup>();
+            var row = overlayRow.gameObject.AddComponent<HorizontalLayoutGroup>();
+            row.childControlWidth = false;
+            row.childControlHeight = false;
+            row.childForceExpandWidth = false;
+            row.childForceExpandHeight = false;
+            row.childAlignment = TextAnchor.MiddleRight;
             popMore = Grid(Ui.Panel("Q3 more tools", popHolder).rectTransform, 3, Cell, Cell);
             MovePopovers();
         }
@@ -353,7 +360,7 @@ namespace OniMobile
             if (OverlayMenu.Instance != null)
             {
                 overlaySource = OverlayMenu.Instance.transform.Find("OverlaysBar");
-                Adopt(overlaySource, popOverlays, true);
+                Adopt(overlaySource, overlayRow, true);
                 Hide(OverlayMenu.Instance);
             }
             var diag = FindObjectOfType<ColonyDiagnosticScreen>();
@@ -679,7 +686,7 @@ namespace OniMobile
                 legend.pivot = new Vector2(0f, 1f);
                 legend.anchoredPosition = Vector2.zero;
                 float height = legend.rect.height / Ui.U;
-                float legendX = placing && productInfo != null ? 64f + productInfo.rect.width / Ui.U : 136f;
+                float legendX = placing && productInfo != null ? 64f + productInfo.rect.width / Ui.U : 160f;
                 Ui.PlaceCorner(legendHolder, legendX, Mathf.Max(Top, 712f - height));
             }
             legendHolder.gameObject.SetActive(!(buildOpen && !placing) && !managementOpen);
@@ -689,19 +696,20 @@ namespace OniMobile
                 pop = Pop.None;
             scrim.SetActive(pop != Pop.None);
             Show(popover, pop != Pop.None);
-            popOverlays.gameObject.SetActive(pop == Pop.Overlays);
             popMore.gameObject.SetActive(pop == Pop.MoreTools);
-            PlacePopover(popOverlays, Margin, Top);
             PlacePopover(popMore, Margin + Step, 432f);
             // The colony panels while the map is free on the right.
             Show(colonyGroup, !buildOpen && !selected && !managementOpen && pop == Pop.None);
             Ui.Place(colony, Margin + Cell + 8f, Top, 300f, 0f, true);
             // The overlay menu destroys and remakes its toggles in its own place when it
             // refreshes (input device, research).
-            Adopt(overlaySource, popOverlays, true);
-            foreach (Transform cell in popOverlays.Cast())
-                FitCell(cell as RectTransform);
-            SizeGrid(popOverlays, Cell, Cell);
+            Adopt(overlaySource, overlayRow, true);
+            foreach (Transform cell in overlayRow.Cast())
+                FitCell(cell as RectTransform, OverlayCell);
+            overlayRow.GetComponent<HorizontalLayoutGroup>().spacing = 2f * Ui.U;
+            // Out of the way of the priority bar and the exit button while working.
+            Show(overlayGroup, !tool && !placing && !managementOpen);
+            Ui.Place(overlayRow, Margin, 712f - OverlayCell, Ui.Width - 2f * Margin, OverlayCell, true);
             SizeGrid(popMore, Cell, Cell);
             foreach (RectTransform cell in moreCells)
                 FitCell(cell);
@@ -715,7 +723,6 @@ namespace OniMobile
         {
             if (managementBar == null)
                 return;
-            LayoutOverlaysButton();
             foreach (Transform child in managementBar.Cast())
             {
                 if (child.GetComponent<KToggle>() == null)
@@ -741,43 +748,6 @@ namespace OniMobile
             float scale = 52f * Ui.U / 32f;
             managementBar.localScale = new Vector3(scale, scale, 1f);
             managementBar.anchoredPosition = new Vector2(-right * Ui.U, -(TopCell / 2f) * Ui.U);
-        }
-
-        // The overlays button, a copy of a management button with an eye, first in the bar.
-        // The menu only remakes its own buttons, so this one stays.
-        void LayoutOverlaysButton()
-        {
-            if (overlays == null)
-            {
-                KToggle model = null;
-                foreach (KToggle toggle in managementBar.GetComponentsInChildren<KToggle>(true))
-                    if (toggle.name == "Toggle:VITALS")
-                        model = toggle;
-                if (model == null)
-                    return;
-                overlays = Instantiate(model.gameObject, managementBar, false).GetComponent<KToggle>();
-                overlays.name = "Toggle:OVERLAYS";
-                overlays.group = null;
-                overlays.isOn = false;
-                overlays.onClick += () => Toggle(Pop.Overlays);
-                Transform icon = overlays.transform.Find("FG");
-                if (icon != null)
-                    icon.GetComponent<Image>().sprite = Assets.GetSprite("eye_icon");
-                var tip = overlays.GetComponent<ToolTip>();
-                if (tip != null)
-                    tip.SetSimpleTooltip(STRINGS.UI.OVERLAYSTITLE);
-            }
-            if (overlays.transform.GetSiblingIndex() != 0)
-                overlays.transform.SetAsFirstSibling();
-            bool on = pop == Pop.Overlays || OverlayScreen.Instance.GetMode() != OverlayModes.None.ID;
-            if (overlays.isOn != on)
-            {
-                if (on)
-                    overlays.Select();
-                else
-                    overlays.Deselect();
-                overlays.isOn = on;
-            }
         }
 
         // Moves the toggles a game menu (re)made under source into target, each in a
@@ -819,7 +789,7 @@ namespace OniMobile
         // A cell takes the toggle's visibility (DLC and research hide some), and the
         // toggle fills it. The tool toggles' labels hang under the icon, over the next
         // cell, so they are hidden: tips mode reads them.
-        static void FitCell(RectTransform cell)
+        static void FitCell(RectTransform cell, float size = Cell)
         {
             if (cell == null || cell.childCount == 0)
                 return;
@@ -828,7 +798,7 @@ namespace OniMobile
                 return;
             if (cell.gameObject.activeSelf != toggle.gameObject.activeSelf)
                 cell.gameObject.SetActive(toggle.gameObject.activeSelf);
-            cell.sizeDelta = new Vector2(Cell * Ui.U, Cell * Ui.U);
+            cell.sizeDelta = new Vector2(size * Ui.U, size * Ui.U);
             Ui.Stretch(toggle);
             toggle.localScale = Vector3.one;
             Transform label = toggle.Find("Text");
