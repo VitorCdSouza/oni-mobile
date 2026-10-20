@@ -35,6 +35,8 @@ namespace OniMobile
         const float TopCell = 64f;
         // The cycle clock, and the speed controls right of it.
         const float OverlayCell = 44f;
+        // A hammer, the game's build errand icon.
+        const string BuildIcon = "icon_errand_build";
         // The diagnostics and resources panels, at the notifications' size.
         const float ColonyScale = 0.8f;
         const float ClockSize = 88f, SpeedX = 56f + ClockSize + 8f;
@@ -64,7 +66,7 @@ namespace OniMobile
         LayoutElement detailsBody;
 
         RectTransform managementBar, sandbox;
-        HudButton build, exit, rotate, more;
+        HudButton build, buildExit, exit, rotate, more;
         CanvasGroup overlayGroup;
 
         void Awake()
@@ -150,7 +152,9 @@ namespace OniMobile
             MoveLegend();
             MoveSheets();
 
-            build = new HudButton("H5 build", leftHolder, "icon_category_base", null, "Build", ToggleBuild, true);
+            build = new HudButton("H5 build", hud, BuildIcon, null, "Build", ToggleBuild, true);
+            // In build mode the build button gives its place to an exit button.
+            buildExit = new HudButton("H5 exit", hud, "icon_action_cancel", "X", "Exit", Exit, true);
             exit = new HudButton("H12 exit", hud, "icon_action_cancel", "X", "Exit", Exit, true);
             rotate = new HudButton("B4 rotate", hud, null, "↻", "Rotate", () =>
             {
@@ -560,9 +564,15 @@ namespace OniMobile
                 meters.localScale = new Vector3(scale, scale, 1f);
             }
 
-            // Left column: notifications, build. Covered by B1 and M1, so hidden with them.
+            // Left column: diagnostics and resources, then notifications. Covered by B1 and
+            // M1, so hidden with them.
             Show(left, !buildOpen && !managementOpen);
-            Ui.Place(notifHolder, 56f, 8f + ClockSize + 4f, 0f, 0f);
+            Show(colonyGroup, !buildOpen && !managementOpen);
+            float colonyHeight = LayoutUtility.GetPreferredHeight(colony) / Ui.U;
+            Ui.Place(colony, 56f, 8f + ClockSize + 4f, 300f / ColonyScale, colonyHeight);
+            colony.localScale = new Vector3(ColonyScale, ColonyScale, 1f);
+            // The resources panel's "See All" link hangs under its own rectangle.
+            Ui.Place(notifHolder, 56f, 8f + ClockSize + 4f + colonyHeight * ColonyScale + 28f, 0f, 0f);
             if (notifications != null)
             {
                 notifications.anchorMin = notifications.anchorMax = new Vector2(0f, 1f);
@@ -571,20 +581,23 @@ namespace OniMobile
                 notifications.localScale = new Vector3(0.8f, 0.8f, 1f);
             }
             // Its label hangs under the tile, as on the game's buttons.
-            build.Place(56f, 600f, 88f, 88f);
-            build.Active = buildOpen;
+            build.Visible = !buildOpen && !managementOpen;
+            build.Place(56f, 620f, 64f, 64f);
+            buildExit.Visible = buildOpen;
+            buildExit.Place(56f, 620f, 64f, 64f);
 
-            // B1: the categories in two columns; B2: the building grid; B3: the chosen building.
+            // B1: the categories in three columns, above the exit button; B2: the building
+            // grid; B3: the chosen building.
             Show(b1, buildOpen && !placing);
             // A popover folds the building grid and the details away until it closes.
             Show(b2, category && !placing && pop == Pop.None);
             Show(b3, placing);
-            Ui.Place(b1Holder, 56f, Top, 160f, 624f);
+            Ui.Place(b1Holder, 56f, Top, 0f, 0f);
             var grid = planGrid.GetComponent<GridLayoutGroup>();
             if (grid != null)
             {
                 grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-                grid.constraintCount = 2;
+                grid.constraintCount = 3;
                 grid.startCorner = GridLayoutGroup.Corner.UpperLeft;
                 grid.startAxis = GridLayoutGroup.Axis.Horizontal;
                 // Room for the label under each icon.
@@ -598,7 +611,7 @@ namespace OniMobile
             float cellScale = Cell * Ui.U / 45f;
             planGrid.localScale = new Vector3(cellScale, cellScale, 1f);
 
-            Ui.Place(b2Holder, 224f, Top, 0f, 0f);
+            Ui.Place(b2Holder, 56f + planGrid.rect.width * cellScale / Ui.U + 8f, Top, 0f, 0f);
             if (planPanel != null)
             {
                 planPanel.anchorMin = planPanel.anchorMax = new Vector2(0f, 1f);
@@ -629,7 +642,7 @@ namespace OniMobile
             wasPlacing = placing;
             rotate.Visible = placing && PlayerController.Instance.ActiveTool == BuildTool.Instance;
             rotate.Place(Margin + Cell + 24f, 622f, Cell, Cell, true);
-            exit.Visible = buildOpen || tool;
+            exit.Visible = tool;
             exit.Place(Margin, 622f, Cell, Cell, true);
 
             // H11: the tool rail, while no other work panel is open.
@@ -699,10 +712,6 @@ namespace OniMobile
             Show(popover, pop != Pop.None);
             popMore.gameObject.SetActive(pop == Pop.MoreTools);
             PlacePopover(popMore, Margin + Step, 432f);
-            // The colony panels under the notifications, with the left column.
-            Show(colonyGroup, !buildOpen && !managementOpen);
-            Ui.Place(colony, 56f, NotificationsBottom() + 8f, 300f / ColonyScale, 0f);
-            colony.localScale = new Vector3(ColonyScale, ColonyScale, 1f);
             // The overlay menu destroys and remakes its toggles in its own place when it
             // refreshes (input device, research).
             Adopt(overlaySource, overlayRow, true);
@@ -716,25 +725,6 @@ namespace OniMobile
             foreach (RectTransform cell in moreCells)
                 FitCell(cell);
 
-        }
-
-        // The lowest edge of what the notification list shows, in reference pixels from the
-        // top: the list's own rectangle is a fixed height.
-        float NotificationsBottom()
-        {
-            float bottom = 8f + ClockSize + 4f;
-            if (notifications == null)
-                return bottom;
-            var corners = new Vector3[4];
-            foreach (Transform child in notifications)
-            {
-                var rect = child as RectTransform;
-                if (rect == null || !child.gameObject.activeInHierarchy || rect.rect.height < 1f)
-                    continue;
-                rect.GetWorldCorners(corners);
-                bottom = Mathf.Max(bottom, (Screen.height - corners[0].y) / Screen.height * 720f);
-            }
-            return bottom;
         }
 
         // The management bar, right aligned at right (reference pixels from the right
