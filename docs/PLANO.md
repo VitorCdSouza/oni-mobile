@@ -429,15 +429,44 @@ esse número estava encostado no limite. Mudanças a partir daí:
   `build/oni-mobile-o2.apk`, para comparar no aparelho com `build/oni-mobile-release.apk`.
 - Sem frame pointer, o `profile_android.sh` usa call graph `dwarf` (desenrola pelo `.eh_frame`).
 
+Medidas no aparelho (2026-10-20, "Sticky Home", limite em 60 fps):
+
+- 1600x720: 26 fps, 38 ms por quadro. Thread principal 26 ms, dos quais 10 a 13 ms esperando o
+  present; render 9 ms; GPU 63 a 68 ms. 1200x540: 40 fps, 25 ms por quadro, GPU 38 a 40 ms. O
+  tempo de GPU acompanha o número de pixels: o jogo é limitado pela taxa de preenchimento do
+  Adreno 619, não pela CPU. (O tempo de GPU do `FrameTimingManager` passa do tempo do quadro, então
+  serve para comparar, não como valor absoluto.)
+- `profile_android.sh` (20 s, `-Os`): a thread principal usa ~65% de um núcleo e a de render
+  ~29%, espalhados por muitas funções (`memcpy` 5%, `RectTransform` da UI, texturas da sim). Sem
+  o `AsyncPathProbeWorker` cheio, que no PC aparecia em fim de jogo.
+- `-O2` no lugar de `-Os`: thread principal igual dentro do ruído (24 a 30 ms). Como a CPU sobra,
+  o `-O2` só deve aparecer em colônias grandes; o padrão do `BuildPlayer` continua `-Os`.
+- `OniMobile.GfxProbe` (`tools/runtime/GfxProbe.cs`) lista as câmeras: 18 no jogo, entre elas 6
+  `TextureLerper_*` de 256x384, `baseCamera MRT` (alvos múltiplos, `MultipleRenderTargetProxy`,
+  `MRTLiquidInterception`), `Light Buffer` em 1600x720 `ARGBHalf` e o `Overlay` com os efeitos.
+  O logcat corta a mensagem por volta de 1 KB, então só as 11 primeiras apareceram; logar uma
+  câmera por linha resolve. Desligar um efeito por vez (`BloomEffect`, `LightBufferCompositor`,
+  `ColorCorrectionLookup`, `FogOfWarPostFX`) mudou 2 a 4 ms de GPU, dentro do ruído: nenhum passe
+  isolado domina, o custo é o render do mundo inteiro na resolução cheia.
+
+Conclusão: a alavanca é a resolução de render. A 540 linhas a UI fica grande demais, porque a
+escala padrão de 175% foi calibrada para 720 (`Platform.DefaultUIScale`). O próximo passo é a
+altura de render como opção (600 ou 540) com a escala padrão da UI proporcional a ela
+(1,75 x altura / 720), ou render do mundo em resolução menor com a UI na resolução da tela.
+
 ## Estado atual e próximos passos
 
 Em aberto:
 
 - Vídeo do menu principal sem shader de Android (`Hidden/VideoDecodeAndroid`).
-- Medir no aparelho o build com limite de 60 fps: o `FrameStats` diz se o quadro é limitado
-  pela CPU ou pela GPU, e o `profile_android.sh` diz onde a CPU gasta.
-- Comparar no aparelho `oni-mobile-release.apk` (`-Os`) e `oni-mobile-o2.apk` (`-O2`) com o
-  mesmo save; se o `-O2` ganhar, passar a ser o padrão do `BuildPlayer`.
+- Render abaixo de 720 linhas com a UI compensada (ver "Desempenho"): 600 linhas deve dar ~32
+  fps, 540 deu 40.
+- UI pensada para celular: o layout do PC sobrepõe painéis na tela de 20:9 e depende de hover.
+  Brief para o design em `docs/ui-mobile-brief.md`.
+- Travadinhas ao dar zoom: o zoom já é suavizado pelo `CameraController`; suspeita de trabalho de
+  CPU quando aparece mais mundo (chunks de tiles, anims). `profile_android.sh` durante um zoom.
+- Carregar um save trava a thread principal por 11 a 13 s, e um toque nesse intervalo dá ANR
+  ("não está respondendo"; Aguardar continua).
 - Achar o quadro de 14 s depois de um toque (compilação de shader na primeira vez que algo
   aparece? abertura de tela?): `profile_android.sh` durante o toque.
 - Candidatos a seguir: GC não incremental (ver acima); a opção "Low Resolution Textures" do
