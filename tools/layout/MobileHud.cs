@@ -35,7 +35,9 @@ namespace OniMobile
         const float TopCell = 64f;
         // The cycle clock, and the speed controls right of it.
         const float OverlayCell = 44f;
-        const float ClockSize = 88f, SpeedX = 56f + ClockSize + 8f, MetersY = 74f;
+        // The diagnostics and resources panels, at the notifications' size.
+        const float ColonyScale = 0.8f;
+        const float ClockSize = 88f, SpeedX = 56f + ClockSize + 8f;
 
         Pop pop;
         bool buildMenu;
@@ -364,14 +366,14 @@ namespace OniMobile
                 Hide(OverlayMenu.Instance);
             }
             var diag = FindObjectOfType<ColonyDiagnosticScreen>();
-            // Diagnostics and resources, folding panels as on the PC, left of the tool rail.
+            // Diagnostics and resources, folding panels as on the PC, under the notifications.
             colony = Ui.Holder("Colony", hud);
             var column = colony.gameObject.AddComponent<VerticalLayoutGroup>();
             column.childControlWidth = true;
             column.childControlHeight = true;
             column.childForceExpandWidth = true;
             column.childForceExpandHeight = false;
-            column.childAlignment = TextAnchor.UpperRight;
+            column.childAlignment = TextAnchor.UpperLeft;
             colonyGroup = colony.gameObject.AddComponent<CanvasGroup>();
             Move(diag, colony);
             if (PinnedResourcesPanel.Instance != null)
@@ -552,16 +554,15 @@ namespace OniMobile
             LayoutManagementBar(Margin);
             if (meters != null)
             {
-                // A second row under the speed controls: the management bar takes the room
-                // they had. The meters are 32 units high.
-                Ui.PlaceCorner(meters, SpeedX, MetersY);
-                float scale = 36f * Ui.U / 32f;
+                // Right of the speed controls, 40 high (the meters are 32 units high).
+                Ui.PlaceCorner(meters, x + 8f, 22f);
+                float scale = 40f * Ui.U / 32f;
                 meters.localScale = new Vector3(scale, scale, 1f);
             }
 
             // Left column: notifications, build. Covered by B1 and M1, so hidden with them.
             Show(left, !buildOpen && !managementOpen);
-            Ui.Place(notifHolder, 56f, MetersY + 44f, 0f, 0f);
+            Ui.Place(notifHolder, 56f, 8f + ClockSize + 4f, 0f, 0f);
             if (notifications != null)
             {
                 notifications.anchorMin = notifications.anchorMax = new Vector2(0f, 1f);
@@ -698,9 +699,10 @@ namespace OniMobile
             Show(popover, pop != Pop.None);
             popMore.gameObject.SetActive(pop == Pop.MoreTools);
             PlacePopover(popMore, Margin + Step, 432f);
-            // The colony panels while the map is free on the right.
-            Show(colonyGroup, !buildOpen && !selected && !managementOpen && pop == Pop.None);
-            Ui.Place(colony, Margin + Cell + 8f, Top, 300f, 0f, true);
+            // The colony panels under the notifications, with the left column.
+            Show(colonyGroup, !buildOpen && !managementOpen);
+            Ui.Place(colony, 56f, NotificationsBottom() + 8f, 300f / ColonyScale, 0f);
+            colony.localScale = new Vector3(ColonyScale, ColonyScale, 1f);
             // The overlay menu destroys and remakes its toggles in its own place when it
             // refreshes (input device, research).
             Adopt(overlaySource, overlayRow, true);
@@ -714,6 +716,25 @@ namespace OniMobile
             foreach (RectTransform cell in moreCells)
                 FitCell(cell);
 
+        }
+
+        // The lowest edge of what the notification list shows, in reference pixels from the
+        // top: the list's own rectangle is a fixed height.
+        float NotificationsBottom()
+        {
+            float bottom = 8f + ClockSize + 4f;
+            if (notifications == null)
+                return bottom;
+            var corners = new Vector3[4];
+            foreach (Transform child in notifications)
+            {
+                var rect = child as RectTransform;
+                if (rect == null || !child.gameObject.activeInHierarchy || rect.rect.height < 1f)
+                    continue;
+                rect.GetWorldCorners(corners);
+                bottom = Mathf.Max(bottom, (Screen.height - corners[0].y) / Screen.height * 720f);
+            }
+            return bottom;
         }
 
         // The management bar, right aligned at right (reference pixels from the right

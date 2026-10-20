@@ -28,9 +28,9 @@ Posição x, y do canto superior esquerdo, em px de referência.
 | H2 | Velocidade: pausa, 1x, 2x, 3x | 152, 16 | ~210x52 | `SpeedControlScreen` |
 | H3 | Alerta vermelho | após H2 | 52x52 | `RedAlertButton` do `TopLeftControlScreen` |
 | — | Sandbox, só o ícone | após H3 | 52x52 | `SandboxToggle` do `TopLeftControlScreen` |
-| — | Medidores (duplicantes, estresse, doença, rações) | 152, 74 | altura 36 | `MeterScreen` |
+| — | Medidores (duplicantes, estresse, doença, rações) | à direita do Sandbox, y 22 | altura 40 | `MeterScreen` |
 | Q2 | Barra de gestão, só ícones (sem Reports e Codex) | direita 8, y 12 | altura 52 | `ManagementMenu` |
-| H4 | Notificações, a 80% | 56, 118 | | `NotificationScreen` |
+| H4 | Notificações, a 80% | 56, 100 | | `NotificationScreen` |
 | H5 | Construir | 56, 600 | 88x88 | novo (abre B1) |
 | H11 | Trilho de ferramentas: 6 + Mais | direita 8, 88 | 72x532 | toggles do `ToolMenu` |
 | H12 | Sair da ferramenta | direita 8, 620 | 92x92 | novo (mesmo efeito do botão direito) |
@@ -44,7 +44,7 @@ Posição x, y do canto superior esquerdo, em px de referência.
 | M1 | Telas de tabela | 56, 88 | largura da tela x 624 | `JobsTableScreen` e afins |
 | O1 | Overlays, uma fileira sempre à vista (some com ferramenta ou prédio ativos) | direita 8, 668 | botões de 44 | toggles do `OverlayMenu` |
 | O2 | Legenda do overlay | 160, de baixo para cima | | `OverlayLegend` |
-| Q1 | Diagnóstico e recursos, painéis dobráveis como no PC | esquerda do trilho, 88 | 300 | `ColonyDiagnosticScreen`, `PinnedResourcesPanel` |
+| Q1 | Diagnóstico e recursos, painéis dobráveis como no PC, a 80% | 56, sob as notificações | 300 | `ColonyDiagnosticScreen`, `PinnedResourcesPanel` |
 | Q3 | Mais ferramentas, 3x2 | direita 84, 432 | | toggles do `ToolMenu` |
 
 Os painéis do jogo são movidos para dentro de holders do HUD (`OniMobile.Hud`, no
@@ -59,8 +59,7 @@ HUD adota os novos a cada quadro.
   cobrem; o trilho H11 some com construção, seleção ou tela de gestão abertas.
 - Slot A, trabalho, um por vez: construção (B1 a B4), ferramenta ativa (H11, P, H12), seleção (D1).
   Abrir um fecha o anterior.
-- Slot B, consulta: só Q3. Q1 fica na tela enquanto o lado direito está livre
-  (sem construção, seleção, tela de gestão ou popover). Fecha com toque no mapa (o toque é consumido por uma
+- Slot B, consulta: só Q3. Q1 fica na coluna da esquerda e some com ela. Fecha com toque no mapa (o toque é consumido por uma
   camada transparente e não chega ao jogo), com toque longo ou ao abrir outro. Com um popover
   aberto, a grade B2 e o painel D1 se recolhem até ele fechar.
 - Slot C, tela de gestão: fecha A e B.
@@ -82,7 +81,7 @@ HUD adota os novos a cada quadro.
   já abre essas telas em tela cheia com o próprio botão de fechar.
 - H3 é o alerta vermelho do canto superior esquerdo do PC; o contador de alertas de colônia (Q5) não
   foi feito. Não há H10: os painéis de diagnóstico e recursos ficam à vista e os
-  medidores do PC (`MeterScreen`) ocupam uma segunda linha sob a velocidade.
+  medidores do PC (`MeterScreen`) ficam na linha de cima, depois da velocidade.
 - H4 é a lista original de notificações, inteira e a 80% (recortada em 72 px ficava ilegível),
   sem o popover Q4.
 - B3 começa recolhido (o cabeçalho do próprio painel expande) e encolhe até 70% se não couber.
