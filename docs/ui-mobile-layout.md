@@ -29,10 +29,7 @@ Posição x, y do canto superior esquerdo, em px de referência.
 | H3 | Alerta vermelho | após H2 | 52x52 | `RedAlertButton` do `TopLeftControlScreen` |
 | — | Sandbox, só o ícone | após H3 | 52x52 | `SandboxToggle` do `TopLeftControlScreen` |
 | — | Medidores (duplicantes, estresse, doença, rações) | 152, 74 | altura 36 | `MeterScreen` |
-| Q2 | Barra de gestão, só ícones (sem Reports e Codex) | à esquerda de H10 | altura 52 | `ManagementMenu` |
-| H10 | Diagnóstico (abre Q1) | direita 152 | 64x64 | novo |
-| H9 | Modo dica (?) | direita 80 | 64x64 | novo |
-| H8 | Overlays (abre O1) | direita 8 | 64x64 | novo |
+| Q2 | Barra de gestão, só ícones (sem Reports e Codex), com o botão de overlays (olho) na frente | direita 8, y 12 | altura 52 | `ManagementMenu`; o de overlays é cópia de um botão dela |
 | H4 | Notificações, a 80% | 56, 118 | | `NotificationScreen` |
 | H5 | Construir | 56, 600 | 88x88 | novo (abre B1) |
 | H11 | Trilho de ferramentas: 6 + Mais | direita 8, 88 | 72x532 | toggles do `ToolMenu` |
@@ -47,9 +44,8 @@ Posição x, y do canto superior esquerdo, em px de referência.
 | M1 | Telas de tabela | 56, 88 | largura da tela x 624 | `JobsTableScreen` e afins |
 | O1 | Overlays, 5 colunas | direita 8, 88 | | toggles do `OverlayMenu` |
 | O2 | Legenda do overlay | 136, de baixo para cima | | `OverlayLegend` |
-| Q1 | Diagnóstico e recursos | direita 8, 88 | 480 | `ColonyDiagnosticScreen`, `PinnedResourcesPanel` |
+| Q1 | Diagnóstico e recursos, painéis dobráveis como no PC | esquerda do trilho, 88 | 300 | `ColonyDiagnosticScreen`, `PinnedResourcesPanel` |
 | Q3 | Mais ferramentas, 3x2 | direita 84, 432 | | toggles do `ToolMenu` |
-| C3 | Balão de dica | junto ao toque | 320 de largura | novo, com o texto do `ToolTip` original |
 
 Os painéis do jogo são movidos para dentro de holders do HUD (`OniMobile.Hud`, no
 `ScreenSpaceOverlayCanvas`), e a posição, o tamanho e a escala são reaplicados a cada quadro, porque
@@ -63,7 +59,8 @@ HUD adota os novos a cada quadro.
   cobrem; o trilho H11 some com construção, seleção ou tela de gestão abertas.
 - Slot A, trabalho, um por vez: construção (B1 a B4), ferramenta ativa (H11, P, H12), seleção (D1).
   Abrir um fecha o anterior.
-- Slot B, consulta, um por vez: Q1, O1, Q3. Fecha com toque no mapa (o toque é consumido por uma
+- Slot B, consulta, um por vez: O1, Q3. Q1 fica na tela enquanto o lado direito está livre
+  (sem construção, seleção, tela de gestão ou popover). Fecha com toque no mapa (o toque é consumido por uma
   camada transparente e não chega ao jogo), com toque longo ou ao abrir outro. Com um popover
   aberto, a grade B2 e o painel D1 se recolhem até ele fechar.
 - Slot C, tela de gestão: fecha A e B.
@@ -74,8 +71,7 @@ HUD adota os novos a cada quadro.
 
 - Célula: o cartão de hover do jogo (`HoverTextScreen`) fica onde foi o último toque. A mira do
   design (H6, C2) foi feita e retirada a pedido.
-- Modo dica (H9): uma camada transparente pega o toque, acha o `ToolTip` do botão embaixo e mostra o
-  texto num balão. Fica ligado até tocar no "?" de novo.
+- O modo dica (H9, C3) também foi feito e retirado a pedido.
 - Rótulo efêmero: ao ativar uma ferramenta, o nome dela aparece por 1,8 s acima da barra P.
 
 ## Diferenças em relação ao design
@@ -85,8 +81,8 @@ HUD adota os novos a cada quadro.
 - M2 (Research, Starmap, Codex, Options em tela cheia com abas e "‹ Mapa"): ficam como no jogo, que
   já abre essas telas em tela cheia com o próprio botão de fechar.
 - H3 é o alerta vermelho do canto superior esquerdo do PC; o contador de alertas de colônia (Q5) não
-  foi feito. H10 é só o botão que abre Q1, sem os três indicadores; os medidores do PC
-  (`MeterScreen`) ocupam a linha de cima.
+  foi feito. Não há H10: os painéis de diagnóstico e recursos ficam à vista e os
+  medidores do PC (`MeterScreen`) ocupam uma segunda linha sob a velocidade.
 - H4 é a lista original de notificações, inteira e a 80% (recortada em 72 px ficava ilegível),
   sem o popover Q4.
 - B3 começa recolhido (o cabeçalho do próprio painel expande) e encolhe até 70% se não couber.
@@ -100,5 +96,5 @@ HUD adota os novos a cada quadro.
 1600x720, com os assemblies do porte e o HUD compilado na hora (~50 s), e o probe
 (`tools/layout/Probe.cs`) tira prints e dumps da árvore da UI. Sem `--mono` roda o player IL2CPP de
 `build/linux-swap`. Os estados do design ficam em `tools/layout/States.cs` (`idle`, `build`, `place`,
-`dig`, `select`, `prio`, `research`, `overlay`) mais `popmgmt`, `popoverlays`, `popdiag`, `popmore`
-e `buildmenu`; `tip:x,y` testa o modo dica. `make run` deixa o jogo aberto para testar à mão.
+`dig`, `select`, `prio`, `research`, `overlay`) mais `popoverlays`, `popmore`
+e `buildmenu`. `make run` deixa o jogo aberto para testar à mão.

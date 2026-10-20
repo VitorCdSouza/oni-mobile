@@ -5,7 +5,7 @@
 //   shot:<name>     screenshot to <dir>/<name>.png
 //   dump:<name>     the UI tree of every root canvas to <dir>/<name>.txt
 //   state:<name>    a reference state of the design (MobileHud.ApplyState)
-//   tip:<x>,<y>     tips mode on and a tap at x, y (reference pixels, HelpMode.cs)
+//   sprites:<text>  the names of the loaded sprites that contain text, to <dir>/sprites-<text>.txt
 //   wait            nothing, one more second
 using System;
 using System.IO;
@@ -80,14 +80,15 @@ namespace OniMobile
                     case "dump":
                         File.WriteAllText(Path.Combine(dir, arg + ".txt"), DumpCanvases());
                         break;
+                    case "sprites":
+                        var names = new StringBuilder();
+                        foreach (Sprite sprite in Resources.FindObjectsOfTypeAll<Sprite>())
+                            if (sprite.name.IndexOf(arg, StringComparison.OrdinalIgnoreCase) >= 0)
+                                names.AppendLine(sprite.name);
+                        File.WriteAllText(Path.Combine(dir, "sprites-" + arg + ".txt"), names.ToString());
+                        break;
                     case "state":
                         hud.ApplyState(arg);
-                        break;
-                    case "tip":
-                        string[] xy = arg.Split(',');
-                        HelpMode.On = true;
-                        HelpMode.TapAt(new Vector2(float.Parse(xy[0]) / 720f * Screen.height,
-                            (720f - float.Parse(xy[1])) / 720f * Screen.height));
                         break;
                 }
             }

@@ -239,7 +239,7 @@ namespace OniMobile
 
     // A button of the phone HUD in the style of the game's build category buttons
     // (ButtonStyle): a game icon or a short text on the tile, and optionally its label
-    // under it. The label is also its tip.
+    // under it.
     public class HudButton
     {
         public RectTransform Rect;
@@ -293,12 +293,8 @@ namespace OniMobile
                     caption.color = ButtonStyle.Label.color;
                 }
             }
-            Tooltip = label;
             Active = false;
-            HelpMode.Register(this);
         }
-
-        public string Tooltip;
 
         public bool Active
         {
