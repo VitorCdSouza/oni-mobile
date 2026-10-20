@@ -101,6 +101,9 @@ namespace OniMobile
         static Vector3 position = new Vector3(Screen.width / 2f, Screen.height / 2f, 0f);
         static Vector3 delta;
 
+        // Where the pointer rests while no finger is down (the HUD's crosshair), or null.
+        public static Vector2? RestingPointer;
+
         static Func<bool> overUI;
         static Func<bool> selectToolActive;
 
@@ -110,7 +113,7 @@ namespace OniMobile
             {
                 LayoutLoader.Ensure();
                 if (!Platform.IsAndroid)
-                    return Input.mousePosition;
+                    return RestingPointer.HasValue ? (Vector3)RestingPointer.Value : Input.mousePosition;
                 Update();
                 return position;
             }
@@ -275,13 +278,26 @@ namespace OniMobile
 
             int count = Input.touchCount;
             if (count == 0)
+            {
                 EndTouches();
+                // Back to the resting point once a click has been pressed and released.
+                if (RestingPointer.HasValue && releaseNextFrame < 0 && !AnyButton())
+                    position = RestingPointer.Value;
+            }
             else if (count == 1)
                 OneFinger(Input.GetTouch(0).position);
             else
                 TwoFingers(Input.GetTouch(0).position, Input.GetTouch(1).position);
 
             delta = position - previous;
+        }
+
+        static bool AnyButton()
+        {
+            for (int i = 0; i < 3; i++)
+                if (held[i] || pressed[i] || released[i])
+                    return true;
+            return false;
         }
 
         static void EndTouches()
