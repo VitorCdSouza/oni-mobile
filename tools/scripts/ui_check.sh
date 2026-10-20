@@ -29,11 +29,12 @@ CONFIG=$OUT/xdg/unity3d/Klei/Oxygen\ Not\ Included
 
 mkdir -p "$CONFIG/save_files"
 cp "$SAVE" "$CONFIG/save_files/check.sav"
-# The real settings, minus the save and the screen, with the phone's UI scale (175%).
-grep -vE '^\s*(SaveFilenameKey/|AutoResumeSaveFile|ResolutionWidth|ResolutionHeight|FullScreen|UIScalePref):' \
+# The real settings, minus the save and the screen, with the phone's UI scale (175%) and
+# without Spaced Out (EXPANSION1_ID), which the game turns on when the setting is missing.
+grep -vE '^\s*(SaveFilenameKey/|AutoResumeSaveFile|ResolutionWidth|ResolutionHeight|FullScreen|UIScalePref|EXPANSION1_ID\.ENABLED):' \
     "$REAL/kplayerprefs.yaml" > "$CONFIG/kplayerprefs.yaml"
 sed -i -e "s|^strings:|strings:\n  AutoResumeSaveFile: $CONFIG/save_files/check.sav|" \
-    -e 's|^ints:|ints:\n  ResolutionWidth: 1600\n  ResolutionHeight: 720\n  FullScreen: 0|' \
+    -e 's|^ints:|ints:\n  ResolutionWidth: 1600\n  ResolutionHeight: 720\n  FullScreen: 0\n  EXPANSION1_ID.ENABLED: 0|' \
     -e 's|^floats:|floats:\n  UIScalePref: 175|' "$CONFIG/kplayerprefs.yaml"
 
 if [ $MONO = 1 ]; then
