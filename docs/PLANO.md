@@ -374,8 +374,7 @@ ajustes de desempenho (resolução, limite de fps, mundo pequeno).
 
 O layout do PC sobrepunha painéis na tela de 20:9 e dependia de hover (brief em
 `docs/ui-mobile-brief.md`). `tools/layout` (`OniMobile.Layout.dll`) move os painéis do próprio jogo
-para colunas nas bordas, popovers e folhas, com uma regra de convivência entre eles, e acrescenta
-modo dica no lugar do hover dos botões. Detalhes, medidas e o que ficou diferente do design em
+para colunas nas bordas, popovers e folhas, com uma regra de convivência entre eles. Detalhes, medidas e o que ficou diferente do design em
 `docs/ui-mobile-layout.md`.
 
 - O `OniMobile.Runtime` carrega o assembly pelo nome na primeira leitura de input
