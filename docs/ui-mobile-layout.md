@@ -34,7 +34,7 @@ Posição x, y do canto superior esquerdo, em px de referência.
 | H5 | Construir (martelo, `icon_errand_build`); no modo construção vira Sair | 56, 620 | 64x64 | novo |
 | H11 | Trilho de ferramentas: 6 + Mais | direita 8, 88 | 72x532 | toggles do `ToolMenu` |
 | H12 | Sair da ferramenta | direita 8, 622 | 72x72 | novo (mesmo efeito do botão direito) |
-| B1 | Categorias, 3 colunas | 56, 88 | | grade do `PlanScreen` |
+| B1 | Categorias, 3 colunas, à direita do botão de construir/sair | 128, 88 | | grade do `PlanScreen` |
 | B2 | Grade de prédios | à direita de B1, 88 | 320x624 | `BuildingGroups` do `PlanScreen` |
 | B3 | Painel do prédio | 56, 88 | até 624 de altura | `ProductInfoScreen` |
 | B4 | Girar | direita 108, 620 | 92x92 | novo (chama `BuildTool.TryRotate`) |

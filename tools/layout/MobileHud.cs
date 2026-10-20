@@ -615,13 +615,14 @@ namespace OniMobile
             buildExit.Visible = buildOpen;
             buildExit.Place(56f, 620f, 64f, 64f);
 
-            // B1: the categories in three columns, above the exit button; B2: the building
+            // B1: the categories in three columns, right of the exit button; B2: the building
             // grid; B3: the chosen building.
             Show(b1, buildOpen && !placing);
             // A popover folds the building grid and the details away until it closes.
             Show(b2, category && !placing && pop == Pop.None);
             Show(b3, placing);
-            Ui.Place(b1Holder, 56f, Top, 0f, 0f);
+            float categoriesX = 56f + 64f + 8f;
+            Ui.Place(b1Holder, categoriesX, Top, 0f, 0f);
             var grid = planGrid.GetComponent<GridLayoutGroup>();
             if (grid != null)
             {
@@ -640,7 +641,7 @@ namespace OniMobile
             float cellScale = Cell * Ui.U / 45f;
             planGrid.localScale = new Vector3(cellScale, cellScale, 1f);
 
-            Ui.Place(b2Holder, 56f + planGrid.rect.width * cellScale / Ui.U + 8f, Top, 0f, 0f);
+            Ui.Place(b2Holder, categoriesX + planGrid.rect.width * cellScale / Ui.U + 8f, Top, 0f, 0f);
             if (planPanel != null)
             {
                 planPanel.anchorMin = planPanel.anchorMax = new Vector2(0f, 1f);
