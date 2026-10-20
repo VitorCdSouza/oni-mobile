@@ -33,10 +33,13 @@ namespace OniMobile
         bool buildMenu;
         bool wasTool, wasSelected, wasManagement, wasPlacing;
         Transform managementSource, overlaySource;
+        ToolMenu.ToolInfo shownTool;
         static FieldInfo managementActive;
 
         RectTransform hud;
-        CanvasGroup left, rail, b1, b2, b3, popover;
+        CanvasGroup left, rail, b1, b2, b3, d1, popover;
+        TMPro.TextMeshProUGUI toolName;
+        float toolNameUntil;
         RectTransform b1Holder, b2Holder, b3Holder, d1Holder, pHolder, railHolder, notifHolder, legendHolder;
         RectTransform m1Holder, sheetsSource;
         ScrollRect sheetScroll;
@@ -100,6 +103,12 @@ namespace OniMobile
 
         void Build()
         {
+            // A new game scene (another save loaded) starts from scratch.
+            railCells.Clear();
+            moreCells.Clear();
+            HelpMode.Clear();
+            pop = Pop.None;
+            buildMenu = false;
             hud = Ui.Holder("OniMobile.Hud", Ui.Root);
             Ui.Stretch(hud);
             Transform front = Ui.Root.Find("MiddleCenter - InFrontOfEverything");
@@ -114,6 +123,7 @@ namespace OniMobile
             b3Holder = Ui.Holder("B3 building", hud);
             b3 = b3Holder.gameObject.AddComponent<CanvasGroup>();
             d1Holder = Ui.Holder("D1 details", hud);
+            d1 = d1Holder.gameObject.AddComponent<CanvasGroup>();
             m1Holder = Ui.Holder("M1 management", hud);
             pHolder = Ui.Holder("P priority", hud);
             railHolder = Ui.Holder("H11 tools", hud);
@@ -128,7 +138,7 @@ namespace OniMobile
             Ui.Stretch(topHolder);
 
             MoveTop();
-            MoveNotifications(leftHolder);
+            notifications = Move(NotificationScreen.Instance, notifHolder);
             MovePlan();
             MoveTools();
             MoveDetails();
@@ -147,6 +157,7 @@ namespace OniMobile
                 if (BuildTool.Instance != null)
                     BuildTool.Instance.TryRotate();
             });
+            toolName = Ui.Text("Tool name", hud, "", 20f);
             more = new HudButton("Q3 more", railHolder, null, "•••", "More", () => Toggle(Pop.MoreTools));
             // Sized once: the rail's layout group places it.
             more.Place(0f, 0f, Cell, Cell);
@@ -231,11 +242,6 @@ namespace OniMobile
             }
             Hide(Ui.FindChild<RectTransform>(Ui.Root, "BuildWatermark"));
             Hide(Ui.FindChild<RectTransform>(Ui.Root, "TopRightInfoPanelButtons"));
-        }
-
-        void MoveNotifications(Transform leftHolder)
-        {
-            notifications = Move(NotificationScreen.Instance, notifHolder);
         }
 
         void MovePlan()
@@ -422,11 +428,20 @@ namespace OniMobile
         void Track()
         {
             bool tool = ToolActive, selected = Selected, managementOpen = ManagementOpen;
+            if (tool && !wasTool || tool && ToolMenu.Instance.currentlySelectedTool != shownTool)
+            {
+                // The tool's name, the first line of its tooltip, for 1.8 s over the priority bar.
+                shownTool = ToolMenu.Instance.currentlySelectedTool;
+                if (shownTool != null)
+                {
+                    toolName.text = shownTool.text;
+                    toolNameUntil = Time.unscaledTime + 1.8f;
+                }
+            }
             if (tool && !wasTool)
             {
                 buildMenu = false;
-                if (pop != Pop.MoreTools)
-                    pop = Pop.None;
+                pop = Pop.None;
             }
             if (selected && !wasSelected)
                 buildMenu = false;
@@ -435,8 +450,6 @@ namespace OniMobile
                 CloseWork();
                 pop = Pop.None;
             }
-            if (pop == Pop.MoreTools && tool && !wasTool)
-                pop = Pop.None;
             // Long press (right click) closes one level: a popover, else the build menu.
             if (TouchInput.GetMouseButtonDown(1))
             {
@@ -457,14 +470,10 @@ namespace OniMobile
 
         void ToggleBuild()
         {
+            bool open = BuildOpen;
             pop = Pop.None;
-            if (BuildOpen)
-            {
-                CloseWork();
-                return;
-            }
             CloseWork();
-            buildMenu = true;
+            buildMenu = !open;
         }
 
         void CloseWork()
@@ -555,7 +564,8 @@ namespace OniMobile
 
             // B1: the categories in two columns; B2: the building grid; B3: the chosen building.
             Show(b1, buildOpen && !placing);
-            Show(b2, category && !placing);
+            // A popover folds the building grid and the details away until it closes.
+            Show(b2, category && !placing && pop == Pop.None);
             Show(b3, placing);
             Ui.Place(b1Holder, 56f, Top, 160f, 624f);
             var grid = planGrid.GetComponent<GridLayoutGroup>();
@@ -615,6 +625,10 @@ namespace OniMobile
                 FitCell(cell);
             more.Active = pop == Pop.MoreTools;
 
+            toolName.gameObject.SetActive(tool && Time.unscaledTime < toolNameUntil);
+            Ui.Place(toolName.rectTransform, (width - 400f) / 2f, 596f, 400f, 36f);
+            toolName.fontSize = 22f * Ui.U;
+
             // P: the priority bar, bottom center.
             Ui.Place(pHolder, (width - 768f) / 2f, 640f, 768f, Cell);
             if (priority != null)
@@ -637,6 +651,7 @@ namespace OniMobile
             }
 
             // D1: details on the right, at most 624 high.
+            Show(d1, pop == Pop.None);
             Ui.Place(d1Holder, Margin, Top, 0f, 0f, true);
             if (rootMenu != null)
             {

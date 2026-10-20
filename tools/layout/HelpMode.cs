@@ -20,6 +20,12 @@ namespace OniMobile
         static readonly List<RaycastResult> hits = new List<RaycastResult>();
         static readonly Dictionary<GameObject, HudButton> buttons = new Dictionary<GameObject, HudButton>();
 
+        public static void Clear()
+        {
+            buttons.Clear();
+            On = false;
+        }
+
         public static void Register(HudButton button)
         {
             buttons[button.Rect.gameObject] = button;
@@ -49,7 +55,12 @@ namespace OniMobile
 
         static void Tap()
         {
-            Vector2 point = TouchInput.mousePosition;
+            TapAt(TouchInput.mousePosition);
+        }
+
+        // Also the probe's "tip:x,y" step (reference pixels from the top left).
+        public static void TapAt(Vector2 point)
+        {
             var data = new PointerEventData(UnityEngine.EventSystems.EventSystem.current) { position = point };
             hits.Clear();
             UnityEngine.EventSystems.EventSystem.current.RaycastAll(data, hits);

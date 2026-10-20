@@ -370,6 +370,23 @@ ajustes de desempenho (resolução, limite de fps, mundo pequeno).
   centro do texel, e o Adreno filtra float de 32 bits com precisão reduzida. O `shader_gles.py`
   troca essas leituras por `texelFetch`. Corrigido no aparelho.
 
+### Layout de toque (2026-10-20)
+
+O layout do PC sobrepunha painéis na tela de 20:9 e dependia de hover (brief em
+`docs/ui-mobile-brief.md`). `tools/layout` (`OniMobile.Layout.dll`) move os painéis do próprio jogo
+para colunas nas bordas, popovers e folhas, com uma regra de convivência entre eles, e acrescenta
+mira e modo dica no lugar do hover. Detalhes, medidas e o que ficou diferente do design em
+`docs/ui-mobile-layout.md`.
+
+- O `OniMobile.Runtime` carrega o assembly pelo nome na primeira leitura de input
+  (`LayoutLoader`), porque o `Assembly-CSharp` referencia o runtime e não o contrário. O
+  `link.xml` guarda o assembly inteiro e o `Keep.cs` o leva para o build.
+- `tools/scripts/ui_check.sh` verifica no PC: com `--mono` roda o jogo Mono do Steam com os
+  assemblies patcheados do porte num `Managed` próprio (`build/mono-check`), o que leva ~50 s
+  contra 6 min de um build IL2CPP; sem `--mono`, o player IL2CPP Linux. A config vai para um
+  diretório à parte (`XDG_CONFIG_HOME`), com cópia do save.
+- `build_android.sh linux` monta o player IL2CPP Linux com o mesmo teto de memória.
+
 ### Desempenho
 
 Perfil no PC: player IL2CPP Linux (`linux_swap.sh`, `XDG_CONFIG_HOME` à parte) com o save
@@ -461,8 +478,8 @@ Em aberto:
 - Vídeo do menu principal sem shader de Android (`Hidden/VideoDecodeAndroid`).
 - Render abaixo de 720 linhas com a UI compensada (ver "Desempenho"): 600 linhas deve dar ~32
   fps, 540 deu 40.
-- UI pensada para celular: o layout do PC sobrepõe painéis na tela de 20:9 e depende de hover.
-  Brief para o design em `docs/ui-mobile-brief.md`.
+- UI de toque (`docs/ui-mobile-layout.md`): feita e verificada no PC (jogo Mono e player IL2CPP
+  Linux); falta testar no aparelho e o que a doc lista em "Diferenças em relação ao design".
 - Travadinhas ao dar zoom: o zoom já é suavizado pelo `CameraController`; suspeita de trabalho de
   CPU quando aparece mais mundo (chunks de tiles, anims). `profile_android.sh` durante um zoom.
 - Carregar um save trava a thread principal por 11 a 13 s, e um toque nesse intervalo dá ANR

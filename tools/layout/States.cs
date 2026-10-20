@@ -29,7 +29,7 @@ namespace OniMobile
                     ManagementMenu.Instance.TogglePriorities();
                     break;
                 case "research":
-                    ManagementMenu.Instance.ToggleResearch();
+                    ManagementMenu.Instance.OpenResearch();
                     break;
                 case "overlay":
                     OverlayScreen.Instance.ToggleOverlay(OverlayModes.Oxygen.ID);

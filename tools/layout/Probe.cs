@@ -5,6 +5,8 @@
 //   shot:<name>     screenshot to <dir>/<name>.png
 //   dump:<name>     the UI tree of every root canvas to <dir>/<name>.txt
 //   state:<name>    a reference state of the design (MobileHud.ApplyState)
+//   tip:<x>,<y>     tips mode on and a tap at x, y (reference pixels, HelpMode.cs)
+//   crosshair[:off] the crosshair on (or off)
 //   wait            nothing, one more second
 using System;
 using System.IO;
@@ -81,6 +83,15 @@ namespace OniMobile
                         break;
                     case "state":
                         hud.ApplyState(arg);
+                        break;
+                    case "tip":
+                        string[] xy = arg.Split(',');
+                        HelpMode.On = true;
+                        HelpMode.TapAt(new Vector2(float.Parse(xy[0]) / 720f * Screen.height,
+                            (720f - float.Parse(xy[1])) / 720f * Screen.height));
+                        break;
+                    case "crosshair":
+                        Crosshair.On = arg != "off";
                         break;
                 }
             }
