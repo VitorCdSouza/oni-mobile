@@ -333,7 +333,8 @@ namespace OniMobile
         public void Resize(float w, float h)
         {
             Rect.sizeDelta = new Vector2(w * Ui.U, h * Ui.U);
-            float shadowX = ButtonStyle.ShadowOffset.x * h / 45f, shadowY = -ButtonStyle.ShadowOffset.y * h / 45f;
+            // The game's drop shadow, about a third as far: at phone size the full one is heavy.
+            float shadowX = ButtonStyle.ShadowOffset.x * 0.35f * h / 45f, shadowY = -ButtonStyle.ShadowOffset.y * 0.35f * h / 45f;
             LayoutChild(shadow.rectTransform, shadowX, shadowY, w, h);
             LayoutChild(background.rectTransform, 0f, 0f, w, h);
             float inset = h * 6f / 45f;

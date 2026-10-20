@@ -27,12 +27,13 @@ Posição x, y do canto superior esquerdo, em px de referência.
 | H1 | Relógio do ciclo | 56, 8 | 88x88 | `DateTime` (AsteroidClockPanel) |
 | H2 | Velocidade: pausa, 1x, 2x, 3x | 152, 16 | ~210x52 | `SpeedControlScreen` |
 | H3 | Alerta vermelho | após H2 | 52x52 | `RedAlertButton` do `TopLeftControlScreen` |
-| — | Medidores (duplicantes, estresse, doença, rações) | após H3, y 16 | altura 56 | `MeterScreen` |
-| H10 | Diagnóstico (abre Q1) | direita 236 | 72x72 | novo |
-| H9 | Modo dica (?) | direita 160 | 72x72 | novo |
-| H8 | Overlays (abre O1) | direita 84 | 72x72 | novo |
-| H7 | Gestão (abre Q2) | direita 8 | 72x72 | novo |
-| H4 | Notificações, a 80% | 56, 104 | | `NotificationScreen` |
+| — | Sandbox, só o ícone | após H3 | 52x52 | `SandboxToggle` do `TopLeftControlScreen` |
+| — | Medidores (duplicantes, estresse, doença, rações) | 152, 74 | altura 36 | `MeterScreen` |
+| Q2 | Barra de gestão, só ícones (sem Reports e Codex) | à esquerda de H10 | altura 52 | `ManagementMenu` |
+| H10 | Diagnóstico (abre Q1) | direita 152 | 64x64 | novo |
+| H9 | Modo dica (?) | direita 80 | 64x64 | novo |
+| H8 | Overlays (abre O1) | direita 8 | 64x64 | novo |
+| H4 | Notificações, a 80% | 56, 118 | | `NotificationScreen` |
 | H5 | Construir | 56, 600 | 88x88 | novo (abre B1) |
 | H11 | Trilho de ferramentas: 6 + Mais | direita 8, 88 | 72x532 | toggles do `ToolMenu` |
 | H12 | Sair da ferramenta | direita 8, 620 | 92x92 | novo (mesmo efeito do botão direito) |
@@ -47,7 +48,6 @@ Posição x, y do canto superior esquerdo, em px de referência.
 | O1 | Overlays, 5 colunas | direita 8, 88 | | toggles do `OverlayMenu` |
 | O2 | Legenda do overlay | 136, de baixo para cima | | `OverlayLegend` |
 | Q1 | Diagnóstico e recursos | direita 8, 88 | 480 | `ColonyDiagnosticScreen`, `PinnedResourcesPanel` |
-| Q2 | Gestão, 2 colunas | direita 8, 88 | | toggles do `ManagementMenu` e o do Sandbox |
 | Q3 | Mais ferramentas, 3x2 | direita 84, 432 | | toggles do `ToolMenu` |
 | C3 | Balão de dica | junto ao toque | 320 de largura | novo, com o texto do `ToolTip` original |
 
@@ -63,7 +63,7 @@ HUD adota os novos a cada quadro.
   cobrem; o trilho H11 some com construção, seleção ou tela de gestão abertas.
 - Slot A, trabalho, um por vez: construção (B1 a B4), ferramenta ativa (H11, P, H12), seleção (D1).
   Abrir um fecha o anterior.
-- Slot B, consulta, um por vez: Q1, Q2, O1, Q3. Fecha com toque no mapa (o toque é consumido por uma
+- Slot B, consulta, um por vez: Q1, O1, Q3. Fecha com toque no mapa (o toque é consumido por uma
   camada transparente e não chega ao jogo), com toque longo ou ao abrir outro. Com um popover
   aberto, a grade B2 e o painel D1 se recolhem até ele fechar.
 - Slot C, tela de gestão: fecha A e B.

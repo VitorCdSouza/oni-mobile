@@ -6,12 +6,12 @@
 // The game's own panels are moved, not rebuilt: each one is reparented into a
 // holder of this HUD and its position, size and scale are set again every frame,
 // since the game resets some of them when it refreshes. Only the few new buttons
-// (build, tips, overlays, management, diagnostics, exit, rotate) are
+// (build, tips, overlays, diagnostics, exit, rotate) are
 // made here. Panels belong to slots that decide what may be open together:
 //   slot 0  always on screen: clock, speed, alerts, meters, notifications, rails
 //   slot A  work, one at a time: build menu, an active tool, a selection
-//   slot B  lookups, one at a time, closed by a tap on the map: management menu,
-//           overlays, diagnostics, more tools
+//   slot B  lookups, one at a time, closed by a tap on the map: overlays,
+//           diagnostics, more tools
 //   slot C  a management screen, which closes A and B
 using System.Collections.Generic;
 using System.Reflection;
@@ -22,7 +22,11 @@ namespace OniMobile
 {
     public class MobileHud : MonoBehaviour
     {
-        enum Pop { None, Management, Overlays, Diagnostics, MoreTools }
+        enum Pop { None, Overlays, Diagnostics, MoreTools }
+
+        // The management bar keeps its buttons as icons; of the three small ones at its
+        // end only Options stays.
+        static readonly string[] DroppedManagement = { "Toggle:REPORTS", "Toggle:DATABASE" };
 
         // The rail's tools; the rest go to the "more" popover.
         static readonly string[] RailTools = { "DigTool", "CancelTool", "DeconstructTool", "PrioritizeTool", "ClearTool", "MopTool" };
@@ -31,12 +35,12 @@ namespace OniMobile
         // The top row: 64 high, so its buttons match the speed controls.
         const float TopCell = 64f;
         // The cycle clock, and the speed controls right of it.
-        const float ClockSize = 88f, SpeedX = 56f + ClockSize + 8f;
+        const float ClockSize = 88f, SpeedX = 56f + ClockSize + 8f, MetersY = 74f;
 
         Pop pop;
         bool buildMenu;
         bool wasTool, wasSelected, wasManagement, wasPlacing;
-        Transform managementSource, overlaySource;
+        Transform overlaySource;
         ToolMenu.ToolInfo shownTool;
         static FieldInfo managementActive;
 
@@ -47,7 +51,7 @@ namespace OniMobile
         RectTransform b1Holder, b2Holder, b3Holder, d1Holder, pHolder, railHolder, notifHolder, legendHolder;
         RectTransform m1Holder, sheetsSource;
         ScrollRect sheetScroll;
-        RectTransform paramsHolder, topHolder, popMgmt, popOverlays, popDiag, popMore;
+        RectTransform paramsHolder, topHolder, popOverlays, popDiag, popMore;
         GameObject scrim;
 
         RectTransform clock, speed, redAlert, meters, notifications;
@@ -56,7 +60,8 @@ namespace OniMobile
         readonly List<RectTransform> moreCells = new List<RectTransform>();
         LayoutElement detailsBody;
 
-        HudButton build, help, overlays, management, diagnostics, exit, rotate, more;
+        RectTransform managementBar, sandbox;
+        HudButton build, help, overlays, diagnostics, exit, rotate, more;
 
         void Awake()
         {
@@ -91,9 +96,7 @@ namespace OniMobile
             States.Apply(name);
             pop = Pop.None;
             buildMenu = name == "build";
-            if (name == "popmgmt")
-                pop = Pop.Management;
-            else if (name == "popoverlays")
+            if (name == "popoverlays")
                 pop = Pop.Overlays;
             else if (name == "popdiag")
                 pop = Pop.Diagnostics;
@@ -151,7 +154,6 @@ namespace OniMobile
             build = new HudButton("H5 build", leftHolder, "icon_category_base", null, "Build", ToggleBuild, true);
             help = new HudButton("H9 tips", topHolder, null, "?", "Tips", () => HelpMode.On = !HelpMode.On);
             overlays = new HudButton("H8 overlays", topHolder, "overlay_oxygen", "OVL", "Overlays", () => Toggle(Pop.Overlays));
-            management = new HudButton("H7 management", topHolder, "OverviewUI_vitals_icon", "MGT", "Menu", () => Toggle(Pop.Management));
             diagnostics = new HudButton("H10 diagnostics", topHolder, "OverviewUI_reports_icon", "DIA", "Colony", () => Toggle(Pop.Diagnostics));
             exit = new HudButton("H12 exit", hud, "icon_action_cancel", "X", "Exit", Exit, true);
             rotate = new HudButton("B4 rotate", hud, null, "↻", "Rotate", () =>
@@ -167,7 +169,6 @@ namespace OniMobile
             var popHolder = Ui.Holder("Popovers", hud);
             Ui.Stretch(popHolder);
             popover = popHolder.gameObject.AddComponent<CanvasGroup>();
-            popMgmt = Grid(Ui.Panel("Q2 management", popHolder).rectTransform, 2, 220f, 60f);
             popOverlays = Grid(Ui.Panel("O1 overlays", popHolder).rectTransform, 5, Cell, Cell);
             popDiag = Ui.Panel("Q1 diagnostics", popHolder).rectTransform;
             var column = popDiag.gameObject.AddComponent<VerticalLayoutGroup>();
@@ -240,7 +241,8 @@ namespace OniMobile
                 Hide(topLeft);
             }
             Hide(Ui.FindChild<RectTransform>(Ui.Root, "BuildWatermark"));
-            Hide(Ui.FindChild<RectTransform>(Ui.Root, "TopRightInfoPanelButtons"));
+            // The management bar (Vitals ... Starmap, Options), as icons in the top row.
+            managementBar = Move(ManagementMenu.Instance, topHolder);
         }
 
         void MovePlan()
@@ -359,11 +361,8 @@ namespace OniMobile
 
         void MovePopovers()
         {
-            KToggle first = ManagementMenu.Instance.GetComponentInChildren<KToggle>(true);
-            managementSource = first != null ? first.transform.parent : ManagementMenu.Instance.transform;
-            Adopt(managementSource, popMgmt, false);
             if (TopLeftControlScreen.Instance != null)
-                Move(Ui.FindChild<RectTransform>(TopLeftControlScreen.Instance.transform, "SandboxToggle"), popMgmt);
+                sandbox = Move(Ui.FindChild<RectTransform>(TopLeftControlScreen.Instance.transform, "SandboxToggle"), topHolder);
             if (OverlayMenu.Instance != null)
             {
                 overlaySource = OverlayMenu.Instance.transform.Find("OverlaysBar");
@@ -528,27 +527,44 @@ namespace OniMobile
                 Ui.PlaceCorner(redAlert, x, 16f);
                 redAlert.sizeDelta = new Vector2(30f, 30f);
                 Ui.ScaleToHeight(redAlert, 52f);
-                x += 52f + 24f;
+                x += 52f + 8f;
             }
+            if (sandbox != null)
+            {
+                // The sandbox toggle as its icon only.
+                Ui.PlaceCorner(sandbox, x, 16f);
+                sandbox.sizeDelta = new Vector2(30f, 30f);
+                Ui.ScaleToHeight(sandbox, 52f);
+                Transform label = sandbox.Find("Label"), icon = sandbox.Find("FG");
+                if (label != null && label.gameObject.activeSelf)
+                    label.gameObject.SetActive(false);
+                if (icon != null)
+                {
+                    var rect = (RectTransform)icon;
+                    rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0.5f, 0.5f);
+                    rect.anchoredPosition = Vector2.zero;
+                }
+                x += 52f + 8f;
+            }
+            overlays.Place(Margin, 12f, TopCell, TopCell, true);
+            help.Place(Margin + TopCell + 8f, 12f, TopCell, TopCell, true);
+            diagnostics.Place(Margin + 2 * (TopCell + 8f), 12f, TopCell, TopCell, true);
+            LayoutManagementBar(Margin + 3 * (TopCell + 8f));
             if (meters != null)
             {
-                // The meters are 32 units high.
-                Ui.PlaceCorner(meters, x, 20f);
-                float scale = 48f * Ui.U / 32f;
+                // A second row under the speed controls: the management bar takes the room
+                // they had. The meters are 32 units high.
+                Ui.PlaceCorner(meters, SpeedX, MetersY);
+                float scale = 36f * Ui.U / 32f;
                 meters.localScale = new Vector3(scale, scale, 1f);
             }
-            management.Place(Margin, 12f, TopCell, TopCell, true);
-            overlays.Place(Margin + TopCell + 8f, 12f, TopCell, TopCell, true);
-            help.Place(Margin + 2 * (TopCell + 8f), 12f, TopCell, TopCell, true);
-            diagnostics.Place(Margin + 3 * (TopCell + 8f), 12f, TopCell, TopCell, true);
-            management.Active = pop == Pop.Management || managementOpen;
             overlays.Active = pop == Pop.Overlays || OverlayScreen.Instance.GetMode() != OverlayModes.None.ID;
             help.Active = HelpMode.On;
             diagnostics.Active = pop == Pop.Diagnostics;
 
             // Left column: notifications, build. Covered by B1 and M1, so hidden with them.
             Show(left, !buildOpen && !managementOpen);
-            Ui.Place(notifHolder, 56f, 8f + ClockSize + 8f, 0f, 0f);
+            Ui.Place(notifHolder, 56f, MetersY + 44f, 0f, 0f);
             if (notifications != null)
             {
                 notifications.anchorMin = notifications.anchorMax = new Vector2(0f, 1f);
@@ -576,6 +592,8 @@ namespace OniMobile
                 // Room for the label under each icon.
                 grid.spacing = new Vector2(4f, 22f);
             }
+            foreach (Transform categoryButton in planGrid)
+                ShortShadow(categoryButton);
             planGrid.anchorMin = planGrid.anchorMax = new Vector2(0f, 1f);
             planGrid.pivot = new Vector2(0f, 1f);
             planGrid.anchoredPosition = Vector2.zero;
@@ -681,11 +699,9 @@ namespace OniMobile
                 pop = Pop.None;
             scrim.SetActive(pop != Pop.None);
             Show(popover, pop != Pop.None);
-            popMgmt.gameObject.SetActive(pop == Pop.Management);
             popOverlays.gameObject.SetActive(pop == Pop.Overlays);
             popDiag.gameObject.SetActive(pop == Pop.Diagnostics);
             popMore.gameObject.SetActive(pop == Pop.MoreTools);
-            PlacePopover(popMgmt, Margin, Top);
             PlacePopover(popOverlays, Margin, Top);
             PlacePopover(popDiag, Margin, Top);
             PlacePopover(popMore, Margin + Step, 432f);
@@ -693,13 +709,11 @@ namespace OniMobile
             popDiag.sizeDelta = new Vector2(480f * Ui.U, popDiag.sizeDelta.y);
             var fit = popDiag.GetComponent<ContentSizeFitter>() ?? popDiag.gameObject.AddComponent<ContentSizeFitter>();
             fit.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            // The management and overlay menus destroy and remake their toggles in their
-            // own place when they refresh (input device, research).
-            Adopt(managementSource, popMgmt, false);
+            // The overlay menu destroys and remakes its toggles in its own place when it
+            // refreshes (input device, research).
             Adopt(overlaySource, popOverlays, true);
             foreach (Transform cell in popOverlays.Cast())
                 FitCell(cell as RectTransform);
-            SizeGrid(popMgmt, 220f, 60f);
             SizeGrid(popOverlays, Cell, Cell);
             SizeGrid(popMore, Cell, Cell);
             foreach (RectTransform cell in moreCells)
@@ -708,8 +722,42 @@ namespace OniMobile
             HelpMode.Layout();
         }
 
+        // The management bar, right aligned at right (reference pixels from the right
+        // edge), its buttons 52 high and without their labels. The menu remakes its
+        // buttons when it refreshes, so this runs every frame.
+        void LayoutManagementBar(float right)
+        {
+            if (managementBar == null)
+                return;
+            foreach (Transform child in managementBar.Cast())
+            {
+                if (child.GetComponent<KToggle>() == null)
+                    continue;
+                bool keep = System.Array.IndexOf(DroppedManagement, child.name) < 0;
+                if (child.gameObject.activeSelf != keep)
+                    child.gameObject.SetActive(keep);
+                Transform label = child.Find("TextContainer");
+                if (label != null && label.gameObject.activeSelf)
+                    label.gameObject.SetActive(false);
+                var size = child.GetComponent<LayoutElement>();
+                if (size != null)
+                {
+                    size.minWidth = size.preferredWidth = 40f;
+                    size.flexibleWidth = 0f;
+                }
+            }
+            // Level with the top right buttons (y 12 to 76); its layout pads the bottom.
+            managementBar.anchorMin = managementBar.anchorMax = new Vector2(1f, 1f);
+            managementBar.pivot = new Vector2(1f, 0.5f);
+            managementBar.sizeDelta = new Vector2(LayoutUtility.GetPreferredWidth(managementBar),
+                LayoutUtility.GetPreferredHeight(managementBar));
+            float scale = 52f * Ui.U / 32f;
+            managementBar.localScale = new Vector3(scale, scale, 1f);
+            managementBar.anchoredPosition = new Vector2(-right * Ui.U, -(TopCell / 2f) * Ui.U);
+        }
+
         // Moves the toggles a game menu (re)made under source into target, each in a
-        // cell of its own when wrap is set, and drops the cells of destroyed toggles.
+        // cell of its own, and drops the cells of destroyed toggles.
         static void Adopt(Transform source, RectTransform target, bool wrap)
         {
             if (source == null)
@@ -762,6 +810,16 @@ namespace OniMobile
             Transform label = toggle.Find("Text");
             if (label != null)
                 label.localScale = Vector3.zero;
+            ShortShadow(toggle);
+        }
+
+        // The game's drop shadow under a button, about a third as far (8, -5 units in the
+        // game): at phone size the full one is heavy.
+        static void ShortShadow(Transform button)
+        {
+            Transform shadow = button.Find("Shadow");
+            if (shadow != null)
+                ((RectTransform)shadow).anchoredPosition = new Vector2(2.8f, -1.8f);
         }
 
         // Shrinks the details body until the whole panel (title, tabs, body, buttons) is
