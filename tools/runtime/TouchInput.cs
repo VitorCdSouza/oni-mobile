@@ -13,7 +13,7 @@
 //                             starts on the UI or a tool other than Select is
 //                             active, drags with the left button (area tools,
 //                             scroll lists, sliders)
-//   two fingers               pan with the middle point, pinch to zoom (wheel steps)
+//   two fingers               pan with the middle point, pinch to zoom
 //
 // UnityEngine.UI's input module reads the same calls through BaseInput, so it
 // sees this mouse too; touchCount reads as 0 there so it does not also handle
@@ -85,8 +85,9 @@ namespace OniMobile
 
         const int Left = 0, Right = 1, Middle = 2;
         const float LongPressSeconds = 0.5f;
-        // Finger distance ratio per zoom step (one wheel notch).
-        const float PinchStep = 1.12f;
+        // CameraController.zoomSpeed while pinching: the camera eases toward its target size
+        // by zoomSpeed times the frame time, and at this speed it gets there in the frame.
+        const float PinchZoomSpeed = 1000f;
 
         static readonly bool[] held = new bool[3];
         static readonly bool[] pressed = new bool[3];
@@ -103,6 +104,8 @@ namespace OniMobile
 
         static Func<bool> overUI;
         static Func<bool> selectToolActive;
+        static Action<float> zoomBy;
+        static Action endZoom;
 
         public static Vector3 mousePosition
         {
@@ -295,8 +298,11 @@ namespace OniMobile
                     Release(Left);
                     break;
                 case Gesture.Pan:
+                    Release(Middle);
+                    break;
                 case Gesture.Pinch:
                     Release(Middle);
+                    EndZoom();
                     break;
             }
             gesture = Gesture.None;
@@ -342,6 +348,7 @@ namespace OniMobile
                 case Gesture.Pinch:
                     // One of the two fingers lifted: stop, and wait for the other.
                     Release(Middle);
+                    EndZoom();
                     gesture = Gesture.Done;
                     break;
             }
@@ -369,19 +376,68 @@ namespace OniMobile
                     break;
                 case Gesture.Pinch:
                     position = middle;
-                    float ratio = distance / pinchDistance;
-                    if (ratio > PinchStep)
-                    {
-                        scroll = 1;
-                        pinchDistance = distance;
-                    }
-                    else if (ratio < 1f / PinchStep)
-                    {
-                        scroll = -1;
-                        pinchDistance = distance;
-                    }
+                    if (distance != pinchDistance)
+                        ZoomBy(distance / pinchDistance);
+                    pinchDistance = distance;
                     break;
             }
+        }
+
+        // Pinch zoom follows the fingers: each frame the camera's target size shrinks by the
+        // change in finger distance, and its zoom speed is raised so it gets there at once,
+        // around the point under the pointer (the middle of the fingers). Wheel steps, one
+        // notch per 12% of finger distance and then eased in, lagged behind the fingers.
+        static void ZoomBy(float ratio)
+        {
+            if (zoomBy == null)
+                FindCamera();
+            zoomBy(ratio);
+        }
+
+        static void EndZoom()
+        {
+            if (endZoom == null)
+                FindCamera();
+            endZoom();
+        }
+
+        // CameraController, through reflection (Assembly-CSharp references this assembly).
+        static void FindCamera()
+        {
+            zoomBy = ratio => { };
+            endZoom = () => { };
+            const BindingFlags member = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+            Type type = Type.GetType("CameraController, Assembly-CSharp");
+            PropertyInfo instance = type == null ? null : type.GetProperty("Instance", BindingFlags.Public | BindingFlags.Static);
+            PropertyInfo target = type == null ? null : type.GetProperty("targetOrthographicSize", member);
+            MethodInfo setTarget = target == null ? null : target.GetSetMethod(true);
+            FieldInfo speed = type == null ? null : type.GetField("zoomSpeed", member);
+            FieldInfo min = type == null ? null : type.GetField("minOrthographicSize", member);
+            FieldInfo max = type == null ? null : type.GetField("maxOrthographicSize", member);
+            if (instance == null || setTarget == null || speed == null || min == null || max == null)
+            {
+                Debug.LogWarning("OniMobile: CameraController zoom members not found");
+                return;
+            }
+            float normalSpeed = -1f;
+            zoomBy = ratio =>
+            {
+                object camera = instance.GetValue(null, null);
+                if (camera == null)
+                    return;
+                if (normalSpeed < 0f)
+                    normalSpeed = (float)speed.GetValue(camera);
+                speed.SetValue(camera, PinchZoomSpeed);
+                float size = (float)target.GetValue(camera, null) / ratio;
+                size = Mathf.Clamp(size, (float)min.GetValue(camera), (float)max.GetValue(camera));
+                setTarget.Invoke(camera, new object[] { size });
+            };
+            endZoom = () =>
+            {
+                object camera = instance.GetValue(null, null);
+                if (camera != null && normalSpeed >= 0f)
+                    speed.SetValue(camera, normalSpeed);
+            };
         }
 
         static float DragSlop()
