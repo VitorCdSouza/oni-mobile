@@ -31,6 +31,20 @@ namespace OniMobile
             get { return Application.platform == RuntimePlatform.Android; }
         }
 
+        // The phone layout of the HUD (tools/layout). On the PC, ONI_MOBILE_UI=1 turns it
+        // on to check it in the IL2CPP Linux player.
+        public static bool MobileUI
+        {
+            get
+            {
+                if (mobileUI < 0)
+                    mobileUI = IsAndroid || Environment.GetEnvironmentVariable("ONI_MOBILE_UI") == "1" ? 1 : 0;
+                return mobileUI == 1;
+            }
+        }
+
+        static int mobileUI = -1;
+
         // KCanvasScaler's scale when the player has not picked one. The game sizes its UI
         // for a 1080p monitor; on a phone the same pixels are about a third as big.
         // At the 720 line render height (Display.RenderHeight) the game's own screen
@@ -38,6 +52,30 @@ namespace OniMobile
         public static float DefaultUIScale()
         {
             return IsAndroid ? 1.75f : 1f;
+        }
+    }
+
+    // Starts OniMobile.MobileHud (tools/layout, OniMobile.Layout.dll) on the first input
+    // read. That assembly references Assembly-CSharp, which references this one, so it is
+    // found by name.
+    public static class LayoutLoader
+    {
+        static bool started;
+
+        public static void Ensure()
+        {
+            if (started)
+                return;
+            started = true;
+            Type hud = Type.GetType("OniMobile.MobileHud, OniMobile.Layout");
+            if (hud == null)
+            {
+                Debug.LogWarning("OniMobile: OniMobile.Layout not found");
+                return;
+            }
+            var host = new GameObject("OniMobile.MobileHud");
+            UnityEngine.Object.DontDestroyOnLoad(host);
+            host.AddComponent(hud);
         }
     }
 
@@ -70,6 +108,7 @@ namespace OniMobile
         {
             get
             {
+                LayoutLoader.Ensure();
                 if (!Platform.IsAndroid)
                     return Input.mousePosition;
                 Update();
