@@ -40,6 +40,8 @@ namespace OniMobile
         // The diagnostics and resources panels, a little smaller than the notifications so
         // they are about as wide; with notifications on screen they are scaled to line up.
         const float ColonyScale = 0.72f;
+        // Build categories in the row right of the exit button; the rest go in a row above.
+        const int CategoriesPerRow = 8;
         const float ClockSize = 88f, SpeedX = 56f + ClockSize + 8f;
 
         Pop pop;
@@ -615,33 +617,15 @@ namespace OniMobile
             buildExit.Visible = buildOpen;
             buildExit.Place(56f, 620f, 64f, 64f);
 
-            // B1: the categories in three columns, right of the exit button; B2: the building
-            // grid; B3: the chosen building.
+            // B1: the categories in a row right of the exit button, the rest in a row above
+            // starting over the button; B2: the building grid; B3: the chosen building.
             Show(b1, buildOpen && !placing);
             // A popover folds the building grid and the details away until it closes.
             Show(b2, category && !placing && pop == Pop.None);
             Show(b3, placing);
-            float categoriesX = 56f + 64f + 8f;
-            Ui.Place(b1Holder, categoriesX, Top, 0f, 0f);
-            var grid = planGrid.GetComponent<GridLayoutGroup>();
-            if (grid != null)
-            {
-                grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-                grid.constraintCount = 3;
-                grid.startCorner = GridLayoutGroup.Corner.UpperLeft;
-                grid.startAxis = GridLayoutGroup.Axis.Horizontal;
-                // Room for the label under each icon.
-                grid.spacing = new Vector2(4f, 22f);
-            }
-            foreach (Transform categoryButton in planGrid)
-                ShortShadow(categoryButton);
-            planGrid.anchorMin = planGrid.anchorMax = new Vector2(0f, 1f);
-            planGrid.pivot = new Vector2(0f, 1f);
-            planGrid.anchoredPosition = Vector2.zero;
-            float cellScale = Cell * Ui.U / 45f;
-            planGrid.localScale = new Vector3(cellScale, cellScale, 1f);
+            float categoriesTop = PlaceCategories();
 
-            Ui.Place(b2Holder, categoriesX + planGrid.rect.width * cellScale / Ui.U + 8f, Top, 0f, 0f);
+            Ui.Place(b2Holder, 56f, Top, 0f, 0f);
             if (planPanel != null)
             {
                 planPanel.anchorMin = planPanel.anchorMax = new Vector2(0f, 1f);
@@ -653,7 +637,7 @@ namespace OniMobile
                 groups.anchorMin = groups.anchorMax = new Vector2(0f, 1f);
                 groups.pivot = new Vector2(0f, 1f);
                 groups.anchoredPosition = Vector2.zero;
-                groups.sizeDelta = new Vector2(groups.sizeDelta.x, 624f * Ui.U / scale);
+                groups.sizeDelta = new Vector2(groups.sizeDelta.x, (categoriesTop - 8f - Top) * Ui.U / scale);
             }
             Ui.Place(b3Holder, 56f, Top, 0f, 0f);
             if (productInfo != null)
@@ -870,6 +854,56 @@ namespace OniMobile
 
         // The game's drop shadow under a button, about a third as far (8, -5 units in the
         // game): at phone size the full one is heavy.
+        // Lays the build categories out by hand: up to CategoriesPerRow in a row right of the
+        // exit button, centred on it, the rest in a row above that starts over the button.
+        // Each label hangs under its tile. Returns the top of the categories, in reference
+        // pixels.
+        float PlaceCategories()
+        {
+            const float rowTop = 620f + 32f - Cell / 2f, stepX = Cell + 16f, stepY = Cell + 26f;
+            var buttons = new List<RectTransform>();
+            foreach (Transform child in planGrid)
+                if (child.gameObject.activeSelf && child.GetComponent<KToggle>() != null)
+                    buttons.Add((RectTransform)child);
+            bool twoRows = buttons.Count > CategoriesPerRow;
+            float top = twoRows ? rowTop - stepY : rowTop;
+
+            // The grid and its fitter would put the buttons back in columns, and its hitbox
+            // would cover the exit button.
+            var grid = planGrid.GetComponent<GridLayoutGroup>();
+            if (grid != null)
+                grid.enabled = false;
+            var fitter = planGrid.GetComponent<ContentSizeFitter>();
+            if (fitter != null)
+                fitter.enabled = false;
+            var hitbox = planGrid.Find("Hitbox");
+            if (hitbox != null && hitbox.GetComponent<Graphic>() != null)
+                hitbox.GetComponent<Graphic>().raycastTarget = false;
+
+            Ui.Place(b1Holder, 56f, top, 0f, 0f);
+            float cellScale = Cell * Ui.U / 45f;
+            planGrid.anchorMin = planGrid.anchorMax = new Vector2(0f, 1f);
+            planGrid.pivot = new Vector2(0f, 1f);
+            planGrid.anchoredPosition = Vector2.zero;
+            planGrid.localScale = new Vector3(cellScale, cellScale, 1f);
+            planGrid.sizeDelta = Vector2.zero;
+            // In the grid's own units, 45 to a tile.
+            float unit = 45f / Cell;
+            for (int i = 0; i < buttons.Count; i++)
+            {
+                bool lower = i < CategoriesPerRow;
+                float x = lower ? 64f + 8f + i * stepX : (i - CategoriesPerRow) * stepX;
+                float y = lower && twoRows ? stepY : 0f;
+                RectTransform button = buttons[i];
+                button.anchorMin = button.anchorMax = new Vector2(0f, 1f);
+                button.pivot = new Vector2(0.5f, 1f);
+                button.sizeDelta = new Vector2(45f, 45f);
+                button.anchoredPosition = new Vector2((x + Cell / 2f) * unit, -y * unit);
+                ShortShadow(button);
+            }
+            return top;
+        }
+
         static void ShortShadow(Transform button)
         {
             Transform shadow = button.Find("Shadow");
