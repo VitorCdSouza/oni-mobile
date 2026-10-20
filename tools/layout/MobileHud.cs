@@ -6,7 +6,7 @@
 // The game's own panels are moved, not rebuilt: each one is reparented into a
 // holder of this HUD and its position, size and scale are set again every frame,
 // since the game resets some of them when it refreshes. Only the few new buttons
-// (build, crosshair, tips, overlays, management, diagnostics, exit, rotate) are
+// (build, tips, overlays, management, diagnostics, exit, rotate) are
 // made here. Panels belong to slots that decide what may be open together:
 //   slot 0  always on screen: clock, speed, alerts, meters, notifications, rails
 //   slot A  work, one at a time: build menu, an active tool, a selection
@@ -546,7 +546,7 @@ namespace OniMobile
             help.Active = HelpMode.On;
             diagnostics.Active = pop == Pop.Diagnostics;
 
-            // Left column: notifications, crosshair, build. Covered by B1 and M1, so hidden with them.
+            // Left column: notifications, build. Covered by B1 and M1, so hidden with them.
             Show(left, !buildOpen && !managementOpen);
             Ui.Place(notifHolder, 56f, 8f + ClockSize + 8f, 0f, 0f);
             if (notifications != null)

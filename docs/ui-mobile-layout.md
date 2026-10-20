@@ -14,6 +14,8 @@ centro fica só o mapa. Os painéis grandes abrem como folhas laterais, nunca em
 - Alvo padrão de 72 px (6,9 mm, ~48 dp); Construir 96 px, Sair e Girar 92 px (~9 mm). O brief
   pedia 9 mm, que são 93 px e não 53: com 93 px em tudo cada coluna lateral teria só 6 botões.
 - Margem de 56 px à esquerda (furo da câmera, 48 px livres) e de 8 px nas outras bordas.
+- Os botões novos copiam o botão de categoria de construção do jogo (fundo, sombra, fonte do
+  rótulo), lidos em tempo de execução.
 - Fonte de corpo ~20 px (1,9 mm), nunca abaixo de 18 px: é a escala de 175% do jogo a 720 linhas.
 
 ## Elementos
@@ -22,17 +24,16 @@ Posição x, y do canto superior esquerdo, em px de referência.
 
 | Código | Elemento | x, y | L x A | Original do jogo |
 | --- | --- | --- | --- | --- |
-| H1 | Relógio do ciclo | 56, 8 | 72x72 | `DateTime` (AsteroidClockPanel) |
-| H2 | Velocidade: pausa, 1x, 2x, 3x | 136, 8 | ~280x72 | `SpeedControlScreen` |
-| H3 | Alerta vermelho | após H2 | 72x72 | `RedAlertButton` do `TopLeftControlScreen` |
+| H1 | Relógio do ciclo | 56, 8 | 88x88 | `DateTime` (AsteroidClockPanel) |
+| H2 | Velocidade: pausa, 1x, 2x, 3x | 152, 16 | ~210x52 | `SpeedControlScreen` |
+| H3 | Alerta vermelho | após H2 | 52x52 | `RedAlertButton` do `TopLeftControlScreen` |
 | — | Medidores (duplicantes, estresse, doença, rações) | após H3, y 16 | altura 56 | `MeterScreen` |
 | H10 | Diagnóstico (abre Q1) | direita 236 | 72x72 | novo |
 | H9 | Modo dica (?) | direita 160 | 72x72 | novo |
 | H8 | Overlays (abre O1) | direita 84 | 72x72 | novo |
 | H7 | Gestão (abre Q2) | direita 8 | 72x72 | novo |
-| H4 | Trilho de notificações, só ícones | 56, 88 | 72x228 | `NotificationScreen` recortada |
-| H6 | Mira | 56, 536 | 72x72 | novo |
-| H5 | Construir | 56, 616 | 96x96 | novo (abre B1) |
+| H4 | Notificações, a 80% | 56, 104 | | `NotificationScreen` |
+| H5 | Construir | 56, 600 | 88x88 | novo (abre B1) |
 | H11 | Trilho de ferramentas: 6 + Mais | direita 8, 88 | 72x532 | toggles do `ToolMenu` |
 | H12 | Sair da ferramenta | direita 8, 620 | 92x92 | novo (mesmo efeito do botão direito) |
 | B1 | Categorias, 2 colunas | 56, 88 | 160x624 | grade do `PlanScreen` |
@@ -48,7 +49,6 @@ Posição x, y do canto superior esquerdo, em px de referência.
 | Q1 | Diagnóstico e recursos | direita 8, 88 | 480 | `ColonyDiagnosticScreen`, `PinnedResourcesPanel` |
 | Q2 | Gestão, 2 colunas | direita 8, 88 | | toggles do `ManagementMenu` e o do Sandbox |
 | Q3 | Mais ferramentas, 3x2 | direita 84, 432 | | toggles do `ToolMenu` |
-| C2 | Retícula da mira | centro do mapa livre, y 400 | 64x64 | novo |
 | C3 | Balão de dica | junto ao toque | 320 de largura | novo, com o texto do `ToolTip` original |
 
 Os painéis do jogo são movidos para dentro de holders do HUD (`OniMobile.Hud`, no
@@ -72,9 +72,8 @@ HUD adota os novos a cada quadro.
 
 ## Substituto do hover
 
-- Mira (H6): a retícula C2 fica no centro do mapa livre e o ponteiro descansa nela quando não há
-  dedo na tela (`TouchInput.RestingPointer`). O cartão de hover do jogo (`HoverTextScreen`) mostra a
-  célula sob a retícula; arrastar a câmera passa as células por ela.
+- Célula: o cartão de hover do jogo (`HoverTextScreen`) fica onde foi o último toque. A mira do
+  design (H6, C2) foi feita e retirada a pedido.
 - Modo dica (H9): uma camada transparente pega o toque, acha o `ToolTip` do botão embaixo e mostra o
   texto num balão. Fica ligado até tocar no "?" de novo.
 - Rótulo efêmero: ao ativar uma ferramenta, o nome dela aparece por 1,8 s acima da barra P.
@@ -88,8 +87,8 @@ HUD adota os novos a cada quadro.
 - H3 é o alerta vermelho do canto superior esquerdo do PC; o contador de alertas de colônia (Q5) não
   foi feito. H10 é só o botão que abre Q1, sem os três indicadores; os medidores do PC
   (`MeterScreen`) ocupam a linha de cima.
-- H4 mostra a lista original recortada em 72 px; tocar num ícone abre a mensagem original (sem o
-  popover Q4).
+- H4 é a lista original de notificações, inteira e a 80% (recortada em 72 px ficava ilegível),
+  sem o popover Q4.
 - B3 começa recolhido (o cabeçalho do próprio painel expande) e encolhe até 70% se não couber.
 - Não feito: raio de toque de 36 px para selecionar objetos pequenos, o cartão C1 ao lado do dedo
   por 4 s (o cartão do jogo fica onde foi o último toque), a trava de orientação ou o espelhamento
@@ -102,4 +101,4 @@ HUD adota os novos a cada quadro.
 (`tools/layout/Probe.cs`) tira prints e dumps da árvore da UI. Sem `--mono` roda o player IL2CPP de
 `build/linux-swap`. Os estados do design ficam em `tools/layout/States.cs` (`idle`, `build`, `place`,
 `dig`, `select`, `prio`, `research`, `overlay`) mais `popmgmt`, `popoverlays`, `popdiag`, `popmore`
-e `buildmenu`; `tip:x,y` e `crosshair` testam os substitutos do hover.
+e `buildmenu`; `tip:x,y` testa o modo dica. `make run` deixa o jogo aberto para testar à mão.
