@@ -37,8 +37,9 @@ namespace OniMobile
         const float OverlayCell = 44f;
         // A hammer, the game's build errand icon.
         const string BuildIcon = "icon_errand_build";
-        // The diagnostics and resources panels, at the notifications' size.
-        const float ColonyScale = 0.8f;
+        // The diagnostics and resources panels, a little smaller than the notifications so
+        // they are about as wide.
+        const float ColonyScale = 0.72f;
         const float ClockSize = 88f, SpeedX = 56f + ClockSize + 8f;
 
         Pop pop;
@@ -568,11 +569,12 @@ namespace OniMobile
             // M1, so hidden with them.
             Show(left, !buildOpen && !managementOpen);
             Show(colonyGroup, !buildOpen && !managementOpen);
-            float colonyHeight = LayoutUtility.GetPreferredHeight(colony) / Ui.U;
-            Ui.Place(colony, 56f, 8f + ClockSize + 4f, 300f / ColonyScale, colonyHeight);
+            // About as wide as the notification list: the panels do not get narrower than
+            // their minimum width, so they are drawn a little smaller instead.
+            float colonyWidth = Mathf.Max(LayoutUtility.GetMinWidth(colony), notifications != null ? notifications.rect.width : 263f);
+            Ui.Place(colony, 56f, 8f + ClockSize + 4f, colonyWidth / Ui.U, LayoutUtility.GetPreferredHeight(colony) / Ui.U);
             colony.localScale = new Vector3(ColonyScale, ColonyScale, 1f);
-            // The resources panel's "See All" link hangs under its own rectangle.
-            Ui.Place(notifHolder, 56f, 8f + ClockSize + 4f + colonyHeight * ColonyScale + 28f, 0f, 0f);
+            Ui.Place(notifHolder, 56f, Bottom(colony) + 8f, 0f, 0f);
             if (notifications != null)
             {
                 notifications.anchorMin = notifications.anchorMax = new Vector2(0f, 1f);
@@ -725,6 +727,22 @@ namespace OniMobile
             foreach (RectTransform cell in moreCells)
                 FitCell(cell);
 
+        }
+
+        // The lowest edge of what is drawn under root, in reference pixels from the top. The
+        // resources panel's rows and links hang out of its own rectangle.
+        static float Bottom(RectTransform root)
+        {
+            float bottom = 0f;
+            var corners = new Vector3[4];
+            foreach (Graphic graphic in root.GetComponentsInChildren<Graphic>())
+            {
+                if (!graphic.enabled || graphic.color.a <= 0f)
+                    continue;
+                graphic.rectTransform.GetWorldCorners(corners);
+                bottom = Mathf.Max(bottom, (Screen.height - corners[0].y) / Screen.height * 720f);
+            }
+            return bottom;
         }
 
         // The management bar, right aligned at right (reference pixels from the right

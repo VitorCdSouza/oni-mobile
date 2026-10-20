@@ -30,7 +30,7 @@ Posição x, y do canto superior esquerdo, em px de referência.
 | — | Sandbox, só o ícone | após H3 | 52x52 | `SandboxToggle` do `TopLeftControlScreen` |
 | — | Medidores (duplicantes, estresse, doença, rações) | à direita do Sandbox, y 22 | altura 40 | `MeterScreen` |
 | Q2 | Barra de gestão, só ícones (sem Reports e Codex) | direita 8, y 12 | altura 52 | `ManagementMenu` |
-| H4 | Notificações, a 80% | 56, sob Q1 | | `NotificationScreen` |
+| H4 | Notificações, a 80% | 56, sob o que Q1 desenha | | `NotificationScreen` |
 | H5 | Construir (martelo, `icon_errand_build`); no modo construção vira Sair | 56, 620 | 64x64 | novo |
 | H11 | Trilho de ferramentas: 6 + Mais | direita 8, 88 | 72x532 | toggles do `ToolMenu` |
 | H12 | Sair da ferramenta | direita 8, 622 | 72x72 | novo (mesmo efeito do botão direito) |
@@ -44,7 +44,7 @@ Posição x, y do canto superior esquerdo, em px de referência.
 | M1 | Telas de tabela | 56, 88 | largura da tela x 624 | `JobsTableScreen` e afins |
 | O1 | Overlays, uma fileira sempre à vista (some com ferramenta ou prédio ativos) | direita 8, 668 | botões de 44 | toggles do `OverlayMenu` |
 | O2 | Legenda do overlay | 160, de baixo para cima | | `OverlayLegend` |
-| Q1 | Diagnóstico e recursos, painéis dobráveis como no PC, a 80% | 56, 100 | 300 | `ColonyDiagnosticScreen`, `PinnedResourcesPanel` |
+| Q1 | Diagnóstico e recursos, painéis dobráveis como no PC, a 72% | 56, 100 | largura das notificações | `ColonyDiagnosticScreen`, `PinnedResourcesPanel` |
 | Q3 | Mais ferramentas, 3x2 | direita 84, 432 | | toggles do `ToolMenu` |
 
 Os painéis do jogo são movidos para dentro de holders do HUD (`OniMobile.Hud`, no
