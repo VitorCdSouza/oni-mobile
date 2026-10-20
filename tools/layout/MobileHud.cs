@@ -40,8 +40,6 @@ namespace OniMobile
         // The diagnostics and resources panels, a little smaller than the notifications so
         // they are about as wide; with notifications on screen they are scaled to line up.
         const float ColonyScale = 0.72f;
-        // Build categories in the row right of the exit button; the rest go in a row above.
-        const int CategoriesPerRow = 8;
         const float ClockSize = 88f, SpeedX = 56f + ClockSize + 8f;
 
         Pop pop;
@@ -852,21 +850,19 @@ namespace OniMobile
             ShortShadow(toggle);
         }
 
-        // The game's drop shadow under a button, about a third as far (8, -5 units in the
-        // game): at phone size the full one is heavy.
-        // Lays the build categories out by hand: up to CategoriesPerRow in a row right of the
-        // exit button, centred on it, the rest in a row above that starts over the button.
-        // Each label hangs under its tile. Returns the top of the categories, in reference
-        // pixels.
+        // Lays the build categories out by hand, all in one row right of the exit button and
+        // centred on it, closer together if they would run into the tool rail. Each label
+        // hangs under its tile. Returns the top of the categories, in reference pixels.
         float PlaceCategories()
         {
-            const float rowTop = 620f + 32f - Cell / 2f, stepX = Cell + 16f, stepY = Cell + 26f;
+            const float top = 620f + 32f - Cell / 2f, firstX = 64f + 8f;
             var buttons = new List<RectTransform>();
             foreach (Transform child in planGrid)
                 if (child.gameObject.activeSelf && child.GetComponent<KToggle>() != null)
                     buttons.Add((RectTransform)child);
-            bool twoRows = buttons.Count > CategoriesPerRow;
-            float top = twoRows ? rowTop - stepY : rowTop;
+            // The row ends short of the tool rail (72 wide, 8 from the right edge).
+            float room = Ui.Width - 88f - 56f - firstX - Cell;
+            float stepX = buttons.Count > 1 ? Mathf.Min(Cell + 16f, room / (buttons.Count - 1)) : 0f;
 
             // The grid and its fitter would put the buttons back in columns, and its hitbox
             // would cover the exit button.
@@ -891,19 +887,19 @@ namespace OniMobile
             float unit = 45f / Cell;
             for (int i = 0; i < buttons.Count; i++)
             {
-                bool lower = i < CategoriesPerRow;
-                float x = lower ? 64f + 8f + i * stepX : (i - CategoriesPerRow) * stepX;
-                float y = lower && twoRows ? stepY : 0f;
+                float x = firstX + i * stepX;
                 RectTransform button = buttons[i];
                 button.anchorMin = button.anchorMax = new Vector2(0f, 1f);
                 button.pivot = new Vector2(0.5f, 1f);
                 button.sizeDelta = new Vector2(45f, 45f);
-                button.anchoredPosition = new Vector2((x + Cell / 2f) * unit, -y * unit);
+                button.anchoredPosition = new Vector2((x + Cell / 2f) * unit, 0f);
                 ShortShadow(button);
             }
             return top;
         }
 
+        // The game's drop shadow under a button, about a third as far (8, -5 units in the
+        // game): at phone size the full one is heavy.
         static void ShortShadow(Transform button)
         {
             Transform shadow = button.Find("Shadow");
