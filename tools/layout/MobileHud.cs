@@ -38,7 +38,7 @@ namespace OniMobile
         // A hammer, the game's build errand icon.
         const string BuildIcon = "icon_errand_build";
         // The diagnostics and resources panels, a little smaller than the notifications so
-        // they are about as wide.
+        // they are about as wide; with notifications on screen they are scaled to line up.
         const float ColonyScale = 0.72f;
         const float ClockSize = 88f, SpeedX = 56f + ClockSize + 8f;
 
@@ -381,6 +381,23 @@ namespace OniMobile
             column.childAlignment = TextAnchor.UpperLeft;
             colonyGroup = colony.gameObject.AddComponent<CanvasGroup>();
             Move(diag, colony);
+            // Its own fitter keeps it at its preferred width, a little narrower than the
+            // resources panel; the column sizes it instead, and it sizes its panel.
+            var diagFitter = diag != null ? diag.GetComponent<ContentSizeFitter>() : null;
+            if (diagFitter != null)
+                diagFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            if (diag != null)
+            {
+                Transform panel = diag.transform.Find("Diagnostics");
+                foreach (Transform node in new[] { diag.transform, panel })
+                {
+                    var diagColumn = node != null ? node.GetComponent<VerticalLayoutGroup>() : null;
+                    if (diagColumn == null)
+                        continue;
+                    diagColumn.childControlWidth = true;
+                    diagColumn.childForceExpandWidth = true;
+                }
+            }
             if (PinnedResourcesPanel.Instance != null)
                 Move(PinnedResourcesPanel.Instance, colony);
             foreach (RectTransform cell in moreCells)
@@ -574,14 +591,24 @@ namespace OniMobile
             float colonyWidth = Mathf.Max(LayoutUtility.GetMinWidth(colony), notifications != null ? notifications.rect.width : 263f);
             Ui.Place(colony, 56f, 8f + ClockSize + 4f, colonyWidth / Ui.U, LayoutUtility.GetPreferredHeight(colony) / Ui.U);
             colony.localScale = new Vector3(ColonyScale, ColonyScale, 1f);
-            Ui.Place(notifHolder, 56f, Bottom(colony) + 8f, 0f, 0f);
             if (notifications != null)
             {
                 notifications.anchorMin = notifications.anchorMax = new Vector2(0f, 1f);
                 notifications.pivot = new Vector2(0f, 1f);
                 notifications.anchoredPosition = Vector2.zero;
                 notifications.localScale = new Vector3(0.8f, 0.8f, 1f);
+                // What the panels draw lines up with the notification rows on both sides: the
+                // scale stretches it to their width, then it moves onto their left edge.
+                Rect rows = Drawn(notifications), panels = Drawn(colony);
+                if (rows.width > 0f && panels.width > 0f)
+                {
+                    float stretch = rows.width / panels.width;
+                    colony.localScale = new Vector3(ColonyScale * stretch, ColonyScale * stretch, 1f);
+                    float panelsX = rows.xMin - (panels.xMin - 56f) * stretch;
+                    Ui.Place(colony, panelsX, 8f + ClockSize + 4f, colonyWidth / Ui.U, LayoutUtility.GetPreferredHeight(colony) / Ui.U);
+                }
             }
+            Ui.Place(notifHolder, 56f, Drawn(colony).yMax + 8f, 0f, 0f);
             // Its label hangs under the tile, as on the game's buttons.
             build.Visible = !buildOpen && !managementOpen;
             build.Place(56f, 620f, 64f, 64f);
@@ -729,20 +756,24 @@ namespace OniMobile
 
         }
 
-        // The lowest edge of what is drawn under root, in reference pixels from the top. The
-        // resources panel's rows and links hang out of its own rectangle.
-        static float Bottom(RectTransform root)
+        // The rectangle of what is drawn under root, in reference pixels from the top left.
+        // The resources panel's rows and links hang out of its own rectangle.
+        static Rect Drawn(RectTransform root)
         {
-            float bottom = 0f;
+            float left = float.MaxValue, right = float.MinValue, bottom = 0f;
             var corners = new Vector3[4];
             foreach (Graphic graphic in root.GetComponentsInChildren<Graphic>())
             {
                 if (!graphic.enabled || graphic.color.a <= 0f)
                     continue;
                 graphic.rectTransform.GetWorldCorners(corners);
+                left = Mathf.Min(left, corners[0].x / Screen.height * 720f);
+                right = Mathf.Max(right, corners[2].x / Screen.height * 720f);
                 bottom = Mathf.Max(bottom, (Screen.height - corners[0].y) / Screen.height * 720f);
             }
-            return bottom;
+            if (left > right)
+                return new Rect(0f, 0f, 0f, bottom);
+            return Rect.MinMaxRect(left, 0f, right, bottom);
         }
 
         // The management bar, right aligned at right (reference pixels from the right
