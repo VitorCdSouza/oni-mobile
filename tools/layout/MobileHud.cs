@@ -147,17 +147,17 @@ namespace OniMobile
             MoveSheets();
 
             build = new HudButton("H5 build", leftHolder, "icon_category_base", null, "Build", ToggleBuild, true);
-            mira = new HudButton("H6 crosshair", leftHolder, "cursorIcon", "+", "Crosshair", () => Crosshair.On = !Crosshair.On);
+            mira = new HudButton("H6 crosshair", leftHolder, "cursorIcon", "+", "Crosshair", () => Crosshair.On = !Crosshair.On, true);
             help = new HudButton("H9 tips", topHolder, null, "?", "Tips", () => HelpMode.On = !HelpMode.On);
             overlays = new HudButton("H8 overlays", topHolder, "overlay_oxygen", "OVL", "Overlays", () => Toggle(Pop.Overlays));
             management = new HudButton("H7 management", topHolder, "OverviewUI_vitals_icon", "MGT", "Menu", () => Toggle(Pop.Management));
             diagnostics = new HudButton("H10 diagnostics", topHolder, "OverviewUI_reports_icon", "DIA", "Colony", () => Toggle(Pop.Diagnostics));
-            exit = new HudButton("H12 exit", hud, "cancel", "X", "Exit", Exit, true);
+            exit = new HudButton("H12 exit", hud, "icon_action_cancel", "X", "Exit", Exit, true);
             rotate = new HudButton("B4 rotate", hud, null, "↻", "Rotate", () =>
             {
                 if (BuildTool.Instance != null)
                     BuildTool.Instance.TryRotate();
-            });
+            }, true);
             toolName = Ui.Text("Tool name", hud, "", 20f);
             more = new HudButton("Q3 more", railHolder, null, "•••", "More", () => Toggle(Pop.MoreTools));
 
@@ -556,9 +556,10 @@ namespace OniMobile
                 notifications.anchoredPosition = Vector2.zero;
                 notifications.localScale = Vector3.one;
             }
-            mira.Place(56f, 536f, Cell, Cell);
+            // Labels hang under the tiles, as on the game's buttons.
+            mira.Place(56f, 496f, Cell, Cell);
             mira.Active = Crosshair.On;
-            build.Place(56f, 616f, 96f, 96f);
+            build.Place(56f, 600f, 88f, 88f);
             build.Active = buildOpen;
 
             // B1: the categories in two columns; B2: the building grid; B3: the chosen building.
@@ -613,9 +614,9 @@ namespace OniMobile
             }
             wasPlacing = placing;
             rotate.Visible = placing && PlayerController.Instance.ActiveTool == BuildTool.Instance;
-            rotate.Place(Margin + 100f, 620f, 92f, 92f, true);
+            rotate.Place(Margin + Cell + 24f, 622f, Cell, Cell, true);
             exit.Visible = buildOpen || tool;
-            exit.Place(Margin, 620f, 92f, 92f, true);
+            exit.Place(Margin, 622f, Cell, Cell, true);
 
             // H11: the tool rail, while no other work panel is open.
             Show(rail, !buildOpen && !selected && !managementOpen);

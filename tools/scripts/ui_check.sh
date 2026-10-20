@@ -10,7 +10,8 @@
 # Both need tools/scripts/setup_player_project.sh to have run.
 #
 # Usage: tools/scripts/ui_check.sh [--mono] <save.sav> <out dir> [steps]
-#   steps: e.g. "state:build;shot:build;dump:build" (default: shot:idle;dump:idle)
+#   steps: e.g. "state:build;shot:build;dump:build" (default: shot:idle;dump:idle),
+#   or "play" to leave the game open to try by hand, without the probe.
 set -euo pipefail
 
 MONO=0
@@ -74,6 +75,11 @@ fi
 
 cd "$RUN"
 status=0
+if [ "$STEPS" = play ]; then
+    XDG_CONFIG_HOME=$OUT/xdg ONI_MOBILE_UI=1 ./OxygenNotIncluded -screen-width 1600 -screen-height 720 \
+        -screen-fullscreen 0 -logFile "$OUT/player.log"
+    exit 0
+fi
 XDG_CONFIG_HOME=$OUT/xdg ONI_MOBILE_UI=1 ONI_MOBILE_PROBE=$OUT ONI_MOBILE_STEPS=$STEPS \
     timeout 300 ./OxygenNotIncluded -screen-width 1600 -screen-height 720 -screen-fullscreen 0 \
     -logFile "$OUT/player.log" || status=$?

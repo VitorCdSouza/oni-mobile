@@ -62,6 +62,7 @@ namespace OniMobile
                     break;
                 }
             }
+            ButtonStyle.Read();
             foreach (LocText text in Root.GetComponentsInChildren<LocText>(true))
             {
                 if (text.font == null)
@@ -196,11 +197,53 @@ namespace OniMobile
         }
     }
 
-    // A button of the phone HUD: the game's rounded box and button colors, a game icon or
-    // a short text, and optionally its label under it. The label is also its tip.
+    // The look of the game's build category buttons, read from the first one: a light
+    // tile with a drop shadow, the icon on it and the label under it.
+    public static class ButtonStyle
+    {
+        public static Sprite Shadow, Normal, Pressed;
+        public static Color ShadowColor = new Color(0f, 0f, 0f, 0.5f);
+        public static Color NormalColor = Color.white, PressedColor = Color.white;
+        public static Vector2 ShadowOffset = new Vector2(8f, -5f);
+        public static LocText Label;
+
+        public static void Read()
+        {
+            if (PlanScreen.Instance == null)
+                return;
+            KToggle toggle = PlanScreen.Instance.GetComponentInChildren<KToggle>(true);
+            if (toggle == null)
+                return;
+            Transform shadow = toggle.transform.Find("Shadow"), background = toggle.transform.Find("BG");
+            if (shadow != null)
+            {
+                var image = shadow.GetComponent<Image>();
+                Shadow = image.sprite;
+                ShadowColor = image.color;
+                ShadowOffset = ((RectTransform)shadow).anchoredPosition;
+            }
+            foreach (ImageToggleState state in toggle.GetComponents<ImageToggleState>())
+            {
+                if (background == null || state.TargetImage == null || state.TargetImage.transform != background)
+                    continue;
+                Normal = state.InactiveSprite;
+                Pressed = state.ActiveSprite != null ? state.ActiveSprite : state.InactiveSprite;
+                NormalColor = state.InactiveColour;
+                PressedColor = state.ActiveColour;
+            }
+            if (Normal == null && background != null)
+                Normal = Pressed = background.GetComponent<Image>().sprite;
+            Label = toggle.GetComponentInChildren<LocText>(true);
+        }
+    }
+
+    // A button of the phone HUD in the style of the game's build category buttons
+    // (ButtonStyle): a game icon or a short text on the tile, and optionally its label
+    // under it. The label is also its tip.
     public class HudButton
     {
         public RectTransform Rect;
+        readonly Image shadow;
         readonly Image background;
         readonly Image icon;
         readonly TextMeshProUGUI text;
@@ -211,10 +254,15 @@ namespace OniMobile
             bool showLabel = false)
         {
             Rect = Ui.Holder(name, parent);
-            background = Rect.gameObject.AddComponent<Image>();
-            background.sprite = Ui.ButtonSprite;
-            background.type = Image.Type.Sliced;
-            background.color = Ui.ButtonColor;
+            // The button's own image only catches the taps.
+            var hit = Rect.gameObject.AddComponent<Image>();
+            hit.color = new Color(0f, 0f, 0f, 0f);
+            shadow = Ui.Holder("Shadow", Rect).gameObject.AddComponent<Image>();
+            shadow.sprite = ButtonStyle.Shadow;
+            shadow.color = ButtonStyle.Shadow != null ? ButtonStyle.ShadowColor : new Color(0f, 0f, 0f, 0.35f);
+            shadow.raycastTarget = false;
+            background = Ui.Holder("BG", Rect).gameObject.AddComponent<Image>();
+            background.raycastTarget = false;
             var button = Rect.gameObject.AddComponent<UnityEngine.UI.Button>();
             button.transition = Selectable.Transition.None;
             button.onClick.AddListener(() =>
@@ -225,8 +273,7 @@ namespace OniMobile
             Sprite image = string.IsNullOrEmpty(sprite) ? null : Assets.GetSprite(sprite);
             if (image != null)
             {
-                var iconRect = Ui.Holder("Icon", Rect);
-                icon = iconRect.gameObject.AddComponent<Image>();
+                icon = Ui.Holder("Icon", Rect).gameObject.AddComponent<Image>();
                 icon.sprite = image;
                 icon.preserveAspect = true;
                 icon.raycastTarget = false;
@@ -234,10 +281,20 @@ namespace OniMobile
             else
             {
                 text = Ui.Text("Glyph", Rect, glyph ?? label, 26f);
+                text.fontStyle = FontStyles.Bold;
             }
-            if (showLabel && (image != null || glyph != null))
-                caption = Ui.Text("Caption", Rect, label, 15f);
+            if (showLabel)
+            {
+                caption = Ui.Text("Label", Rect, label, 16f);
+                if (ButtonStyle.Label != null)
+                {
+                    caption.font = ButtonStyle.Label.font;
+                    caption.fontSharedMaterial = ButtonStyle.Label.fontSharedMaterial;
+                    caption.color = ButtonStyle.Label.color;
+                }
+            }
             Tooltip = label;
+            Active = false;
             HelpMode.Register(this);
         }
 
@@ -249,7 +306,9 @@ namespace OniMobile
             set
             {
                 active = value;
-                background.color = value ? Ui.ButtonActiveColor : Ui.ButtonColor;
+                background.sprite = value ? ButtonStyle.Pressed : ButtonStyle.Normal;
+                background.color = background.sprite == null ? (value ? Ui.ButtonActiveColor : Ui.ButtonColor)
+                    : value ? ButtonStyle.PressedColor : ButtonStyle.NormalColor;
             }
         }
 
@@ -269,26 +328,26 @@ namespace OniMobile
             Resize(w, h);
         }
 
-        // Size and contents only, for a button placed by a layout group.
+        // Size and contents only, for a button placed by a layout group. The label goes
+        // under the tile, outside its rectangle, as on the game's buttons.
         public void Resize(float w, float h)
         {
             Rect.sizeDelta = new Vector2(w * Ui.U, h * Ui.U);
-            float iconSize = Mathf.Min(w, h) * (caption != null ? 0.5f : 0.56f);
-            float iconTop = caption != null ? h * 0.12f : (h - iconSize) / 2f;
+            float shadowX = ButtonStyle.ShadowOffset.x * h / 45f, shadowY = -ButtonStyle.ShadowOffset.y * h / 45f;
+            LayoutChild(shadow.rectTransform, shadowX, shadowY, w, h);
+            LayoutChild(background.rectTransform, 0f, 0f, w, h);
+            float inset = h * 6f / 45f;
             if (icon != null)
-                LayoutChild(icon.rectTransform, (w - iconSize) / 2f, iconTop, iconSize, iconSize);
+                LayoutChild(icon.rectTransform, inset, inset, w - 2f * inset, h - 2f * inset);
             if (text != null)
             {
-                LayoutChild(text.rectTransform, 0f, caption != null ? h * 0.08f : 0f, w, caption != null ? h * 0.6f : h);
-                text.fontSize = Mathf.Min(26f, h * 0.4f) * Ui.U;
+                LayoutChild(text.rectTransform, 0f, 0f, w, h);
+                text.fontSize = Mathf.Min(30f, h * 0.45f) * Ui.U;
             }
             if (caption != null)
             {
-                LayoutChild(caption.rectTransform, 2f, h * 0.66f, w - 4f, h * 0.3f);
-                caption.fontSize = 15f * Ui.U;
-                caption.enableAutoSizing = true;
-                caption.fontSizeMin = 11f * Ui.U;
-                caption.fontSizeMax = 15f * Ui.U;
+                LayoutChild(caption.rectTransform, -16f, h + 1f, w + 32f, 24f);
+                caption.fontSize = 18f * Ui.U;
             }
         }
 
