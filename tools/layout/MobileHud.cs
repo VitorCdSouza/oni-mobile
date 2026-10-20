@@ -28,6 +28,8 @@ namespace OniMobile
         static readonly string[] RailTools = { "DigTool", "CancelTool", "DeconstructTool", "PrioritizeTool", "ClearTool", "MopTool" };
 
         const float Cell = 72f, Step = 76f, Margin = 8f, Top = 88f;
+        // The top row: 64 high, so its buttons match the speed controls.
+        const float TopCell = 64f;
 
         Pop pop;
         bool buildMenu;
@@ -132,7 +134,6 @@ namespace OniMobile
             Ui.Stretch(leftHolder);
             left = leftHolder.gameObject.AddComponent<CanvasGroup>();
             notifHolder = Ui.Holder("H4 notifications", leftHolder);
-            notifHolder.gameObject.AddComponent<RectMask2D>();
             legendHolder = Ui.Holder("O2 legend", hud);
             topHolder = Ui.Holder("Top", hud);
             Ui.Stretch(topHolder);
@@ -145,13 +146,13 @@ namespace OniMobile
             MoveLegend();
             MoveSheets();
 
-            build = new HudButton("H5 build", leftHolder, "icon_category_base", null, "Build", ToggleBuild);
+            build = new HudButton("H5 build", leftHolder, "icon_category_base", null, "Build", ToggleBuild, true);
             mira = new HudButton("H6 crosshair", leftHolder, "cursorIcon", "+", "Crosshair", () => Crosshair.On = !Crosshair.On);
             help = new HudButton("H9 tips", topHolder, null, "?", "Tips", () => HelpMode.On = !HelpMode.On);
             overlays = new HudButton("H8 overlays", topHolder, "overlay_oxygen", "OVL", "Overlays", () => Toggle(Pop.Overlays));
             management = new HudButton("H7 management", topHolder, "OverviewUI_vitals_icon", "MGT", "Menu", () => Toggle(Pop.Management));
             diagnostics = new HudButton("H10 diagnostics", topHolder, "OverviewUI_reports_icon", "DIA", "Colony", () => Toggle(Pop.Diagnostics));
-            exit = new HudButton("H12 exit", hud, "cancel", "X", "Exit", Exit);
+            exit = new HudButton("H12 exit", hud, "cancel", "X", "Exit", Exit, true);
             rotate = new HudButton("B4 rotate", hud, null, "↻", "Rotate", () =>
             {
                 if (BuildTool.Instance != null)
@@ -159,8 +160,6 @@ namespace OniMobile
             });
             toolName = Ui.Text("Tool name", hud, "", 20f);
             more = new HudButton("Q3 more", railHolder, null, "•••", "More", () => Toggle(Pop.MoreTools));
-            // Sized once: the rail's layout group places it.
-            more.Place(0f, 0f, Cell, Cell);
 
             // Slot B: the scrim that closes a popover on a tap on the map, then the popovers.
             scrim = Ui.Scrim("Scrim", hud, () => pop = Pop.None).gameObject;
@@ -520,28 +519,28 @@ namespace OniMobile
             }
             if (speed != null)
             {
-                Ui.PlaceCorner(speed, 136f, 8f);
-                Ui.ScaleToHeight(speed, Cell);
+                Ui.PlaceCorner(speed, 136f, 12f);
+                Ui.ScaleToHeight(speed, TopCell);
             }
             float x = 136f + (speed != null ? speed.rect.width * speed.localScale.x / Ui.U : 280f) + 8f;
             if (redAlert != null)
             {
-                Ui.PlaceCorner(redAlert, x, 8f);
+                Ui.PlaceCorner(redAlert, x, 12f);
                 redAlert.sizeDelta = new Vector2(30f, 30f);
-                Ui.ScaleToHeight(redAlert, Cell);
-                x += Cell + 16f;
+                Ui.ScaleToHeight(redAlert, TopCell);
+                x += TopCell + 24f;
             }
             if (meters != null)
             {
                 // The meters are 32 units high.
-                Ui.PlaceCorner(meters, x, 16f);
-                float scale = 56f * Ui.U / 32f;
+                Ui.PlaceCorner(meters, x, 20f);
+                float scale = 48f * Ui.U / 32f;
                 meters.localScale = new Vector3(scale, scale, 1f);
             }
-            management.Place(Margin, 8f, Cell, Cell, true);
-            overlays.Place(Margin + Step, 8f, Cell, Cell, true);
-            help.Place(Margin + 2 * Step, 8f, Cell, Cell, true);
-            diagnostics.Place(Margin + 3 * Step, 8f, Cell, Cell, true);
+            management.Place(Margin, 12f, TopCell, TopCell, true);
+            overlays.Place(Margin + TopCell + 8f, 12f, TopCell, TopCell, true);
+            help.Place(Margin + 2 * (TopCell + 8f), 12f, TopCell, TopCell, true);
+            diagnostics.Place(Margin + 3 * (TopCell + 8f), 12f, TopCell, TopCell, true);
             management.Active = pop == Pop.Management || managementOpen;
             overlays.Active = pop == Pop.Overlays || OverlayScreen.Instance.GetMode() != OverlayModes.None.ID;
             help.Active = HelpMode.On;
@@ -549,13 +548,13 @@ namespace OniMobile
 
             // Left column: notifications, crosshair, build. Covered by B1 and M1, so hidden with them.
             Show(left, !buildOpen && !managementOpen);
-            Ui.Place(notifHolder, 56f, Top, Cell, 228f);
+            Ui.Place(notifHolder, 56f, Top, 0f, 0f);
             if (notifications != null)
             {
                 notifications.anchorMin = notifications.anchorMax = new Vector2(0f, 1f);
                 notifications.pivot = new Vector2(0f, 1f);
                 notifications.anchoredPosition = Vector2.zero;
-                notifications.localScale = new Vector3(1.4f, 1.4f, 1f);
+                notifications.localScale = Vector3.one;
             }
             mira.Place(56f, 536f, Cell, Cell);
             mira.Active = Crosshair.On;
@@ -623,6 +622,7 @@ namespace OniMobile
             Ui.Place(railHolder, Margin, Top, Cell, 7 * Step, true);
             foreach (RectTransform cell in railCells)
                 FitCell(cell);
+            more.Resize(Cell, Cell);
             more.Active = pop == Pop.MoreTools;
 
             toolName.gameObject.SetActive(tool && Time.unscaledTime < toolNameUntil);

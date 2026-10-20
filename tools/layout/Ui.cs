@@ -48,9 +48,17 @@ namespace OniMobile
                     var image = state.GetComponent<Image>();
                     if (image == null || image.sprite == null || state.name == "OuterGlow" || state.name == "AlertIcon")
                         continue;
-                    ButtonSprite = image.sprite;
                     ButtonColor = state.InactiveColour;
                     ButtonActiveColor = state.ActiveColour;
+                    break;
+                }
+            }
+            // The game's rounded box (8 px corners), as on its panels and buttons.
+            foreach (Sprite sprite in Resources.FindObjectsOfTypeAll<Sprite>())
+            {
+                if (sprite.name == "web_rounded_8")
+                {
+                    ButtonSprite = sprite;
                     break;
                 }
             }
@@ -188,8 +196,8 @@ namespace OniMobile
         }
     }
 
-    // A button of the phone HUD: the game's button sprite and colors, a game icon or a
-    // short text, and an optional caption under it.
+    // A button of the phone HUD: the game's rounded box and button colors, a game icon or
+    // a short text, and optionally its label under it. The label is also its tip.
     public class HudButton
     {
         public RectTransform Rect;
@@ -199,7 +207,8 @@ namespace OniMobile
         readonly TextMeshProUGUI caption;
         bool active;
 
-        public HudButton(string name, Transform parent, string sprite, string glyph, string label, System.Action onClick)
+        public HudButton(string name, Transform parent, string sprite, string glyph, string label, System.Action onClick,
+            bool showLabel = false)
         {
             Rect = Ui.Holder(name, parent);
             background = Rect.gameObject.AddComponent<Image>();
@@ -226,7 +235,7 @@ namespace OniMobile
             {
                 text = Ui.Text("Glyph", Rect, glyph ?? label, 26f);
             }
-            if (!string.IsNullOrEmpty(label) && (image != null || glyph != null))
+            if (showLabel && (image != null || glyph != null))
                 caption = Ui.Text("Caption", Rect, label, 15f);
             Tooltip = label;
             HelpMode.Register(this);
@@ -257,6 +266,13 @@ namespace OniMobile
         public void Place(float x, float y, float w, float h, bool right = false)
         {
             Ui.Place(Rect, x, y, w, h, right);
+            Resize(w, h);
+        }
+
+        // Size and contents only, for a button placed by a layout group.
+        public void Resize(float w, float h)
+        {
+            Rect.sizeDelta = new Vector2(w * Ui.U, h * Ui.U);
             float iconSize = Mathf.Min(w, h) * (caption != null ? 0.5f : 0.56f);
             float iconTop = caption != null ? h * 0.12f : (h - iconSize) / 2f;
             if (icon != null)

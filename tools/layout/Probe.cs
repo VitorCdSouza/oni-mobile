@@ -138,6 +138,9 @@ namespace OniMobile
                 text.Append(c.GetType().Name).Append(' ');
             }
             text.Append('}');
+            var image = node.GetComponent<Image>();
+            if (image != null && image.sprite != null)
+                text.Append($" sprite={image.sprite.name}/{image.type}/b{image.sprite.border.x:F0}");
             var label = node.GetComponent<TMPro.TMP_Text>();
             if (label != null && !string.IsNullOrEmpty(label.text))
                 text.Append(" \"").Append(Shorten(label.text)).Append('"');
