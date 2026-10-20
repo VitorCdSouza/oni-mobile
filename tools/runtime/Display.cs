@@ -57,6 +57,7 @@ namespace OniMobile
                 windowStart = lastFrame = now;
                 return;
             }
+            GfxProbe.Tick();
             worst = Mathf.Max(worst, now - lastFrame);
             lastFrame = now;
             frames++;

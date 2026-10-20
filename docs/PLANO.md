@@ -451,10 +451,12 @@ junto com o jogo de PC aberto travou a máquina, então build do Unity roda semp
 1. `tools/scripts/setup_player_project.sh`: copia e patcheia os DLLs, compila o runtime e gera o
    `Keep.cs`.
 2. `tools/scripts/setup_android_plugins.sh`: plugins arm64 e ícone.
-3. Build Android, em `unity/player`:
-   `~/Unity/Hub/Editor/6000.3.5f2/Editor/Unity -batchmode -nographics -quit -projectPath .
-   -buildTarget Android -executeMethod BuildPlayer.Android -logFile Logs/build-android.log`.
-   O build do Unity reinicia o servidor do adb, o que corta qualquer `adb push` em andamento.
+3. Build Android: `tools/scripts/build_android.sh`. Roda o Unity num scope do systemd com teto
+   de memória igual à memória disponível menos 1,5 GB e sem swap, e recusa começar com menos de
+   ~10,5 GB disponíveis. Com um teto fixo de 11 GB e navegador, Steam e Discord abertos, o desktop
+   inteiro entrou em swap e a máquina travou (2026-10-20). O log fica em
+   `unity/player/Logs/build-android.log`. O build do Unity reinicia o servidor do adb, o que corta
+   qualquer `adb push` em andamento.
 4. `tools/venv/bin/python -I tools/scripts/convert_data.py <Game_Data> build/data-android
    --platform android --shaders gles`. Só precisa ser refeito quando o conversor muda; para
    regravar só um arquivo, use `--only globalgamemanagers`.
