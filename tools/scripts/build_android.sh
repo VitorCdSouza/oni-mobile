@@ -8,6 +8,9 @@
 #
 # Usage: tools/scripts/build_android.sh [linux]   (environment passes through, e.g.
 #        ONI_IL2CPP_ARGS="--compiler-flags=-O2")
+# ONI_BUILD_JOBS=6 caps the compilers the IL2CPP C++ step runs at once (bee_backend's
+# BEE_BUILD_THREADS; by default one per core, 28 here, ~190 MB each), which lowers the
+# peak memory, and ONI_MIN_MB then lets the build start with less memory available.
 # With "linux" it builds the IL2CPP Linux player (BuildPlayer.Linux, Builds/Linux) for the
 # PC checks of tools/scripts/linux_swap.sh and ui_check.sh; the cap protects the desktop
 # the same way, and a build that hits it is killed.
@@ -20,6 +23,10 @@ TARGET=Android
 if [ "${1:-}" = linux ]; then
     TARGET=Linux
     MIN_MB=6144
+fi
+MIN_MB=${ONI_MIN_MB:-$MIN_MB}
+if [ -n "${ONI_BUILD_JOBS:-}" ]; then
+    export BEE_BUILD_THREADS=$ONI_BUILD_JOBS
 fi
 
 available=$(awk '/^MemAvailable:/ {print int($2 / 1024)}' /proc/meminfo)
