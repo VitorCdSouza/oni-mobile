@@ -97,6 +97,8 @@ namespace OniMobile
         static Vector2 startPosition;
         static float startTime;
         static float pinchDistance;
+        static int fingerA = -1, fingerB = -1;
+        static float wheelLog;
         static int scroll;
         static int releaseNextFrame = -1;
         static Vector3 position = new Vector3(Screen.width / 2f, Screen.height / 2f, 0f);
@@ -104,7 +106,7 @@ namespace OniMobile
 
         static Func<bool> overUI;
         static Func<bool> selectToolActive;
-        static Action<float> zoomBy;
+        static Func<float, bool> zoomBy;
         static Action endZoom;
 
         public static Vector3 mousePosition
@@ -277,12 +279,14 @@ namespace OniMobile
             Vector3 previous = position;
 
             int count = Input.touchCount;
-            if (count == 0)
+            if (!Application.isFocused)
+                CancelTouches();
+            else if (count == 0)
                 EndTouches();
             else if (count == 1)
                 OneFinger(Input.GetTouch(0).position);
             else
-                TwoFingers(Input.GetTouch(0).position, Input.GetTouch(1).position);
+                TwoFingers();
 
             delta = position - previous;
         }
@@ -305,6 +309,19 @@ namespace OniMobile
                     EndZoom();
                     break;
             }
+            gesture = Gesture.None;
+        }
+
+        // The app lost focus (notification shade, app switch) with fingers down: let go of
+        // every button without the click a lifted finger would give.
+        static void CancelTouches()
+        {
+            if (gesture == Gesture.None)
+                return;
+            Release(Left);
+            Release(Middle);
+            if (gesture == Gesture.Pinch)
+                EndZoom();
             gesture = Gesture.None;
         }
 
@@ -354,10 +371,22 @@ namespace OniMobile
             }
         }
 
-        static void TwoFingers(Vector2 a, Vector2 b)
+        // The pinch follows the same two fingers by id: with a third finger down, or one
+        // lifting while another lands in the same frame, the touch indexes change.
+        static void TwoFingers()
         {
-            Vector2 middle = (a + b) / 2f;
-            float distance = Mathf.Max((a - b).magnitude, 1f);
+            Touch a, b;
+            bool same = true;
+            if (!FindFinger(fingerA, out a) || !FindFinger(fingerB, out b))
+            {
+                a = Input.GetTouch(0);
+                b = Input.GetTouch(1);
+                fingerA = a.fingerId;
+                fingerB = b.fingerId;
+                same = false;
+            }
+            Vector2 middle = (a.position + b.position) / 2f;
+            float distance = Mathf.Max((a.position - b.position).magnitude, 1f);
             switch (gesture)
             {
                 case Gesture.Drag:
@@ -368,14 +397,17 @@ namespace OniMobile
                 case Gesture.None:
                 case Gesture.Pending:
                 case Gesture.Pan:
+                    StartPinch(middle, distance);
+                    break;
+                case Gesture.Pinch:
+                    if (!same)
+                    {
+                        StartPinch(middle, distance);
+                        break;
+                    }
                     position = middle;
                     if (!held[Middle])
                         Press(Middle);
-                    pinchDistance = distance;
-                    gesture = Gesture.Pinch;
-                    break;
-                case Gesture.Pinch:
-                    position = middle;
                     if (distance != pinchDistance)
                         ZoomBy(distance / pinchDistance);
                     pinchDistance = distance;
@@ -383,15 +415,54 @@ namespace OniMobile
             }
         }
 
+        // The camera pans by the pointer's distance from where the middle button went down.
+        // A pan under one finger, or a pinch whose fingers changed, holds it somewhere else:
+        // it is let go where it is and pressed again under the middle of the fingers on the
+        // next frame, so the camera does not jump to the new point.
+        static void StartPinch(Vector2 middle, float distance)
+        {
+            if (held[Middle])
+                Release(Middle);
+            else
+            {
+                position = middle;
+                Press(Middle);
+            }
+            pinchDistance = distance;
+            wheelLog = 0f;
+            gesture = Gesture.Pinch;
+        }
+
+        static bool FindFinger(int id, out Touch touch)
+        {
+            for (int i = Input.touchCount - 1; i >= 0; i--)
+            {
+                touch = Input.GetTouch(i);
+                if (touch.fingerId == id)
+                    return true;
+            }
+            touch = default(Touch);
+            return false;
+        }
+
         // Pinch zoom follows the fingers: each frame the camera's target size shrinks by the
         // change in finger distance, and its zoom speed is raised so it gets there at once,
         // around the point under the pointer (the middle of the fingers). Wheel steps, one
         // notch per 12% of finger distance and then eased in, lagged behind the fingers.
+        // While a screen holds the camera (DisableUserCameraControl: the starmap, which
+        // zooms on its own), the pinch turns into those wheel notches instead.
+        const float WheelNotch = 0.11332869f; // ln(1.12)
+
         static void ZoomBy(float ratio)
         {
             if (zoomBy == null)
                 FindCamera();
-            zoomBy(ratio);
+            if (zoomBy(ratio))
+                return;
+            wheelLog += Mathf.Log(ratio);
+            int notches = (int)(wheelLog / WheelNotch);
+            scroll += notches;
+            wheelLog -= notches * WheelNotch;
         }
 
         static void EndZoom()
@@ -404,7 +475,7 @@ namespace OniMobile
         // CameraController, through reflection (Assembly-CSharp references this assembly).
         static void FindCamera()
         {
-            zoomBy = ratio => { };
+            zoomBy = ratio => false;
             endZoom = () => { };
             const BindingFlags member = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
             Type type = Type.GetType("CameraController, Assembly-CSharp");
@@ -414,29 +485,37 @@ namespace OniMobile
             FieldInfo speed = type == null ? null : type.GetField("zoomSpeed", member);
             FieldInfo min = type == null ? null : type.GetField("minOrthographicSize", member);
             FieldInfo max = type == null ? null : type.GetField("maxOrthographicSize", member);
-            if (instance == null || setTarget == null || speed == null || min == null || max == null)
+            PropertyInfo disabled = type == null ? null : type.GetProperty("DisableUserCameraControl", member);
+            if (instance == null || setTarget == null || speed == null || min == null || max == null || disabled == null)
             {
                 Debug.LogWarning("OniMobile: CameraController zoom members not found");
                 return;
             }
+            // Set once per pinch, and given back when it ends.
             float normalSpeed = -1f;
+            var args = new object[1];
             zoomBy = ratio =>
             {
                 object camera = instance.GetValue(null, null);
-                if (camera == null)
-                    return;
+                if (camera == null || (bool)disabled.GetValue(camera, null))
+                    return false;
                 if (normalSpeed < 0f)
+                {
                     normalSpeed = (float)speed.GetValue(camera);
-                speed.SetValue(camera, PinchZoomSpeed);
+                    speed.SetValue(camera, PinchZoomSpeed);
+                }
                 float size = (float)target.GetValue(camera, null) / ratio;
                 size = Mathf.Clamp(size, (float)min.GetValue(camera), (float)max.GetValue(camera));
-                setTarget.Invoke(camera, new object[] { size });
+                args[0] = size;
+                setTarget.Invoke(camera, args);
+                return true;
             };
             endZoom = () =>
             {
                 object camera = instance.GetValue(null, null);
                 if (camera != null && normalSpeed >= 0f)
                     speed.SetValue(camera, normalSpeed);
+                normalSpeed = -1f;
             };
         }
 
