@@ -37,7 +37,7 @@ systemd-run --user --scope -q -p MemoryMax="${cap}M" -p MemoryHigh="$((cap - 512
     "$HOME/Unity/Hub/Editor/6000.3.5f2/Editor/Unity" -batchmode -nographics -quit -projectPath . \
     -buildTarget "$([ $TARGET = Linux ] && echo Linux64 || echo Android)" -executeMethod "BuildPlayer.$TARGET" \
     -logFile "Logs/build-${TARGET,,}.log" || status=$?
-grep -E "\[BuildPlayer\]|error CS" "Logs/build-${TARGET,,}.log" | tail -5
+grep -E "\[BuildPlayer\]|error CS" "Logs/build-${TARGET,,}.log" | tail -5 || true
 # The build writes the PlayerSettings it set (compiler arguments and such) into
 # the tracked project settings; they are set again on every build.
 git -C "$ROOT" checkout -q unity/player/ProjectSettings/ProjectSettings.asset

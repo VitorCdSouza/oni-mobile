@@ -49,7 +49,7 @@ _DATA_LOOKUP = re.compile(
 
 def _texel_fetch(m):
     sampler, uv = m.groups()
-    return f"texelFetch({sampler}, ivec2({uv} * vec2(textureSize({sampler}, 0))), 0)"
+    return f"texelFetch({sampler}, ivec2(({uv}) * vec2(textureSize({sampler}, 0))), 0)"
 
 
 def convert_glsl(text):

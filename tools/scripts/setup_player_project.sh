@@ -58,6 +58,8 @@ PluginImporter:
 EOF
 }
 
+# From scratch: an assembly the game no longer ships would stay and go into Keep.cs.
+rm -rf "$DEST"
 mkdir -p "$DEST"
 for dll in "$GAME_DATA"/Managed/*.dll; do
     name=$(basename "$dll" .dll)

@@ -15,6 +15,7 @@ run:
 
 apk:
 	tools/scripts/setup_player_project.sh
+	tools/scripts/setup_android_plugins.sh
 	tools/scripts/build_android.sh
 	tools/scripts/make_apk.sh build/data-android
 
