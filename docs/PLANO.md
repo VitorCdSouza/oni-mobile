@@ -502,6 +502,10 @@ junto com o jogo de PC aberto travou a máquina, então build do Unity roda semp
    inteiro entrou em swap e a máquina travou (2026-10-20). O log fica em
    `unity/player/Logs/build-android.log`. O build do Unity reinicia o servidor do adb, o que corta
    qualquer `adb push` em andamento.
+   O passo de C++ do IL2CPP abre um compilador por núcleo (28, ~190 MB cada). Com o navegador
+   aberto e só ~8 GB disponíveis, isso ficou parado no teto de memória sem avançar (2026-10-26).
+   `ONI_BUILD_JOBS=6 ONI_MIN_MB=6500 tools/scripts/build_android.sh` limita a 6 compiladores
+   (`BEE_BUILD_THREADS`) e terminou em 9 min.
 4. `tools/venv/bin/python -I tools/scripts/convert_data.py <Game_Data> build/data-android
    --platform android --shaders gles`. Só precisa ser refeito quando o conversor muda; para
    regravar só um arquivo, use `--only globalgamemanagers`.
