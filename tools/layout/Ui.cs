@@ -209,15 +209,18 @@ namespace OniMobile
 
         public static void Read()
         {
+            // A new scene's buttons, not the last one's (destroyed with its canvas).
+            Shadow = Normal = Pressed = null;
+            Label = null;
             if (PlanScreen.Instance == null)
                 return;
             KToggle toggle = PlanScreen.Instance.GetComponentInChildren<KToggle>(true);
             if (toggle == null)
                 return;
             Transform shadow = toggle.transform.Find("Shadow"), background = toggle.transform.Find("BG");
-            if (shadow != null)
+            var image = shadow != null ? shadow.GetComponent<Image>() : null;
+            if (image != null)
             {
-                var image = shadow.GetComponent<Image>();
                 Shadow = image.sprite;
                 ShadowColor = image.color;
                 ShadowOffset = ((RectTransform)shadow).anchoredPosition;
@@ -231,8 +234,9 @@ namespace OniMobile
                 NormalColor = state.InactiveColour;
                 PressedColor = state.ActiveColour;
             }
-            if (Normal == null && background != null)
-                Normal = Pressed = background.GetComponent<Image>().sprite;
+            var backgroundImage = background != null ? background.GetComponent<Image>() : null;
+            if (Normal == null && backgroundImage != null)
+                Normal = Pressed = backgroundImage.sprite;
             Label = toggle.GetComponentInChildren<LocText>(true);
         }
     }

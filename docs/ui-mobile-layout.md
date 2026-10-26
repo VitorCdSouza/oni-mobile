@@ -40,7 +40,7 @@ Posição x, y do canto superior esquerdo, em px de referência.
 | B4 | Girar | direita 108, 620 | 92x92 | novo (chama `BuildTool.TryRotate`) |
 | P | Barra de prioridade 1-9 + emergência | centro, 640 | 768x72 | `PriorityScreen` do `ToolMenu` |
 | — | Filtro da ferramenta | esquerda do trilho, 88 | | `ToolParameterMenu` |
-| D1 | Painel de detalhes | direita 8, 88 | até 624 de altura | `RootMenu` com o `DetailsScreen` |
+| D1 | Painel de detalhes | direita 8, 88 | até 572 de altura (acaba acima de O1) | `RootMenu` com o `DetailsScreen` |
 | M1 | Telas de tabela | 56, 88 | largura da tela x 624 | `JobsTableScreen` e afins |
 | O1 | Overlays, uma fileira sempre à vista (some com ferramenta ou prédio ativos) | direita 8, 668 | botões de 44 | toggles do `OverlayMenu` |
 | O2 | Legenda do overlay | 160, de baixo para cima | | `OverlayLegend` |

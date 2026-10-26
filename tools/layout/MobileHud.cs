@@ -65,10 +65,24 @@ namespace OniMobile
         readonly List<RectTransform> railCells = new List<RectTransform>();
         readonly List<RectTransform> moreCells = new List<RectTransform>();
         LayoutElement detailsBody;
+        float detailsBodyHeight, detailsBodyMin;
+        KSelectable detailsFor;
+        readonly List<RectTransform> categoryButtons = new List<RectTransform>();
+        static readonly List<Graphic> drawnGraphics = new List<Graphic>();
+        static readonly Vector3[] drawnCorners = new Vector3[4];
 
         RectTransform managementBar, sandbox;
         HudButton build, buildExit, exit, rotate, more;
         CanvasGroup overlayGroup;
+
+        // The canvas a build failed on; a new scene's canvas tries again.
+        GameObject failedCanvas;
+
+        bool FailedHere()
+        {
+            return failedCanvas != null && GameScreenManager.Instance != null
+                && GameScreenManager.Instance.ssOverlayCanvas == failedCanvas;
+        }
 
         void Awake()
         {
@@ -78,13 +92,28 @@ namespace OniMobile
         void LateUpdate()
         {
             if (Game.Instance == null || SpeedControlScreen.Instance == null || PlanScreen.Instance == null
-                || ToolMenu.Instance == null || ToolMenu.Instance.basicTools.Count == 0 || ManagementMenu.Instance == null)
+                || PlayerController.Instance == null || ToolMenu.Instance == null || ToolMenu.Instance.basicTools.Count == 0 || ManagementMenu.Instance == null)
                 return;
             if (Platform.MobileUI)
             {
                 // Built once per game scene: the holder goes with the scene's canvas.
-                if (hud == null && Ui.Find())
-                    Build();
+                if (hud == null && !FailedHere() && Ui.Find())
+                {
+                    try
+                    {
+                        Build();
+                    }
+                    catch (System.Exception e)
+                    {
+                        // Half a HUD would throw every frame: leave the game's own layout
+                        // for this scene instead.
+                        Debug.LogError("OniMobile: HUD build failed: " + e);
+                        if (hud != null)
+                            Destroy(hud.gameObject);
+                        hud = null;
+                        failedCanvas = GameScreenManager.Instance.ssOverlayCanvas;
+                    }
+                }
                 if (hud != null)
                 {
                     Ui.Measure();
@@ -297,6 +326,12 @@ namespace OniMobile
                 Transform body = DetailsScreen.Instance.transform.Find("Body");
                 if (body != null)
                     detailsBody = body.GetComponent<LayoutElement>();
+                if (detailsBody != null)
+                {
+                    detailsBodyHeight = detailsBody.preferredHeight;
+                    detailsBodyMin = detailsBody.minHeight;
+                    detailsFor = null;
+                }
             }
         }
 
@@ -327,8 +362,9 @@ namespace OniMobile
         {
             Ui.Place(m1Holder, 56f, Top, Ui.Width - 56f - Margin, 624f);
             RectTransform open = null;
-            foreach (Transform child in m1Holder.Cast())
+            for (int i = 0; i < m1Holder.childCount; i++)
             {
+                Transform child = m1Holder.GetChild(i);
                 if (!child.gameObject.activeInHierarchy || child.localScale.x < 0.01f || child.GetComponent<KScreen>() == null)
                     continue;
                 open = (RectTransform)child;
@@ -602,7 +638,8 @@ namespace OniMobile
                 Rect rows = Drawn(notifications), panels = Drawn(colony);
                 if (rows.width > 0f && panels.width > 0f)
                 {
-                    float stretch = rows.width / panels.width;
+                    // Bounded: with the panels folded the drawn width can be a sliver.
+                    float stretch = Mathf.Clamp(rows.width / panels.width, 0.5f, 1.5f);
                     colony.localScale = new Vector3(ColonyScale * stretch, ColonyScale * stretch, 1f);
                     float panelsX = rows.xMin - (panels.xMin - 56f) * stretch;
                     Ui.Place(colony, panelsX, 8f + ClockSize + 4f, colonyWidth / Ui.U, LayoutUtility.GetPreferredHeight(colony) / Ui.U);
@@ -690,7 +727,7 @@ namespace OniMobile
                 toolParams.anchoredPosition = new Vector2(0f, -height);
             }
 
-            // D1: details on the right, at most 624 high.
+            // D1: details on the right, above the overlay row.
             Show(d1, pop == Pop.None);
             Ui.Place(d1Holder, Margin, Top, 0f, 0f, true);
             if (rootMenu != null)
@@ -727,8 +764,8 @@ namespace OniMobile
             // The overlay menu destroys and remakes its toggles in its own place when it
             // refreshes (input device, research).
             Adopt(overlaySource, overlayRow, true);
-            foreach (Transform cell in overlayRow.Cast())
-                FitCell(cell as RectTransform, OverlayCell);
+            for (int i = 0; i < overlayRow.childCount; i++)
+                FitCell(overlayRow.GetChild(i) as RectTransform, OverlayCell);
             overlayRow.GetComponent<HorizontalLayoutGroup>().spacing = 2f * Ui.U;
             // Out of the way of the priority bar and the exit button while working.
             Show(overlayGroup, !tool && !placing && !managementOpen);
@@ -744,8 +781,9 @@ namespace OniMobile
         static Rect Drawn(RectTransform root)
         {
             float left = float.MaxValue, right = float.MinValue, bottom = 0f;
-            var corners = new Vector3[4];
-            foreach (Graphic graphic in root.GetComponentsInChildren<Graphic>())
+            Vector3[] corners = drawnCorners;
+            root.GetComponentsInChildren(drawnGraphics);
+            foreach (Graphic graphic in drawnGraphics)
             {
                 if (!graphic.enabled || graphic.color.a <= 0f)
                     continue;
@@ -766,8 +804,9 @@ namespace OniMobile
         {
             if (managementBar == null)
                 return;
-            foreach (Transform child in managementBar.Cast())
+            for (int i = 0; i < managementBar.childCount; i++)
             {
+                Transform child = managementBar.GetChild(i);
                 if (child.GetComponent<KToggle>() == null)
                     continue;
                 bool keep = System.Array.IndexOf(DroppedManagement, child.name) < 0;
@@ -799,20 +838,33 @@ namespace OniMobile
         {
             if (source == null)
                 return;
-            foreach (Transform child in source.Cast())
-            {
-                if (child.GetComponent<KToggle>() == null)
-                    continue;
-                if (wrap)
-                    Wrap((RectTransform)child, target, child.name);
-                else
-                    child.SetParent(target, false);
-            }
+            // Copied only when there is something to move: this runs every frame.
+            if (HasToggle(source))
+                foreach (Transform child in source.Cast())
+                {
+                    if (child.GetComponent<KToggle>() == null)
+                        continue;
+                    if (wrap)
+                        Wrap((RectTransform)child, target, child.name);
+                    else
+                        child.SetParent(target, false);
+                }
             if (!wrap)
                 return;
-            foreach (Transform cell in target.Cast())
+            for (int i = 0; i < target.childCount; i++)
+            {
+                Transform cell = target.GetChild(i);
                 if (cell.childCount == 0)
                     Object.Destroy(cell.gameObject);
+            }
+        }
+
+        static bool HasToggle(Transform parent)
+        {
+            for (int i = 0; i < parent.childCount; i++)
+                if (parent.GetChild(i).GetComponent<KToggle>() != null)
+                    return true;
+            return false;
         }
 
         static void SizeGrid(RectTransform panel, float w, float h)
@@ -856,7 +908,8 @@ namespace OniMobile
         float PlaceCategories()
         {
             const float top = 620f + 32f - Cell / 2f, firstX = 64f + 8f;
-            var buttons = new List<RectTransform>();
+            List<RectTransform> buttons = categoryButtons;
+            buttons.Clear();
             foreach (Transform child in planGrid)
                 if (child.gameObject.activeSelf && child.GetComponent<KToggle>() != null)
                     buttons.Add((RectTransform)child);
@@ -907,14 +960,26 @@ namespace OniMobile
                 ((RectTransform)shadow).anchoredPosition = new Vector2(2.8f, -1.8f);
         }
 
-        // Shrinks the details body until the whole panel (title, tabs, body, buttons) is
-        // at most 624 reference pixels high.
+        // Shrinks the details body until the whole panel (title, tabs, body, buttons) ends
+        // above the overlay row (O1, from 668): at most 572 reference pixels high.
+        const float DetailsHeight = 668f - 8f - Top;
+
         void FitDetails()
         {
             if (detailsBody == null || DetailsScreen.Instance == null || !DetailsScreen.Instance.gameObject.activeInHierarchy)
                 return;
+            // Each selection starts from the body's own size: a short panel after a tall
+            // one would keep the squeezed body.
+            KSelectable selected = SelectTool.Instance != null ? SelectTool.Instance.selected : null;
+            if (selected != detailsFor)
+            {
+                detailsFor = selected;
+                detailsBody.preferredHeight = detailsBodyHeight;
+                detailsBody.minHeight = detailsBodyMin;
+                return;
+            }
             var details = DetailsScreen.Instance.transform as RectTransform;
-            float excess = details.rect.height - 624f * Ui.U;
+            float excess = details.rect.height - DetailsHeight * Ui.U;
             if (Mathf.Abs(excess) < 2f)
                 return;
             float body = detailsBody.preferredHeight > 0f ? detailsBody.preferredHeight : detailsBody.GetComponent<RectTransform>().rect.height;
