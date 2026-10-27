@@ -46,13 +46,13 @@ char DoSublimation(SimData &sim, SimEvents &events, int cell, const ElementPostP
         }
 
         float solid_disease = static_cast<float>(soa.diseaseCount[n]);
-        int disease = static_cast<int>((amount / solid_mass) * solid_disease);
+        int disease = TruncToInt((amount / solid_mass) * solid_disease);
         if (gas == home_element) {
             float added = solid.sublimateEfficiency * amount;
             float room = 1.8f - home.mass[cell];
             if (room < added) {
                 amount = amount * (room / added);
-                disease = static_cast<int>(solid_disease * (amount / solid_mass));
+                disease = TruncToInt(solid_disease * (amount / solid_mass));
                 added = room;
             }
             AddMassAndUpdateTemperature(&soa, &soa, cell, added, soa.temperature[n], soa.diseaseIdx[n], disease);

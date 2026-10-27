@@ -79,7 +79,7 @@ bool Overwrite(CellSOA &cells, int cell, uint16_t element, float mass, float tem
     cells.mass[cell] = 0.0f;
     cells.temperature[cell] = 0.0f;
     AddMassAndUpdateTemperature(&cells, &cells, cell, rest, temperature, disease_idx,
-                                static_cast<int>(rest / mass * static_cast<float>(disease_count)));
+                                TruncToInt(rest / mass * static_cast<float>(disease_count)));
     return true;
 }
 
@@ -329,7 +329,7 @@ void AddSolid(int cell, unsigned short element, float mass, float temperature, u
         if (room > 0.0f) {
             float add = MinSS(room, mass);
             AddMassAndUpdateTemperature(cells, cells, below, add, temperature, disease_idx,
-                                        static_cast<int>(static_cast<float>(disease_count) * (add / mass)));
+                                        TruncToInt(static_cast<float>(disease_count) * (add / mass)));
             cells = sim.updatedCells;
             mass = mass - add;
         }
@@ -340,7 +340,7 @@ void AddSolid(int cell, unsigned short element, float mass, float temperature, u
         if (room > 0.0f) {
             float add = MinSS(room, mass);
             AddMassAndUpdateTemperature(cells, cells, here, add, temperature, disease_idx,
-                                        static_cast<int>(static_cast<float>(disease_count) * (add / mass)));
+                                        TruncToInt(static_cast<float>(disease_count) * (add / mass)));
             mass = mass - add;
         }
     }

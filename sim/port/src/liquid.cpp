@@ -141,7 +141,7 @@ bool FlowSideways(SimData &sim, SimEvents &events, const CellSOA &old, int cell,
         return true;
     }
     int below = cell - sim.width;
-    int moved_disease = static_cast<int>(static_cast<float>(disease) * (flow / mass));
+    int moved_disease = TruncToInt(static_cast<float>(disease) * (flow / mass));
     uint8_t disease_idx = old.diseaseIdx[cell];
     bool moved = false;
     if (StateOf(gElementLiquidData[cells.elementIdx[below]].state) == kSolid || (cells.properties[below] & 2) != 0) {
@@ -213,7 +213,7 @@ void UpdateLiquid(SimData &sim, SimEvents &events, int cell) {
                 flow = viscosity;
             }
             if ((mass <= liquid.minVerticalFlow || liquid.minVerticalFlow <= flow) && 0.0f < flow) {
-                int moved_disease = static_cast<int>(static_cast<float>(disease) * (flow / mass));
+                int moved_disease = TruncToInt(static_cast<float>(disease) * (flow / mass));
                 if (MoveLiquid(flow, sim, events, cell, element, cell - width, old.diseaseIdx[c], moved_disease)) {
                     disease -= moved_disease;
                     TakeFromSource(sim, old, c, flow, moved_disease, mass, &Vector4f::z);
@@ -294,7 +294,7 @@ void UpdateLiquid(SimData &sim, SimEvents &events, int cell) {
                 }
             }
             if (0.01f < flow) {
-                int moved_disease = static_cast<int>(static_cast<float>(disease) * (flow / mass));
+                int moved_disease = TruncToInt(static_cast<float>(disease) * (flow / mass));
                 if (MoveLiquid(flow, sim, events, cell, element, up, old.diseaseIdx[c], moved_disease)) {
                     TakeFromSource(sim, old, c, flow, moved_disease, mass, &Vector4f::w);
                 }

@@ -80,7 +80,7 @@ uint32_t LerpColor(int a, int b, float t) {
     int red = LerpInt((a >> 16) & 0xff, (b >> 16) & 0xff, t);
     int green = LerpInt((static_cast<uint32_t>(a) >> 8) & 0xff, (static_cast<uint32_t>(b) >> 8) & 0xff, t);
     int blue = LerpInt(a & 0xff, b & 0xff, t);
-    return static_cast<uint32_t>(green << 8 | alpha << 24 | red << 16 | blue);
+    return static_cast<uint32_t>(green << 8 | red << 16 | blue) | static_cast<uint32_t>(alpha) << 24;
 }
 
 uint32_t AddMaterialPropertyToEncodedColor(uint32_t color, uint32_t properties, uint32_t bit) {

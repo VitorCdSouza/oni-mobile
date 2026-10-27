@@ -22,7 +22,7 @@ struct OffGas {
         int moved_disease = 0;
         if (transfer_disease) {
             int disease = s.diseaseCount[src.cell];
-            moved_disease = static_cast<int>(static_cast<float>(disease) * (amount / src_mass));
+            moved_disease = TruncToInt(static_cast<float>(disease) * (amount / src_mass));
             s.diseaseCount[src.cell] = disease - moved_disease;
             if (s.diseaseCount[src.cell] < 1) {
                 ClearDisease(s, src.cell);
@@ -151,7 +151,7 @@ void PostProcessLiquid(SimData &sim, SimEvents &events, CellAccessor &self, cons
                     cur->elementIdx[above] = soa.elementIdx[cell];
                     int disease = soa.diseaseCount[cell];
                     cur->diseaseIdx[above] = soa.diseaseIdx[cell];
-                    int moved_disease = static_cast<int>(static_cast<float>(disease) * (moved / total));
+                    int moved_disease = TruncToInt(static_cast<float>(disease) * (moved / total));
                     cur->diseaseCount[above] = moved_disease;
                     cur->diseaseInfestationTickCount[above] = 0;
                     cur->diseaseAccumulatedError[above] = 0.0f;

@@ -170,6 +170,12 @@ bool DisplaceLiquid(SimData &sim, SimEvents &events, CellSOA *soa, int cell, uin
 inline float MinSS(float a, float b) { return a < b ? a : b; }
 inline float MaxSS(float a, float b) { return a > b ? a : b; }
 inline double MinSD(double a, double b) { return a < b ? a : b; }
+// cvttss2si semantics: NaN and values outside the int range give INT32_MIN. A plain cast does
+// that on x86 but gives 0 for NaN (and saturates) on arm64, so garbage the original lets
+// through, like a 0/0 disease share, would come out differently on the phone.
+inline int32_t TruncToInt(float f) {
+    return f >= -2147483648.0f && f < 2147483648.0f ? static_cast<int32_t>(f) : INT32_MIN;
+}
 inline double MaxSD(double a, double b) { return a > b ? a : b; }
 
 bool DoDensityDisplacement(SimData &sim, SimEvents &events, int cell, const ElementPostProcessData &elem,

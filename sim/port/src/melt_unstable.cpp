@@ -42,7 +42,7 @@ uint64_t DoPartialMelt(SimData &sim, SimEvents &events, int cell, int solid) {
                 melt_temperature <= e[liquid].highTemp + 3.0f) {
                 // The molten chunk drips out as a droplet.
                 int moved_disease =
-                    static_cast<int>(static_cast<float>(soa.diseaseCount[solid]) * (5.0f / soa.mass[solid]));
+                    TruncToInt(static_cast<float>(soa.diseaseCount[solid]) * (5.0f / soa.mass[solid]));
                 SpawnFallingLiquidInfo info{};
                 info.cellIdx = game_cell;
                 info.elemIdx = liquid;

@@ -46,7 +46,7 @@ DiseaseCount CombineDisease(const Disease &disease, uint8_t idx_a, int count_a, 
     float a = disease.Weight(idx_a) * static_cast<float>(count_a);
     float b = disease.Weight(idx_b) * static_cast<float>(count_b);
     if (a > b) {
-        int left = static_cast<int>(static_cast<float>(count_b) - (a / b) * static_cast<float>(count_a));
+        int left = TruncToInt(static_cast<float>(count_b) - (a / b) * static_cast<float>(count_a));
         if (left < 0) {
             return {idx_a, -left};
         }

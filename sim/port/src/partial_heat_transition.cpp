@@ -47,7 +47,7 @@ uint64_t DoPartialHeatTransition(SimData &sim, SimEvents &events, int cell, int 
     int disease = soa.diseaseCount[cell];
     uint8_t target_state = StateOf(elements[elements[element].highTempTransitionIdx].state);
     float new_source_temperature = (source_capacity * source_temperature - energy_needed) / source_capacity;
-    int moved_disease = static_cast<int>(static_cast<float>(disease) * (kChunk / mass));
+    int moved_disease = TruncToInt(static_cast<float>(disease) * (kChunk / mass));
 
     uint64_t result;
     int game_cell;

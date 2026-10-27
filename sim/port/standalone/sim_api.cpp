@@ -319,7 +319,10 @@ uint8_t *PrepareGameData(BinaryBufferReader &reader) {
         if (n != left && !gAssertsDisabled) {
             AssertFunc("BREAKPT:", 0x30f, "SimBindings.cpp");
         }
-        std::memcpy(previous->visibleGrid, reader.data + reader.pos, n);
+        // The original copies n bytes regardless; a short buffer would read past its end.
+        size_t copied = n < left ? n : left;
+        std::memcpy(previous->visibleGrid, reader.data + reader.pos, copied);
+        std::memset(previous->visibleGrid + copied, 0, n - copied);
     });
     return PrepareGameDataUpdate(*gFrameSync.previous);
 }
@@ -436,10 +439,12 @@ __attribute__((visibility("default"))) uint32_t ConduitTemperatureManager_Add(
                                            conduit_heat_capacity, conduit_conductivity, insulated);
 }
 
-__attribute__((visibility("default"))) void ConduitTemperatureManager_Set(float contents_temperature,
-                                                                          float contents_mass, int handle,
-                                                                          int element_hash) {
+// The game declares an int return and ignores it; the original returns 0.
+__attribute__((visibility("default"))) int ConduitTemperatureManager_Set(float contents_temperature,
+                                                                         float contents_mass, int handle,
+                                                                         int element_hash) {
     gConduitTemperatureManager->Set(handle, contents_temperature, contents_mass, element_hash);
+    return 0;
 }
 
 __attribute__((visibility("default"))) void ConduitTemperatureManager_Remove(int handle) {
