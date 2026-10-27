@@ -55,6 +55,18 @@ namespace OniMobile
         }
     }
 
+    // UnityEngine.SystemInfo reads the game makes, through PatchAndroid. Unity counts the
+    // cores from /proc/cpuinfo, which says 1 under the Android emulator's arm64 translation,
+    // and the game's JobManager then throws in its static constructor (a semaphore with no
+    // room) and the game cannot start. The OS count is used when Unity's is lower.
+    public static class SystemInfo
+    {
+        public static int processorCount
+        {
+            get { return Math.Max(UnityEngine.SystemInfo.processorCount, Environment.ProcessorCount); }
+        }
+    }
+
     // Starts OniMobile.MobileHud (tools/layout, OniMobile.Layout.dll) on the first input
     // read. That assembly references Assembly-CSharp, which references this one, so it is
     // found by name.

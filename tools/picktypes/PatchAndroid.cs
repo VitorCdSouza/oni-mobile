@@ -43,6 +43,15 @@
 // 8. Idle UI raycast. StandaloneInputModule.ProcessMouseEvent(int) returns right
 // away while OniMobile.TouchInput.PointerIdle() is true (no finger down, see
 // TouchInput.cs), instead of raycasting the whole UI every frame for hover.
+//
+// 9. Core count. Reads of SystemInfo.processorCount go to OniMobile.SystemInfo, which
+// falls back to the OS count when Unity's is lower (1 under the emulator's translation,
+// where the game's JobManager cannot start).
+//
+// 10. Render work with nothing new (tools/runtime/Render.cs). PropertyTextures uploads
+// the sim's textures through OniMobile.SimTextures, which skips them until Game.StepTheSim
+// (marked here) runs again; the overlay camera's two post effect components turn off
+// while they have no effect to draw, and back on when one is added.
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -64,13 +73,17 @@ static class PatchAndroid
         var runtime = ModuleDefinition.ReadModule(args[3]);
         var inputs = Redirect(module, runtime, "UnityEngine.Input", "OniMobile.TouchInput");
         var resolutions = Redirect(module, runtime, "UnityEngine.Screen", "OniMobile.Display");
+        var cores = Redirect(module, runtime, "UnityEngine.SystemInfo", "OniMobile.SystemInfo");
         var scale = DefaultUIScale(module, runtime);
         var nullSafe = NullSafeDelegates(module);
         var idle = SkipIdlePointer(module, runtime);
+        var render = SkipIdleRendering(module, runtime);
         Console.WriteLine($"{module.Assembly.Name.Name}: {quiet} Steam errors made warnings, {ignored} crash screen messages ignored, "
             + $"{callbacks} native callbacks marked, {inputs} Input calls redirected, {resolutions} Screen calls redirected, "
+            + $"{cores} core count reads redirected, "
             + $"{scale} UI scale defaults replaced, "
-            + $"{nullSafe} delegate creations made null-safe, {idle} idle pointer raycasts skipped");
+            + $"{nullSafe} delegate creations made null-safe, {idle} idle pointer raycasts skipped, "
+            + $"{render} idle render steps skipped");
         var getter = module.GetMemberReferences().OfType<MethodReference>()
             .FirstOrDefault(m => m.Name == "get_streamingAssetsPath" && m.DeclaringType.FullName == "UnityEngine.Application");
         if (getter == null)
@@ -171,6 +184,73 @@ static class PatchAndroid
         il.InsertBefore(first, il.Create(OpCodes.Brfalse, first));
         il.InsertBefore(first, il.Create(OpCodes.Ret));
         return 1;
+    }
+
+    static int SkipIdleRendering(ModuleDefinition module, ModuleDefinition runtime)
+    {
+        int patched = 0;
+        var textures = runtime.GetType("OniMobile.SimTextures");
+        var step = module.GetType("Game")?.Methods.FirstOrDefault(m => m.Name == "StepTheSim");
+        var update = module.GetType("PropertyTextures")?.Methods.FirstOrDefault(m => m.Name == "UpdateProperty");
+        if (step != null && update != null)
+        {
+            var il = step.Body.GetILProcessor();
+            il.InsertBefore(step.Body.Instructions[0],
+                il.Create(OpCodes.Call, module.ImportReference(textures.Methods.First(m => m.Name == "Stepped"))));
+            patched++;
+            foreach (var ins in update.Body.Instructions)
+            {
+                if (!(ins.Operand is MethodReference mr) || mr.DeclaringType.FullName != "UnityEngine.Texture2D"
+                    || (mr.Name != "LoadRawTextureData" && mr.Name != "Apply"))
+                    continue;
+                // The instance call becomes a static one taking the texture first.
+                var helper = textures.Methods.FirstOrDefault(m => m.Name == mr.Name
+                    && m.Parameters.Count == mr.Parameters.Count + 1
+                    && m.Parameters.Skip(1).Select(x => x.ParameterType.FullName)
+                        .SequenceEqual(mr.Parameters.Select(x => x.ParameterType.FullName)));
+                if (helper == null)
+                    throw new Exception("no OniMobile.SimTextures." + mr.Name + " for " + mr.FullName);
+                ins.OpCode = OpCodes.Call;
+                ins.Operand = module.ImportReference(helper);
+                patched++;
+            }
+        }
+        var effects = runtime.GetType("OniMobile.PostEffects");
+        var wake = module.ImportReference(effects.Methods.First(m => m.Name == "Wake"));
+        foreach (var names in new[] {
+            new[] { "KAnimActivePostProcessingEffects", "EnableEffect", "currentActiveEffects", "SleepIfIdle" },
+            new[] { "CustomActiveScreenPostProcessingEffects", "RegisterEffect", "ActiveEffects", "SleepIfEmpty" } })
+        {
+            string typeName = names[0], add = names[1], field = names[2], sleep = names[3];
+            var type = module.GetType(typeName);
+            var render = type?.Methods.FirstOrDefault(m => m.Name == "OnRenderImage");
+            var adder = type?.Methods.FirstOrDefault(m => m.Name == add);
+            var active = type?.Fields.FirstOrDefault(f => f.Name == field);
+            if (render == null || adder == null || active == null)
+                continue;
+            var il = adder.Body.GetILProcessor();
+            var first = adder.Body.Instructions[0];
+            il.InsertBefore(first, il.Create(OpCodes.Ldarg_0));
+            il.InsertBefore(first, il.Create(OpCodes.Call, wake));
+            // Each ret becomes "this, this.field, call Sleep..., ret": branches to the old ret
+            // land on the new first instruction.
+            var sleepRef = module.ImportReference(effects.Methods.First(m => m.Name == sleep));
+            il = render.Body.GetILProcessor();
+            foreach (var ret in render.Body.Instructions.Where(i => i.OpCode == OpCodes.Ret).ToList())
+            {
+                ret.OpCode = OpCodes.Ldarg_0;
+                ret.Operand = null;
+                var load = il.Create(OpCodes.Ldarg_0);
+                il.InsertAfter(ret, load);
+                var get = il.Create(OpCodes.Ldfld, active);
+                il.InsertAfter(load, get);
+                var call = il.Create(OpCodes.Call, sleepRef);
+                il.InsertAfter(get, call);
+                il.InsertAfter(call, il.Create(OpCodes.Ret));
+            }
+            patched++;
+        }
+        return patched;
     }
 
     static int DefaultUIScale(ModuleDefinition module, ModuleDefinition runtime)
