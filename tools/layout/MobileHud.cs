@@ -47,7 +47,7 @@ namespace OniMobile
         bool wasTool, wasSelected, wasManagement, wasPlacing;
         Transform overlaySource;
         ToolMenu.ToolInfo shownTool;
-        static FieldInfo managementActive;
+        static FieldInfo managementActive, detailsSideScreen;
 
         RectTransform hud;
         CanvasGroup left, rail, b1, b2, b3, d1, popover;
@@ -737,6 +737,7 @@ namespace OniMobile
                 rootMenu.anchoredPosition = Vector2.zero;
                 rootMenu.localScale = Vector3.one;
                 FitDetails();
+                FitSideScreen();
             }
 
             if (sheetScroll != null)
@@ -963,6 +964,25 @@ namespace OniMobile
         // Shrinks the details body until the whole panel (title, tabs, body, buttons) ends
         // above the overlay row (O1, from 668): at most 572 reference pixels high.
         const float DetailsHeight = 668f - 8f - Top;
+
+        // The side screen (Options: filters, settings) hangs from the bottom of the details
+        // panel and grows upward with its content; an item filter list ran off the top of
+        // the screen. It is drawn smaller to fit between the top row and that bottom.
+        void FitSideScreen()
+        {
+            if (DetailsScreen.Instance == null || !DetailsScreen.Instance.gameObject.activeInHierarchy)
+                return;
+            if (detailsSideScreen == null)
+                detailsSideScreen = typeof(DetailsScreen).GetField("sideScreen", BindingFlags.NonPublic | BindingFlags.Instance);
+            var side = detailsSideScreen != null ? detailsSideScreen.GetValue(DetailsScreen.Instance) as GameObject : null;
+            if (side == null || !side.activeInHierarchy)
+                return;
+            var rect = (RectTransform)side.transform;
+            float height = rect.rect.height;
+            float scale = height > 1f ? Mathf.Clamp(DetailsHeight * Ui.U / height, 0.55f, 1f) : 1f;
+            if (Mathf.Abs(rect.localScale.x - scale) > 0.001f)
+                rect.localScale = new Vector3(scale, scale, 1f);
+        }
 
         void FitDetails()
         {

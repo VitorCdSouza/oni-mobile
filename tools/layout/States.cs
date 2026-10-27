@@ -25,6 +25,15 @@ namespace OniMobile
                 case "select":
                     Select();
                     break;
+                case "filter":
+                    // A building with an item filter: its side screen is the tallest.
+                    foreach (BuildingComplete building in Components.BuildingCompletes.Items)
+                        if (building.GetComponent<TreeFilterable>() != null && building.GetComponent<KSelectable>() != null)
+                        {
+                            SelectTool.Instance.Select(building.GetComponent<KSelectable>(), true);
+                            break;
+                        }
+                    break;
                 case "prio":
                     ManagementMenu.Instance.TogglePriorities();
                     break;
