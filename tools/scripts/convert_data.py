@@ -59,6 +59,10 @@ ANDROID_PLAYER_SETTINGS = {
     # FrameTimingManager (CPU main and render thread, GPU time per frame), read by
     # OniMobile.FrameStats. A release player only records them with this set.
     "enableFrameTimingStats": True,
+    # AndroidBlitType.Auto: Unity renders straight into the window surface when it can,
+    # instead of always drawing offscreen and copying the whole frame to it (Always, 0,
+    # what the PC build had). One full-screen copy less on a fill-rate bound GPU.
+    "androidBlitType": 2,
 }
 MAIN_FILES = ("globalgamemanagers", "globalgamemanagers.assets", "level0", "level1", "level2",
               "resources.assets", "sharedassets0.assets", "sharedassets1.assets", "sharedassets2.assets",
