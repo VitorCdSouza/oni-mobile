@@ -470,6 +470,25 @@ escala padrão de 175% foi calibrada para 720 (`Platform.DefaultUIScale`). O pr�
 altura de render como opção (600 ou 540) com a escala padrão da UI proporcional a ela
 (1,75 x altura / 720), ou render do mundo em resolução menor com a UI na resolução da tela.
 
+### Emulador e memória (2026-10-27)
+
+Sem o celular, o APK roda no emulador do Android: `vendor/android-sdk` (imagem Android 14
+x86_64, que roda código arm64 por tradução) e AVD `vendor/avd/poco_x5` (1080x2400, 400 dpi,
+6 GB). O `tools/scripts/make_emulator_apk.sh` troca `SEVL`/`WFE` por `NOP` nas libs, porque a
+tradução não tem essas instruções (SIGILL nos spinlocks do `libunity.so`). O emulador roda num
+scope do systemd com teto de memória; com 8 GB no guest, o cache de disco do Android encheu a RAM
+do PC e o scope foi morto. FPS e tempo de CPU do emulador não valem para o celular; crashes,
+exceções e memória valem.
+
+- Sob a tradução a Unity conta 1 núcleo, e o `JobManager` do jogo não inicia assim (patch 9 do
+  `PatchAndroid`).
+- O save "Sustentaveis" (ciclo 2924, 19 duplicantes) carrega e aguenta 1500 eventos do `monkey`
+  sem exceção, mas o jogo chega a ~6,4 GB (PSS). O jogo Mono do PC dá 5,8 GB de RSS com o mesmo
+  save: é o tamanho do jogo, não da tradução. No celular ainda entram ~1,4 GB de texturas ASTC na
+  RAM compartilhada, então saves de fim de jogo ficam no limite dos 8 GB. "Low Resolution
+  Textures" (Options > Graphics, nível de qualidade 1) fica quase igual a 1600x720 e deve tirar
+  perto de 1 GB de textura; não medido no aparelho.
+
 ## Estado atual e próximos passos
 
 Em aberto:
