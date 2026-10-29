@@ -5,10 +5,11 @@
 // 1. StreamingAssets.
 // On Android Application.streamingAssetsPath points inside the APK, which
 // System.IO cannot read, and the game reads its YAML, codex and bundles with
-// System.IO. The files are pushed to <persistentDataPath>/StreamingAssets
-// instead, and every read of Application.streamingAssetsPath (and FMOD's
-// hardcoded "file:///android_asset") goes through an injected helper that
-// returns that directory on Android and the usual path elsewhere.
+// System.IO. Every read of Application.streamingAssetsPath goes to
+// OniMobile.StreamingAssets.Path (tools/runtime/StreamingAssets.cs), which on
+// Android copies those files out of the APK to <persistentDataPath>/StreamingAssets
+// and returns that directory, and the usual path elsewhere. FMOD's hardcoded
+// "file:///android_asset" is left alone: it reads the banks from the APK.
 //
 // 2. Steam. SteamManager.Awake quits the game when Steam cannot start, which is
 // always the case on Android (libsteam_api.so is a stub there). The quit calls
@@ -61,8 +62,6 @@ using Mono.Cecil.Rocks;
 
 static class PatchAndroid
 {
-    const int RuntimePlatformAndroid = 11;
-
     static int Main(string[] args)
     {
         var module = ModuleDefinition.ReadModule(args[0], new ReaderParameters { AssemblyResolver = new NameResolver(args[2]) });
@@ -92,12 +91,12 @@ static class PatchAndroid
             Console.WriteLine($"{module.Assembly.Name.Name}: {quits} Steam quit calls dropped");
             return 0;
         }
-        var helper = InjectHelper(module, getter);
+        var helper = module.ImportReference(runtime.GetType("OniMobile.StreamingAssets").Methods.First(m => m.Name == "Path"));
 
-        int calls = 0, literals = 0;
+        int calls = 0;
         foreach (var type in module.GetTypes())
         {
-            foreach (var method in type.Methods.Where(m => m.HasBody && m != helper))
+            foreach (var method in type.Methods.Where(m => m.HasBody))
             {
                 foreach (var ins in method.Body.Instructions)
                 {
@@ -108,17 +107,11 @@ static class PatchAndroid
                         ins.Operand = helper;
                         calls++;
                     }
-                    else if (ins.OpCode == OpCodes.Ldstr && (string)ins.Operand == "file:///android_asset")
-                    {
-                        ins.OpCode = OpCodes.Call;
-                        ins.Operand = helper;
-                        literals++;
-                    }
                 }
             }
         }
         module.Write(args[1]);
-        Console.WriteLine($"{module.Assembly.Name.Name}: {calls} streamingAssetsPath reads, {literals} android_asset literals redirected, {quits} Steam quit calls dropped");
+        Console.WriteLine($"{module.Assembly.Name.Name}: {calls} streamingAssetsPath reads redirected, {quits} Steam quit calls dropped");
         return 0;
     }
 
@@ -455,42 +448,5 @@ static class PatchAndroid
         type.Methods.Add(ctor);
         module.Types.Add(type);
         return ctor;
-    }
-
-    // static string OniMobile.Paths::StreamingAssets()
-    // {
-    //     if (Application.platform == RuntimePlatform.Android)
-    //         return Application.persistentDataPath + "/StreamingAssets";
-    //     return Application.streamingAssetsPath;
-    // }
-    static MethodDefinition InjectHelper(ModuleDefinition module, MethodReference streamingAssetsPath)
-    {
-        var application = streamingAssetsPath.DeclaringType;
-        var platformType = new TypeReference("UnityEngine", "RuntimePlatform", module, application.Scope, true);
-        var getPlatform = new MethodReference("get_platform", platformType, application);
-        var getPersistent = new MethodReference("get_persistentDataPath", module.TypeSystem.String, application);
-        var concat = new MethodReference("Concat", module.TypeSystem.String, module.TypeSystem.String);
-        concat.Parameters.Add(new ParameterDefinition(module.TypeSystem.String));
-        concat.Parameters.Add(new ParameterDefinition(module.TypeSystem.String));
-
-        var paths = new TypeDefinition("OniMobile", "Paths",
-            TypeAttributes.Public | TypeAttributes.Abstract | TypeAttributes.Sealed | TypeAttributes.BeforeFieldInit,
-            module.TypeSystem.Object);
-        var method = new MethodDefinition("StreamingAssets",
-            MethodAttributes.Public | MethodAttributes.Static | MethodAttributes.HideBySig, module.TypeSystem.String);
-        var il = method.Body.GetILProcessor();
-        var elsewhere = il.Create(OpCodes.Call, streamingAssetsPath);
-        il.Emit(OpCodes.Call, getPlatform);
-        il.Emit(OpCodes.Ldc_I4, RuntimePlatformAndroid);
-        il.Emit(OpCodes.Bne_Un, elsewhere);
-        il.Emit(OpCodes.Call, getPersistent);
-        il.Emit(OpCodes.Ldstr, "/StreamingAssets");
-        il.Emit(OpCodes.Call, concat);
-        il.Emit(OpCodes.Ret);
-        il.Append(elsewhere);
-        il.Emit(OpCodes.Ret);
-        paths.Methods.Add(method);
-        module.Types.Add(paths);
-        return method;
     }
 }

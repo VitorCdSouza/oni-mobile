@@ -334,7 +334,12 @@ jogando. O que precisou ser corrigido depois dos plugins, além do que já estav
   final que ele não conhece), então a cauda original é copiada de volta; sem isso o player acusa
   "globalgamemanagers is corrupted".
 - Patches de IL (`tools/picktypes/PatchAndroid.cs`, aplicados por `setup_player_project.sh`):
-  - StreamingAssets lido de `persistentDataPath/StreamingAssets`.
+  - StreamingAssets lido de `persistentDataPath/StreamingAssets`. O APK leva os arquivos: os
+    banks do FMOD na raiz de `assets/`, que o FMOD lê direto do APK (`file:///android_asset`), e o
+    resto (~190 MB: bundles, YAML, codex, strings) em `assets/StreamingAssets/`, que
+    `tools/runtime/StreamingAssets.cs` copia para fora na primeira leitura do caminho. Depois só
+    copia o que mudou de tamanho ou CRC (lista em `.apk-files`). Celular novo ou app reinstalado
+    não precisa de push.
   - O `SteamManager` não fecha mais o jogo, e "Steam not initialized in time" vira aviso.
   - O `KCrashReporter` abre com qualquer `LogError`. As 3 mensagens do shader de vídeo que falta
     (`Hidden/VideoDecodeAndroid`) entram na lista de mensagens ignoradas.
@@ -538,8 +543,10 @@ junto com o jogo de PC aberto travou a máquina, então build do Unity roda semp
    4. `adb shell am start -a android.intent.action.VIEW -t application/vnd.android.package-archive
       -d content://media/external/file/<id> --grant-read-uri-permission`;
    5. tocar em Atualizar no aparelho.
-7. `tools/scripts/push_streaming_assets.sh` envia o StreamingAssets, ~1 GB. Só é preciso na
-   primeira instalação ou quando os bundles mudam.
+7. Nada mais a enviar: o StreamingAssets vai dentro do APK. Na primeira abertura depois de
+   instalar ou atualizar, o log mostra `OniMobile StreamingAssets: N files copied from the APK`.
+   Até 2026-10-29 ele ia à parte por `push_streaming_assets.sh`; os `.bank` que esse script
+   deixou no aparelho são apagados nessa primeira abertura.
 
 Para testar sem tocar no aparelho, a chave `AutoResumeSaveFile` em
 `/sdcard/Android/data/local.oni.mobile/files/kplayerprefs.yaml` faz o menu carregar esse save

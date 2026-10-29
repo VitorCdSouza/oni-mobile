@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 # Build build/oni-mobile.apk: the IL2CPP Android player from unity/player with
 # its data replaced by the converted game data (convert_data.py --platform
-# android --shaders gles). StreamingAssets is not in the APK: push it with
-# tools/scripts/push_streaming_assets.sh.
+# android --shaders gles), and the game's StreamingAssets: the FMOD banks at
+# assets/ (FMOD reads them from the APK) and everything else under
+# assets/StreamingAssets/, which the game copies out on its first start
+# (tools/runtime/StreamingAssets.cs). The converted bundles replace the original
+# ones; the hires_* bundles are left out.
 #
 # Usage: tools/scripts/make_apk.sh [converted data dir] [game data dir]
 set -euo pipefail
@@ -40,7 +43,21 @@ for f in resources.resource RuntimeInitializeOnLoads.json ScriptingAssemblies.js
     cp "$GAME_DATA/$f" "$D/$f"
 done
 
-# Data goes in uncompressed (the player memory-maps and seeks in it).
+# StreamingAssets as symlinks, which zip follows, so the ~1 GB is not copied twice.
+S=$WORK/assets/StreamingAssets
+mkdir -p "$S"
+for f in "$GAME_DATA"/StreamingAssets/*; do
+    name=$(basename "$f")
+    case "$name" in
+        hires_*) continue ;;
+        *.bank) ln -s "$f" "$WORK/assets/$name" ;;
+        *) if [ -e "$CONVERTED/StreamingAssets/$name" ]; then ln -s "$CONVERTED/StreamingAssets/$name" "$S/$name"
+           else ln -s "$f" "$S/$name"; fi ;;
+    esac
+done
+
+# Data goes in uncompressed (the player memory-maps and seeks in it, FMOD streams
+# the banks, and StreamingAssets.cs copies the rest out byte for byte).
 (cd "$WORK" && zip -q -0 -r base.apk assets)
 "$BUILD_TOOLS/zipalign" -f -P 16 4 "$WORK/base.apk" "$WORK/aligned.apk"
 
