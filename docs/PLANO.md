@@ -338,8 +338,12 @@ jogando. O que precisou ser corrigido depois dos plugins, além do que já estav
     banks do FMOD na raiz de `assets/`, que o FMOD lê direto do APK (`file:///android_asset`), e o
     resto (~190 MB: bundles, YAML, codex, strings) em `assets/StreamingAssets/`, que
     `tools/runtime/StreamingAssets.cs` copia para fora na primeira leitura do caminho. Depois só
-    copia o que mudou de tamanho ou CRC (lista em `.apk-files`). Celular novo ou app reinstalado
-    não precisa de push.
+    copia o que mudou de tamanho ou CRC (lista em `.apk-files`) e apaga o que o APK não traz.
+    Celular novo ou app reinstalado não precisa de push.
+  - `FMODUnity.RuntimeManager.Initialize` começa chamando `org.fmod.FMOD.init(activity)`
+    (`tools/runtime/Fmod.cs`). O `FMODUnity.dll` do PC compilou essa chamada fora (`#if
+    UNITY_ANDROID`), e sem ela o FMOD não lê `file:///android_asset`: nenhum bank carrega e o
+    `MusicManager` abre a tela de crash com "Event not found".
   - O `SteamManager` não fecha mais o jogo, e "Steam not initialized in time" vira aviso.
   - O `KCrashReporter` abre com qualquer `LogError`. As 3 mensagens do shader de vídeo que falta
     (`Hidden/VideoDecodeAndroid`) entram na lista de mensagens ignoradas.
@@ -543,6 +547,12 @@ junto com o jogo de PC aberto travou a máquina, então build do Unity roda semp
    4. `adb shell am start -a android.intent.action.VIEW -t application/vnd.android.package-archive
       -d content://media/external/file/<id> --grant-read-uri-permission`;
    5. tocar em Atualizar no aparelho.
+   O APK tem ~1,2 GB, abaixo do limite de 2 GiB por arquivo das releases do GitHub. Os dados
+   do jogo (~1,7 GB) vão num só `data.unity3d` em LZ4HC (`tools/scripts/pack_data.py`), o
+   formato do `BuildOptions.CompressWithLz4HC` da Unity, que o player lê em blocos de 128 KB
+   direto do APK: 619 MB. As DLCs (Spaced Out, planet packs, cosméticos) ficam de fora, ~740 MB
+   de banks e bundles; sem o bundle o jogo não liga a DLC (`DlcManager`) e não carrega os banks
+   dela (`KFMOD.Initialize`). `ONI_DLC=1` as põe de volta. Saves com DLC não abrem sem elas.
 7. Nada mais a enviar: o StreamingAssets vai dentro do APK. Na primeira abertura depois de
    instalar ou atualizar, o log mostra `OniMobile StreamingAssets: N files copied from the APK`.
    Até 2026-10-29 ele ia à parte por `push_streaming_assets.sh`; os `.bank` que esse script

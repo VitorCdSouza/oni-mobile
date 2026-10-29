@@ -99,7 +99,7 @@ done
 # Touch controls and Android defaults (tools/runtime), built against the game's own engine assemblies.
 M=$GAME_DATA/Managed
 "$MB/bin/mcs" -target:library -nostdlib -noconfig -r:"$M/mscorlib.dll" -r:"$M/netstandard.dll" \
-    -r:"$M/UnityEngine.CoreModule.dll" -r:"$M/UnityEngine.InputLegacyModule.dll" \
+    -r:"$M/UnityEngine.CoreModule.dll" -r:"$M/UnityEngine.InputLegacyModule.dll" -r:"$M/UnityEngine.AndroidJNIModule.dll" \
     -out:"$DEST/OniMobile.Runtime.dll" "$ROOT"/tools/runtime/*.cs
 plugin_meta OniMobile.Runtime
 # StreamingAssets, Steam, native callbacks and touch input on Android (see tools/picktypes/PatchAndroid.cs).

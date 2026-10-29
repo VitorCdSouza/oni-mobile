@@ -7,11 +7,13 @@
 // every read of the path here. The first read copies them out to
 // <persistentDataPath>/StreamingAssets, only the files whose size or CRC differs
 // from the last copy (listed in .apk-files there), so a reinstall or a new phone
-// gets them back by itself and an update copies just what changed.
+// gets them back by itself and an update copies just what changed. Files there that
+// the APK does not carry are deleted: the banks and the DLC bundles the old
+// push_streaming_assets.sh left, ~1.1 GB, and a DLC bundle left there would turn
+// that DLC on (DlcManager checks the bundle file) without its banks.
 //
 // The FMOD banks are not copied: make_apk.sh puts them at the APK's assets/ root and
-// FMOD reads them from there (file:///android_asset). Banks left in the directory by
-// the old push_streaming_assets.sh are deleted, ~930 MB.
+// FMOD reads them from there (file:///android_asset).
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -70,15 +72,22 @@ namespace OniMobile
             string manifestPath = System.IO.Path.Combine(dir, ManifestName);
             var old = ReadManifest(manifestPath);
             var manifest = new StringBuilder();
-            int copied = 0, kept = 0;
+            // Dictionary, not HashSet: the runtime builds against mscorlib and netstandard only.
+            var carried = new Dictionary<string, bool>(StringComparer.Ordinal) { { System.IO.Path.GetFullPath(manifestPath), true } };
+            int copied = 0, kept = 0, deleted = 0;
             long bytes = 0;
             var buffer = new byte[1 << 20];
             using (var zip = new FileStream(apk, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
-                foreach (Entry entry in ReadCentralDirectory(zip))
+                List<Entry> entries = ReadCentralDirectory(zip);
+                // An APK without them would otherwise empty the directory below.
+                if (entries.Count == 0)
+                    throw new IOException("no " + Prefix + " in " + apk);
+                foreach (Entry entry in entries)
                 {
                     string relative = entry.Name.Substring(Prefix.Length);
                     string target = System.IO.Path.Combine(dir, relative);
+                    carried[System.IO.Path.GetFullPath(target)] = true;
                     string key = entry.Crc.ToString("x8") + " " + entry.Size;
                     manifest.Append(key).Append(' ').Append(relative).Append('\n');
                     string previous;
@@ -109,14 +118,20 @@ namespace OniMobile
                 }
             }
             File.WriteAllText(manifestPath, manifest.ToString());
-            int banks = 0;
-            foreach (string bank in Directory.GetFiles(dir, "*.bank"))
-            {
-                File.Delete(bank);
-                banks++;
-            }
+            foreach (string file in Directory.GetFiles(dir, "*", SearchOption.AllDirectories))
+                if (!carried.ContainsKey(System.IO.Path.GetFullPath(file)))
+                {
+                    File.Delete(file);
+                    deleted++;
+                }
+            // Deepest first, so a directory emptied by its children goes too.
+            string[] directories = Directory.GetDirectories(dir, "*", SearchOption.AllDirectories);
+            Array.Sort(directories, (a, b) => b.Length.CompareTo(a.Length));
+            foreach (string directory in directories)
+                if (Directory.GetFileSystemEntries(directory).Length == 0)
+                    Directory.Delete(directory);
             Debug.Log("OniMobile StreamingAssets: " + copied + " files copied from the APK (" + (bytes >> 20) + " MB), "
-                + kept + " unchanged, " + banks + " old banks deleted, " + (int)(DateTime.UtcNow - start).TotalMilliseconds + " ms");
+                + kept + " unchanged, " + deleted + " not in the APK deleted, " + (int)(DateTime.UtcNow - start).TotalMilliseconds + " ms");
         }
 
         static Dictionary<string, string> ReadManifest(string manifestPath)

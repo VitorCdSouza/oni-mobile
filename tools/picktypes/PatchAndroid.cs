@@ -53,6 +53,10 @@
 // the sim's textures through OniMobile.SimTextures, which skips them until Game.StepTheSim
 // (marked here) runs again; the overlay camera's two post effect components turn off
 // while they have no effect to draw, and back on when one is added.
+//
+// 11. FMOD's Java side. FMODUnity.RuntimeManager.Initialize starts with a call to
+// OniMobile.Fmod.InitJava (tools/runtime/Fmod.cs), the org.fmod.FMOD.init call that
+// the PC build of FMODUnity compiled out; FMOD needs it to read the banks from the APK.
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -77,12 +81,13 @@ static class PatchAndroid
         var nullSafe = NullSafeDelegates(module);
         var idle = SkipIdlePointer(module, runtime);
         var render = SkipIdleRendering(module, runtime);
+        var fmod = InitFmodJava(module, runtime);
         Console.WriteLine($"{module.Assembly.Name.Name}: {quiet} Steam errors made warnings, {ignored} crash screen messages ignored, "
             + $"{callbacks} native callbacks marked, {inputs} Input calls redirected, {resolutions} Screen calls redirected, "
             + $"{cores} core count reads redirected, "
             + $"{scale} UI scale defaults replaced, "
             + $"{nullSafe} delegate creations made null-safe, {idle} idle pointer raycasts skipped, "
-            + $"{render} idle render steps skipped");
+            + $"{render} idle render steps skipped, {fmod} FMOD Java inits added");
         var getter = module.GetMemberReferences().OfType<MethodReference>()
             .FirstOrDefault(m => m.Name == "get_streamingAssetsPath" && m.DeclaringType.FullName == "UnityEngine.Application");
         if (getter == null)
@@ -161,6 +166,19 @@ static class PatchAndroid
             }
         }
         return redirected;
+    }
+
+    // RESULT RuntimeManager.Initialize() { Fmod.InitJava(); ... }
+    static int InitFmodJava(ModuleDefinition module, ModuleDefinition runtime)
+    {
+        var initialize = module.GetType("FMODUnity.RuntimeManager")?.Methods
+            .FirstOrDefault(m => m.Name == "Initialize" && m.Parameters.Count == 0 && m.HasBody);
+        if (initialize == null)
+            return 0;
+        var init = runtime.GetType("OniMobile.Fmod").Methods.First(m => m.Name == "InitJava");
+        var il = initialize.Body.GetILProcessor();
+        il.InsertBefore(initialize.Body.Instructions[0], il.Create(OpCodes.Call, module.ImportReference(init)));
+        return 1;
     }
 
     // ProcessMouseEvent(int id) { if (TouchInput.PointerIdle()) return; ... }

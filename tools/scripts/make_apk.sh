@@ -7,6 +7,11 @@
 # (tools/runtime/StreamingAssets.cs). The converted bundles replace the original
 # ones; the hires_* bundles are left out.
 #
+# The DLCs (Spaced Out, the planet packs, the cosmetics pack) are left out too,
+# their bundles and banks, about 600 MB: the game turns a DLC on only when its
+# bundle is there (DlcManager.CheckForDLCFileInstallation), and KFMOD.Initialize
+# then drops its banks from the list. ONI_DLC=1 keeps them.
+#
 # Usage: tools/scripts/make_apk.sh [converted data dir] [game data dir]
 set -euo pipefail
 
@@ -26,20 +31,25 @@ cp "$ROOT/unity/player/Builds/Android/oni.apk" "$WORK/base.apk"
 
 # Drop the empty project's scenes and assets; keep the player's own engine files
 # (unity default resources, Managed/Metadata, boot.config, unity_app_guid).
-zip -q -d "$WORK/base.apk" \
+zip -q -d "$WORK/base.apk" 'assets/bin/Data/data.unity3d' \
     'assets/bin/Data/globalgamemanagers*' 'assets/bin/Data/level*' 'assets/bin/Data/sharedassets*' \
     'assets/bin/Data/resources.*' 'assets/bin/Data/Resources/unity_builtin_extra' \
     'assets/bin/Data/RuntimeInitializeOnLoads.json' 'assets/bin/Data/ScriptingAssemblies.json' >/dev/null
 
+# The game's data goes into one LZ4HC archive, data.unity3d (tools/scripts/pack_data.py),
+# which the player reads in place: ~1.6 GB of data in about 0.6 GB.
 D=$WORK/assets/bin/Data
+packed=()
 for f in globalgamemanagers globalgamemanagers.assets level0 level1 level2 \
          resources.assets resources.assets.resS sharedassets0.assets sharedassets0.assets.resS \
-         sharedassets1.assets sharedassets1.assets.resS sharedassets2.assets sharedassets2.assets.resS; do
-    [ -e "$CONVERTED/$f" ] && ln "$CONVERTED/$f" "$D/$f" 2>/dev/null || cp "$CONVERTED/$f" "$D/$f"
+         sharedassets1.assets sharedassets1.assets.resS sharedassets2.assets sharedassets2.assets.resS \
+         Resources/unity_builtin_extra; do
+    packed+=("$f=$CONVERTED/$f")
 done
-cp "$CONVERTED/Resources/unity_builtin_extra" "$D/Resources/"
-# Unchanged game files: audio clips and the script tables.
-for f in resources.resource RuntimeInitializeOnLoads.json ScriptingAssemblies.json; do
+# Unchanged game files: audio clips, and the script tables, which stay beside the archive.
+packed+=("resources.resource=$GAME_DATA/resources.resource")
+"$ROOT/tools/venv/bin/python" -I "$ROOT/tools/scripts/pack_data.py" "$D/data.unity3d" "${packed[@]}"
+for f in RuntimeInitializeOnLoads.json ScriptingAssemblies.json; do
     cp "$GAME_DATA/$f" "$D/$f"
 done
 
@@ -50,14 +60,15 @@ for f in "$GAME_DATA"/StreamingAssets/*; do
     name=$(basename "$f")
     case "$name" in
         hires_*) continue ;;
+        expansion1_*|DLC[0-9]_*|dlc[0-9]_bundle|cosmetic[0-9]_bundle) [ "${ONI_DLC:-0}" = 1 ] || continue ;;&
         *.bank) ln -s "$f" "$WORK/assets/$name" ;;
         *) if [ -e "$CONVERTED/StreamingAssets/$name" ]; then ln -s "$CONVERTED/StreamingAssets/$name" "$S/$name"
            else ln -s "$f" "$S/$name"; fi ;;
     esac
 done
 
-# Data goes in uncompressed (the player memory-maps and seeks in it, FMOD streams
-# the banks, and StreamingAssets.cs copies the rest out byte for byte).
+# Data goes in uncompressed (the player seeks in data.unity3d, FMOD streams the
+# banks, and StreamingAssets.cs copies the rest out byte for byte).
 (cd "$WORK" && zip -q -0 -r base.apk assets)
 "$BUILD_TOOLS/zipalign" -f -P 16 4 "$WORK/base.apk" "$WORK/aligned.apk"
 
